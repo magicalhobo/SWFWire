@@ -1,0 +1,518 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:WindowedApplication xmlns:fx="http://ns.adobe.com/mxml/2009"
+					   xmlns:s="library://ns.adobe.com/flex/spark"
+					   xmlns:mx="library://ns.adobe.com/flex/mx"
+					   xmlns:ui="com.swfwire.debugger.flex.ui.*"
+					   showStatusBar="false"
+					   applicationComplete="main()">
+	<fx:Script>
+		<![CDATA[
+			import air.update.ApplicationUpdaterUI;
+			
+			import com.magicalhobo.air.utils.WindowTracker;
+			import com.swfwire.debugger.injected.Logger;
+			import com.swfwire.debugger.utils.ABCWrapper;
+			import com.swfwire.debugger.utils.InstructionLocation;
+			import com.swfwire.debugger.utils.InstructionTemplate;
+			import com.swfwire.decompiler.AsyncSWFReader;
+			import com.swfwire.decompiler.AsyncSWFReaderFiltered;
+			import com.swfwire.decompiler.SWF10Writer;
+			import com.swfwire.decompiler.SWFByteArray;
+			import com.swfwire.decompiler.SWFFileWriteResult;
+			import com.swfwire.decompiler.SWFReadResult;
+			import com.swfwire.decompiler.SWFWriter;
+			import com.swfwire.decompiler.abc.ABCReaderMetadata;
+			import com.swfwire.decompiler.abc.instructions.*;
+			import com.swfwire.decompiler.abc.tokens.ConstantPoolToken;
+			import com.swfwire.decompiler.abc.tokens.MethodBodyInfoToken;
+			import com.swfwire.decompiler.abc.tokens.cpool.CPoolIndex;
+			import com.swfwire.decompiler.abc.tokens.multinames.MultinameQNameToken;
+			import com.swfwire.decompiler.abc.tokens.traits.TraitMethodToken;
+			import com.swfwire.decompiler.data.swf.SWF;
+			import com.swfwire.decompiler.data.swf.SWFHeader;
+			import com.swfwire.decompiler.data.swf.tags.SWFTag;
+			import com.swfwire.decompiler.data.swf9.tags.DoABCTag;
+			import com.swfwire.utils.Debug;
+			
+			import flash.utils.getTimer;
+			
+			private var windowTracker:WindowTracker;
+			private var appUpdater:ApplicationUpdaterUI;
+			private var urlLoader:URLLoader;
+			
+			private function main():void
+			{
+				Logger.output = logOut;
+				
+				appUpdater = new ApplicationUpdaterUI();
+				appUpdater.configurationFile = new File('app:/updateConfig.xml');
+				appUpdater.initialize();
+				
+				windowTracker = new WindowTracker(SharedObject.getLocal('preferences'), nativeWindow);
+				windowTracker.restore();
+				windowTracker.startTracking();
+				
+				urlLoader = new URLLoader();
+				urlLoader.addEventListener(ProgressEvent.PROGRESS,	 loadProgressHandler);
+				urlLoader.addEventListener(Event.COMPLETE,			 loadCompleteHandler);
+				urlLoader.dataFormat = URLLoaderDataFormat.BINARY;
+				
+				//load('FlexBug.swf');
+				//load('sample.swf');
+				
+				load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpse/bin-debug/SWFCorpse.swf').url);
+				//load('WordSearch.swf');
+			}
+			
+			private function loadProgressHandler(ev:ProgressEvent):void
+			{
+				loadProgress.setProgress(ev.bytesLoaded, ev.bytesTotal);
+			}
+			
+			private function loadCompleteHandler(ev:Event):void
+			{
+				var bytes:ByteArray = urlLoader.data as ByteArray;
+				if(bytes)
+				{
+					//sanity check
+					if(false)
+					{
+						var context:LoaderContext = new LoaderContext();
+						context.allowLoadBytesCodeExecution = true;
+						preview.loadBytes(bytes, context);
+					}
+					else
+					{
+						parse(bytes);
+					}
+				}
+			}
+			
+			private function parse(bytes:ByteArray):void
+			{
+				var swfBytes:SWFByteArray = new SWFByteArray(bytes);
+				var swfReader:AsyncSWFReaderFiltered = new AsyncSWFReaderFiltered();
+				var result:SWFReadResult;
+				
+				swfReader.includedTags[0] = true;
+				swfReader.includedTags[82] = true;
+				swfReader.eventDispatcher.addEventListener('tagRead', function(ev:Event):void
+				{
+					var current:uint = swfBytes.getBytePosition();
+					var max:uint = swfBytes.getLength();
+					readProgress.setProgress(current, max);
+				});
+				swfReader.eventDispatcher.addEventListener('done', function(ev:Event):void
+				{
+					inject(result.swf, result.abcMetadata);
+				});
+				
+				result = swfReader.readFile(swfBytes);
+			}
+			
+			private function inject(swf:SWF, metadata:Vector.<ABCReaderMetadata>):void
+			{
+				var start:uint = getTimer();
+				
+				swf.header.signature = SWFHeader.UNCOMPRESSED_SIGNATURE;
+				
+				for(var iTag:uint = 0; iTag < swf.tags.length; iTag++)
+				{
+					var abcTag:DoABCTag = swf.tags[iTag] as DoABCTag;
+					if(abcTag)
+					{
+						/*
+						if(iTag == 306)
+						{
+							Debug.maxProperties = 200;
+							Debug.dump(abcTag.abcFile.methodBodies[5].instructions, 5);
+						}
+						else
+						{
+							continue;
+						}
+						*/
+
+						var wrapper:ABCWrapper = new ABCWrapper(abcTag.abcFile, metadata[iTag]);
+						
+						var traceIndex:int = wrapper.getMultinameIndex('', 'trace');
+						if(traceIndex >= 0)
+						//if(true)
+						{
+							var classIndex:int = wrapper.addQName(
+								wrapper.addNamespaceFromString('com.swfwire.debugger.injected'),
+								wrapper.addString('Logger'));
+							
+							var emptyNS:int = wrapper.addNamespaceFromString('');
+							
+							var temp:* = abcTag.abcFile.cpool.namespaces[emptyNS];
+							
+							var methodIndex2:int = wrapper.addQName(emptyNS, wrapper.addString('enterFunction'));
+							var methodIndex3:int = wrapper.addQName(emptyNS, wrapper.addString('exitFunction'));
+							
+							var cp:ConstantPoolToken = abcTag.abcFile.cpool;
+							
+							var mn1:* = cp.multinames[methodIndex2].data as MultinameQNameToken;
+							var mn2:* = cp.multinames[methodIndex3].data as MultinameQNameToken;
+							
+							trace(cp.strings[cp.namespaces[mn1.ns].name].utf8+'::'+cp.strings[mn1.name].utf8);
+							trace(cp.strings[cp.namespaces[mn2.ns].name].utf8+'::'+cp.strings[mn2.name].utf8);
+							
+							var l:* = wrapper.findInstruction(new InstructionTemplate(Instruction_findpropstrict, {index: traceIndex}));
+							
+							for(var iter:* in l)
+							{
+								abcTag.abcFile.methodBodies[l[iter].methodBody].maxStack += 1;
+							}
+							
+							wrapper.replaceInstruction2(l, function(z:*, a:Vector.<IInstruction>):Vector.<IInstruction>
+							{
+								var b:Vector.<IInstruction> = new Vector.<IInstruction>();
+								b.push(new Instruction_getlex(classIndex));
+								return b;
+							});
+							
+							var methodIndex:int = wrapper.addQName(emptyNS, wrapper.addString('log'));
+							
+							l = wrapper.findInstruction(new InstructionTemplate(Instruction_callpropvoid, {index: traceIndex}));
+							wrapper.replaceInstruction2(l, function(z:*, a:Vector.<IInstruction>):Vector.<IInstruction>
+							{
+								var b:Vector.<IInstruction> = new Vector.<IInstruction>();
+								b.push(new Instruction_callpropvoid(methodIndex, Object(a[0]).argCount));
+								return b;
+							});
+							
+							l = wrapper.findInstruction(new InstructionTemplate(Instruction_callproperty, {index: traceIndex}));
+							wrapper.replaceInstruction2(l, function(z:*, a:Vector.<IInstruction>):Vector.<IInstruction>
+							{
+								var b:Vector.<IInstruction> = new Vector.<IInstruction>();
+								b.push(new Instruction_callproperty(methodIndex, Object(a[0]).argCount));
+								return b;
+							});
+							
+							l = wrapper.findInstruction(new InstructionTemplate(Instruction_pushscope, {}));
+							
+							for(var iter2:* in l)
+							{
+								abcTag.abcFile.methodBodies[l[iter2].methodBody].maxStack += 2;
+							}
+							/*
+							wrapper.replaceInstruction2(l, function(z:InstructionLocation, a:Vector.<IInstruction>):Vector.<IInstruction>
+							{
+								var n:* = abcTag.abcFile.methodBodies[z.methodBody].method;
+								var o:* = 'unknown';
+								
+								outer:
+								for(var i1:* in abcTag.abcFile.instances)
+								{
+									var j1:* = abcTag.abcFile.instances[i1];
+									for(var i2:* in j1.traits)
+									{
+										var j2:* = j1.traits[i2];
+										var j3:* = j2.data as TraitMethodToken;
+										if(j3)
+										{
+											if(j3.methodId == n)
+											{
+												var j4:MultinameQNameToken = abcTag.abcFile.cpool.multinames[j2.name].data as MultinameQNameToken;
+												if(j4)
+												{
+													var j5:String = abcTag.abcFile.cpool.strings[abcTag.abcFile.cpool.namespaces[j4.ns].name].utf8;
+													j5 += '/' + abcTag.abcFile.cpool.strings[j4.name].utf8;
+													o = j5;
+													break outer;
+												}
+											}
+										}
+									}
+								}
+								
+								var j6:int =  wrapper.addString(o+' (#'+n+'.'+z.id+')');
+								
+								a.push(new Instruction_getlex(classIndex));
+								a.push(new Instruction_pushstring(j6));
+								a.push(new Instruction_callpropvoid(methodIndex2, 1));
+								return a;
+							});
+							l = wrapper.findInstruction(new InstructionTemplate(Instruction_returnvoid, {}));
+							var m:* = wrapper.findInstruction(new InstructionTemplate(Instruction_popscope, {}));
+							
+							for(var iter4:* in m)
+							{
+								l.push(m[iter4]);
+							}
+							*/
+							/*
+							m = wrapper.findInstruction(new InstructionTemplate(Instruction_newfunction, {}));
+							for(var iter5:* in m)
+							{
+								l.push(m[iter5]);
+							}
+							*/
+							/*
+							for(var iter6:* in l)
+							{
+								abcTag.abcFile.methodBodies[l[iter6].methodBody].maxStack += 1;
+							}
+							
+							wrapper.replaceInstruction2(l, function(z:InstructionLocation, a:Vector.<IInstruction>):Vector.<IInstruction>
+							{
+								var n:* = abcTag.abcFile.methodBodies[z.methodBody].method;
+								var o:* = 'unknown';
+								
+								outer:
+								for(var i1:* in abcTag.abcFile.instances)
+								{
+									var j1:* = abcTag.abcFile.instances[i1];
+									for(var i2:* in j1.traits)
+									{
+										var j2:* = j1.traits[i2];
+										var j3:* = j2.data as TraitMethodToken;
+										if(j3)
+										{
+											if(j3.methodId == n)
+											{
+												var j4:MultinameQNameToken = abcTag.abcFile.cpool.multinames[j2.name].data as MultinameQNameToken;
+												if(j4)
+												{
+													var j5:String = abcTag.abcFile.cpool.strings[abcTag.abcFile.cpool.namespaces[j4.ns].name].utf8;
+													j5 += '/' + abcTag.abcFile.cpool.strings[j4.name].utf8;
+													o = j5;
+													break outer;
+												}
+											}
+										}
+									}
+								}
+								
+								var j6:int =  wrapper.addString(o+' (#'+n+'.'+z.id+')');
+								
+								a.unshift(new Instruction_callpropvoid(methodIndex3, 1));
+								a.unshift(new Instruction_pushstring(j6));
+								a.unshift(new Instruction_getlex(classIndex));
+								return a;
+							});
+							
+							var def:int = wrapper.addString('<default>');
+							var j7:Vector.<IInstruction> = abcTag.abcFile.methodBodies[l[3].methodBody].instructions;
+							j7.unshift(new Instruction_callpropvoid(methodIndex2, 1));
+							j7.unshift(new Instruction_pushstring(def));
+							j7.unshift(new Instruction_getlex(classIndex));
+							*/
+							/*
+							var l:* = wrapper.findInstruction(new InstructionTemplate(Instruction_returnvoid, {}));
+							var m:* = wrapper.findInstruction(new InstructionTemplate(Instruction_returnvalue, {}));
+							
+							for(var iter4:* in m)
+							{
+								l.push(m[iter4]);
+							}
+								
+							for(var iter6:* in l)
+							{
+								abcTag.abcFile.methodBodies[l[iter6].methodBody].maxStack += 1;
+							}
+							
+							wrapper.replaceInstruction2(l, function(z:InstructionLocation, a:Vector.<IInstruction>):Vector.<IInstruction>
+							{
+								var n:* = abcTag.abcFile.methodBodies[z.methodBody].method;
+								var o:* = 'unknown';
+								
+								outer:
+								for(var i1:* in abcTag.abcFile.instances)
+								{
+									var j1:* = abcTag.abcFile.instances[i1];
+									for(var i2:* in j1.traits)
+									{
+										var j2:* = j1.traits[i2];
+										var j3:* = j2.data as TraitMethodToken;
+										if(j3)
+										{
+											if(j3.methodId == n)
+											{
+												var j4:MultinameQNameToken = abcTag.abcFile.cpool.multinames[j2.name].data as MultinameQNameToken;
+												if(j4)
+												{
+													var j5:String = abcTag.abcFile.cpool.strings[abcTag.abcFile.cpool.namespaces[j4.ns].name].utf8;
+													j5 += '/' + abcTag.abcFile.cpool.strings[j4.name].utf8;
+													o = j5;
+													break outer;
+												}
+											}
+										}
+									}
+								}
+								
+								a.unshift(new Instruction_callpropvoid(methodIndex3, 0));
+								a.unshift(new Instruction_getlex(classIndex));
+								return a;
+							});
+							*/
+							/*
+							for(var i8:int = 0; i8 < abcTag.abcFile.methodBodies.length; i8++)
+							{
+								abcTag.abcFile.methodBodies[i8].maxStack += 5;
+								var j8:* = abcTag.abcFile.methodBodies[i8].instructions;
+								var j9:* = abcTag.abcFile.methodBodies[i8].initScopeDepth;
+								if(j9 == 1)
+								{
+									j8.splice(2, 0, new Instruction_callpropvoid(methodIndex2, 0));
+									j8.splice(2, 0, new Instruction_getlex(classIndex));
+								}
+								else
+								{
+									j8.unshift(new Instruction_callpropvoid(methodIndex2, 0));
+									j8.unshift(new Instruction_getlex(classIndex));
+								}
+							}
+							*/
+							/*
+							var l:* = wrapper.findInstruction(new InstructionTemplate(Instruction_lookupswitch, {}));
+							
+							if(l.length > 0)
+							{
+								Debug.dump(l);
+							}
+							*/
+							/*
+							wrapper.replaceInstruction2(l, function(z:InstructionLocation, a:Vector.<IInstruction>):Vector.<IInstruction>
+							{
+								var n:* = abcTag.abcFile.methodBodies[z.methodBody].method;
+								var o:* = 'unknown';
+								
+								outer:
+								for(var i1:* in abcTag.abcFile.instances)
+								{
+									var j1:* = abcTag.abcFile.instances[i1];
+									for(var i2:* in j1.traits)
+									{
+										var j2:* = j1.traits[i2];
+										var j3:* = j2.data as TraitMethodToken;
+										if(j3)
+										{
+											if(j3.methodId == n)
+											{
+												var j4:MultinameQNameToken = abcTag.abcFile.cpool.multinames[j2.name].data as MultinameQNameToken;
+												if(j4)
+												{
+													var j5:String = abcTag.abcFile.cpool.strings[abcTag.abcFile.cpool.namespaces[j4.ns].name].utf8;
+													j5 += '/' + abcTag.abcFile.cpool.strings[j4.name].utf8;
+													o = j5;
+													break outer;
+												}
+											}
+										}
+									}
+								}
+								
+								a.unshift(new Instruction_callpropvoid(methodIndex3, 0));
+								a.unshift(new Instruction_getlex(classIndex));
+								return a;
+							});
+							*/
+							/*
+							for(var i9:int = 0; i9 < abcTag.abcFile.methodBodies.length; i9++)
+							{
+								var j9:* = abcTag.abcFile.methodBodies[i9].instructions;
+								//j9.unshift(new Instruction_0x01());
+								//j9.unshift(new Instruction_nop());
+							}
+							*/
+							/*
+							wrapper.replaceInstructions(
+								Vector.<IInstruction>([new Instruction_findpropstrict(index)]),
+								Vector.<IInstruction>([new Instruction_getlex(classIndex)]));
+							
+							var methodIndex:int = wrapper.addQName(1, wrapper.addString('log'));
+							wrapper.replaceInstructions2(
+								Vector.<InstructionTemplate>([new InstructionTemplate(Instruction_findpropstrict, {index: index})]),
+								function(match:Vector.<IInstruction>):Vector.<IInstruction>
+								{
+									return Vector.<IInstruction>([Instruction_getlex(classIndex)]);
+								});
+							/*
+							wrapper.replaceInstructions2([{type: Instruction_findpropstrict, index: index}], function(a:Vector.<IInstruction>):Vector.<IInstruction>
+							{
+								var replacement:Vector.<IInstruction> = new Vector.<IInstruction>();
+								
+								return replacement;
+							});
+							*/
+							/*
+							wrapper.replaceInstructions(
+								Vector.<IInstruction>([new Instruction_callpropvoid(traceIndex, 1)]),
+								Vector.<IInstruction>([new Instruction_callpropvoid(methodIndex, 1)]));
+							*/
+							//update(callpropvoid, where index = 123, update index = 124)
+							//replaceInstruction(callpropvoid, where index = 123, update index = 124)
+							
+							/*
+							var findProp:Instruction_findpropstrict = abcTag.abcFile.methodBodies[1].instructions[2] as Instruction_findpropstrict;
+							findProp.index = classIndex;
+							*/
+							/*
+							var getLex:Instruction_getlex = new Instruction_getlex();
+							getLex.index = classIndex;
+							abcTag.abcFile.methodBodies[1].instructions[2] = getLex;
+							
+							var callProp:Instruction_callpropvoid = abcTag.abcFile.methodBodies[1].instructions[4] as Instruction_callpropvoid;
+							callProp.index = methodIndex;
+							*/
+							
+							//Debug.dump(abcTag.abcFile.methodBodies, 5);
+							/*
+							if(iTag == 306)
+							{
+								Debug.maxProperties = 200;
+								Debug.dump(abcTag.abcFile.methodBodies[5].instructions, 5);
+							}
+							*/
+						}
+					}
+				}
+				
+
+				var swfWriter:SWF10Writer = new SWF10Writer();
+				
+				var result:SWFFileWriteResult = swfWriter.write(swf);
+				
+				writeProgress.setProgress(1, 1);
+				
+				logOut.text += 'Writing swf took: '+(getTimer() - start)+'ms';
+				
+				Debug.dump(result, 4);
+				
+				var f:File = new File(File.applicationDirectory.nativePath).resolvePath('recompiled.swf');
+				trace(f.nativePath);
+				var fs:FileStream = new FileStream();
+				fs.open(f, FileMode.WRITE);
+				fs.writeBytes(result.bytes);
+				fs.close();
+				
+				var context:LoaderContext = new LoaderContext();
+				context.allowLoadBytesCodeExecution = true;
+				preview.loadBytes(result.bytes, context);
+			}
+			
+			public function load(url:String):void
+			{
+				loadProgress.setProgress(0, 0);
+				readProgress.setProgress(0, 0);
+				writeProgress.setProgress(0, 0);
+				urlLoader.load(new URLRequest(url));
+			}
+		]]>
+	</fx:Script>
+	<s:layout>
+		<s:VerticalLayout paddingLeft="5" paddingTop="5" paddingRight="5" paddingBottom="5"/>
+	</s:layout>
+	<mx:VDividedBox width="100%" height="100%">
+		<s:BorderContainer width="100%" height="100%" borderColor="#666666">
+			<ui:PreviewPanel id="preview" width="100%" height="100%"/>
+		</s:BorderContainer>
+		<mx:TextArea id="logOut" width="100%" height="100" editable="false"/>
+	</mx:VDividedBox>
+	<mx:ProgressBar id="loadProgress" width="100%" mode="manual" labelPlacement="center" label="Loading SWF: %3%%"/>
+	<mx:ProgressBar id="readProgress" width="100%" mode="manual" labelPlacement="center" label="Reading SWF: %3%%"/>
+	<mx:ProgressBar id="writeProgress" width="100%" mode="manual" labelPlacement="center" label="Writing SWF: %3%%"/>
+</s:WindowedApplication>
