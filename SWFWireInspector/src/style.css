@@ -1,0 +1,71 @@
+@namespace mx "library://ns.adobe.com/flex/mx";
+
+global
+{
+	color: #B7BABC;
+	chrome-color: #222222;
+	accent-color: #000000;
+	text-roll-over-color: #999999;
+	focus-color: #a4da0a;
+}
+
+@font-face
+{
+	src: url('myriad_pro.otf');
+	fontFamily: MyriadEmbedded;
+	embedAsCFF: false;
+}
+
+mx|WindowedApplication
+{
+	background-color: #2f2e2a;
+}
+
+mx|DataGrid, mx|List
+{
+	alternating-item-colors: #383733, #3f3e3a;
+	vertical-grid-line-color: #000000;
+	selection-color: #a4da0a;
+	roll-over-color: #a4da0a;
+	text-roll-over-color: #000000;
+}
+
+mx|Alert
+{
+	modal-transparency: 0;
+	modal-transparency-duration: 2000;
+	modal-transparency-blur: 10;
+	background-color: #222222;
+}
+
+mx|TextArea
+{
+	content-background-color: #383733;
+}
+
+mx|Button
+{
+	font-size: 12;
+	corner-radius: 0;
+}
+
+mx|List
+{
+	content-background-color: #383733;
+	roll-over-color: #a4da0a;
+	text-roll-over-color: #000000;
+	selection-color: #a4da0a;
+}
+
+.bigText
+{
+	font-family: MyriadEmbedded;
+	font-lookup: embeddedCFF;
+}
+
+.dropSpot
+{
+	background-color: #383733;
+	border-style: solid;
+	border-color: #21201C;
+}
