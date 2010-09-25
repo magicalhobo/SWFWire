@@ -27,7 +27,9 @@
     </libraryPath>
     <sourceAttachmentPath/>
   </compiler>
-  <applications/>
+  <applications>
+    <application path="SWFCorpse.as"/>
+  </applications>
   <modules/>
   <buildCSSFiles/>
 </actionScriptProperties>

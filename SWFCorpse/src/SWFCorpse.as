@@ -104,17 +104,13 @@ package
 			}
 		}
 		
-		private function addedToStageHandler(ev:Event):void
-		{
-			stage.scaleMode = StageScaleMode.NO_SCALE;
-			stage.align = StageAlign.TOP_LEFT;
-		}
-		
 		public function SWFCorpse()
 		{
 			trace('Starting constructor');
+			trace('stage: '+stage);
 			
-			addEventListener(Event.ADDED_TO_STAGE, addedToStageHandler);
+			stage.scaleMode = StageScaleMode.NO_SCALE;
+			stage.align = StageAlign.TOP_LEFT;
 			
 			custom::customMethod(null);
 			ClassName.staticMethod();
