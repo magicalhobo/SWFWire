@@ -72,7 +72,10 @@ package com.swfwire.decompiler.abc
 			
 			var abc:ABCByteArray = new ABCByteArray(bytes);
 			
+			var position:uint = 0;
+			var endPosition:uint = 0;
 			var offsetLookup:Dictionary = new Dictionary();
+			var lengthLookup:Dictionary = new Dictionary();
 			
 			for(var iter:uint = 0; iter < methodBody.instructions.length; iter++)
 			{
@@ -81,49 +84,133 @@ package com.swfwire.decompiler.abc
 				var InstructionClass:Class = Object(instruction).constructor;
 				var id:uint = ABCInstructions.getId(InstructionClass);
 				
+				position = abc.getBytePosition();
+				
 				abc.writeU8(id);
-				
-				offsetLookup[instruction] = abc.getBytePosition();
-				
 				writeInstruction(abc, instruction);
+				
+				endPosition = abc.getBytePosition();
+				
+				offsetLookup[instruction] = position;
+				lengthLookup[instruction] = endPosition - position;
 			}
 			
 			for(var iter2:uint = 0; iter2 < methodBody.instructions.length; iter2++)
 			{
 				var instruction2:IInstruction = methodBody.instructions[iter2];
 				
-				abc.setBytePosition(offsetLookup[instruction2]);
+				abc.setBytePosition(offsetLookup[instruction2] + 1);
 				
-				writeInstruction2(abc, instruction2, offsetLookup);
+				writeInstruction2(abc, instruction2, offsetLookup, lengthLookup);
+			}
+			
+			for(var iter3:uint = 0; iter3 < methodBody.exceptions.length; iter3++)
+			{
+				var ex:ExceptionInfoToken = methodBody.exceptions[iter3];
+				ex.from = offsetLookup[ex.fromRef];
+				ex.to = offsetLookup[ex.toRef];
+				ex.target = offsetLookup[ex.targetRef];
 			}
 			
 			methodBody.code = bytes;
 		}
 		
-		public function writeInstruction2(abc:ABCByteArray, instruction:IInstruction, offsetLookup:Dictionary):void
+		public function writeInstruction2(abc:ABCByteArray, instruction:IInstruction, offsetLookup:Dictionary, lengthLookup:Dictionary):void
 		{
 			var op:* = instruction;
+			var baseOffset:uint = offsetLookup[op];
+			var opLength:uint = lengthLookup[op];
+			var offset:int;
 			
-			switch(Object(op).constructor)
+			switch(op.constructor)
 			{
+				case Instruction_ifeq:
+					var op_ifeq:Instruction_ifeq = op as Instruction_ifeq;
+					offset = offsetLookup[op_ifeq.reference] - (baseOffset + opLength);
+					abc.writeS24(offset);
+					break;
+				case Instruction_iffalse:
+					var op_iffalse:Instruction_iffalse = op as Instruction_iffalse;
+					offset = offsetLookup[op_iffalse.reference] - (baseOffset + opLength);
+					abc.writeS24(offset);
+					break;
+				case Instruction_ifge:
+					var op_ifge:Instruction_ifge = op as Instruction_ifge;
+					offset = offsetLookup[op_ifge.reference] - (baseOffset + opLength);
+					abc.writeS24(offset);
+					break;
+				case Instruction_ifgt:
+					var op_ifgt:Instruction_ifgt = op as Instruction_ifgt;
+					offset = offsetLookup[op_ifgt.reference] - (baseOffset + opLength);
+					abc.writeS24(offset);
+					break;
+				case Instruction_ifle:
+					var op_ifle:Instruction_ifle = op as Instruction_ifle;
+					offset = offsetLookup[op_ifle.reference] - (baseOffset + opLength);
+					abc.writeS24(offset);
+					break;
+				case Instruction_iflt:
+					var op_iflt:Instruction_iflt = op as Instruction_iflt;
+					offset = offsetLookup[op_iflt.reference] - (baseOffset + opLength);
+					abc.writeS24(offset);
+					break;
+				case Instruction_ifnge:
+					var op_ifnge:Instruction_ifnge = op as Instruction_ifnge;
+					offset = offsetLookup[op_ifnge.reference] - (baseOffset + opLength);
+					abc.writeS24(offset);
+					break;
+				case Instruction_ifngt:
+					var op_ifngt:Instruction_ifngt = op as Instruction_ifngt;
+					offset = offsetLookup[op_ifngt.reference] - (baseOffset + opLength);
+					abc.writeS24(offset);
+					break;
+				case Instruction_ifnle:
+					var op_ifnle:Instruction_ifnle = op as Instruction_ifnle;
+					offset = offsetLookup[op_ifnle.reference] - (baseOffset + opLength);
+					abc.writeS24(offset);
+					break;
+				case Instruction_ifnlt:
+					var op_ifnlt:Instruction_ifnlt = op as Instruction_ifnlt;
+					offset = offsetLookup[op_ifnlt.reference] - (baseOffset + opLength);
+					abc.writeS24(offset);
+					break;
+				case Instruction_ifne:
+					var op_ifne:Instruction_ifne = op as Instruction_ifne;
+					offset = offsetLookup[op_ifne.reference] - (baseOffset + opLength);
+					abc.writeS24(offset);
+					break;
+				case Instruction_ifstricteq:
+					var op_ifstricteq:Instruction_ifstricteq = op as Instruction_ifstricteq;
+					offset = offsetLookup[op_ifstricteq.reference] - (baseOffset + opLength);
+					abc.writeS24(offset);
+					break;
+				case Instruction_ifstrictne:
+					var op_ifstrictne:Instruction_ifstrictne = op as Instruction_ifstrictne;
+					offset = offsetLookup[op_ifstrictne.reference] - (baseOffset + opLength);
+					abc.writeS24(offset);
+					break;
+				case Instruction_iftrue:
+					var op_iftrue:Instruction_iftrue = op as Instruction_iftrue;
+					offset = offsetLookup[op_iftrue.reference] - (baseOffset + opLength);
+					abc.writeS24(offset);
+					break;
+				case Instruction_jump:
+					var op_jump:Instruction_jump = op as Instruction_jump;
+					offset = offsetLookup[op_jump.reference] - (baseOffset + opLength);
+					abc.writeS24(offset);
+					break;
 				case Instruction_lookupswitch:
-					var baseOffset:uint = offsetLookup[op];
-					var lookup:Instruction_lookupswitch = op as Instruction_lookupswitch;
+					var op_lookup:Instruction_lookupswitch = op as Instruction_lookupswitch;
+					offset = offsetLookup[op_lookup.defaultReference] - baseOffset;
+					abc.writeS24(offset);
 					
-					var defaultOffset:int = offsetLookup[lookup.defaultReference];
-					abc.writeS24(defaultOffset - baseOffset);
-					trace('now default offset is: '+(defaultOffset - baseOffset));
+					abc.writeU30(op.caseReferences.length - 1);
 					
-					abc.writeU30(op.caseOffsets.length - 1);
-					
-					for(var iter:uint = 0; iter < lookup.caseReferences.length; iter++)
+					for(var iter:uint = 0; iter < op_lookup.caseReferences.length; iter++)
 					{
-						var opRef:IInstruction = lookup.caseReferences[iter];
-						var caseOffset:int = offsetLookup[opRef];
-						abc.writeS24(caseOffset - baseOffset);
-						trace('caseOffset #'+iter+' is: '+(caseOffset - baseOffset));
+						offset = offsetLookup[op_lookup.caseReferences[iter]] - baseOffset;
+						abc.writeS24(offset);
 					}
-					
 					break;
 			}
 		}
@@ -210,6 +297,23 @@ package com.swfwire.decompiler.abc
 				case Instruction_setlocal1:
 				case Instruction_setlocal2:
 				case Instruction_setlocal3:
+				case Instruction_dxnslate:
+				case Instruction_label:
+				case Instruction_pushscope:
+				case Instruction_decrement:
+				case Instruction_li8:
+				case Instruction_li16:
+				case Instruction_li32:
+				case Instruction_lf32:
+				case Instruction_lf64:
+				case Instruction_si8:
+				case Instruction_si16:
+				case Instruction_si32:
+				case Instruction_sf32:
+				case Instruction_sf64:
+				case Instruction_sxi1:
+				case Instruction_sxi8:
+				case Instruction_sxi16:
 					break;
 				case Instruction_getsuper:
 					write_getsuper(op, abc);
@@ -220,12 +324,8 @@ package com.swfwire.decompiler.abc
 				case Instruction_dxns:
 					write_dxns(op, abc);
 					break;
-				case Instruction_dxnslate:
-					break;
 				case Instruction_kill:
 					write_kill(op, abc);
-					break;
-				case Instruction_label:
 					break;
 				case Instruction_ifnlt:
 					write_ifnlt(op, abc);
@@ -293,43 +393,14 @@ package com.swfwire.decompiler.abc
 				case Instruction_pushdouble:
 					write_pushdouble(op, abc);
 					break;
-				case Instruction_pushscope:
-					break;
 				case Instruction_pushnamespace:
 					write_pushnamespace(op, abc);
 					break;
 				case Instruction_hasnext2:
 					write_hasnext2(op, abc);
 					break;
-				case 0x35:
-					//op = read_li8(abc);
-					break;
-				case 0x36:
-					//op = read_li16(abc);
-					break;
-				case 0x37:
-					//op = read_li32(abc);
-					break;
-				case 0x38:
-					//op = read_lf32(abc);
-					break;
-				case 0x39:
-					//op = read_lf64(abc);
-					break;
 				case Instruction_si8:
 					write_si8(op, abc);
-					break;
-				case 0x3B:
-					//op = read_si16(abc);
-					break;
-				case 0x3C:
-					//op = read_si32(abc);
-					break;
-				case 0x3D:
-					//op = read_sf32(abc);
-					break;
-				case 0x3E:
-					//op = read_sf64(abc);
 					break;
 				case Instruction_newfunction:
 					write_newfunction(op, abc);
@@ -366,15 +437,6 @@ package com.swfwire.decompiler.abc
 					break;
 				case Instruction_callpropvoid:
 					write_callpropvoid(op, abc);
-					break;
-				case 0x50:
-					//op = read_sxi1(abc);
-					break;
-				case 0x51:
-					//op = read_sxi8(abc);
-					break;
-				case 0x52:
-					//op = read_sxi16(abc);
 					break;
 				case Instruction_applytype:
 					write_applytype(op, abc);
@@ -456,8 +518,6 @@ package com.swfwire.decompiler.abc
 					break;
 				case Instruction_inclocal:
 					write_inclocal(op, abc);
-					break;
-				case Instruction_decrement:
 					break;
 				case Instruction_declocal:
 					write_declocal(op, abc);
@@ -792,12 +852,10 @@ package com.swfwire.decompiler.abc
 		
 		public function write_lookupswitch(op:Instruction_lookupswitch, abc:ABCByteArray):void
 		{
-			trace('originally, default offset is: '+op.defaultOffset);
 			abc.writeS24(op.defaultOffset);
 			abc.writeU30(op.caseOffsets.length - 1);
 			for(var iter:uint = 0; iter < op.caseOffsets.length; iter++)
 			{
-				trace('originally, case offset #'+iter+' is: '+op.caseOffsets[iter]);
 				abc.writeS24(op.caseOffsets[iter]);
 			}
 		}

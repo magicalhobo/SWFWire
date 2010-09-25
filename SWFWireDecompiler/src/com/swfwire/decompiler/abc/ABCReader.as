@@ -79,7 +79,7 @@ package com.swfwire.decompiler.abc
 			for(iter = 0; iter < abc.methodBodies.length; iter++)
 			{
 				var methodBody:MethodBodyInfoToken = abc.methodBodies[iter];
-				var methodBodyResult:MethodBodyReadResult = readMethodBody(methodBody.code);
+				var methodBodyResult:MethodBodyReadResult = readMethodBody(methodBody);
 				methodBody.instructions = methodBodyResult.instructions;
 				result.metadata.idFromOffset[iter] = methodBodyResult.offsetFromId;
 				result.metadata.offsetFromId[iter] = methodBodyResult.idFromOffset;
@@ -91,10 +91,12 @@ package com.swfwire.decompiler.abc
 		}
 		
 
-		private function readMethodBody(bytes:ByteArray):MethodBodyReadResult
+		private function readMethodBody(methodBody:MethodBodyInfoToken):MethodBodyReadResult
 		{
 			//trace('parsing: '+bytes.length+' bytes');
 			//ByteArrayUtil.dumpHex(bytes);
+			
+			var bytes:ByteArray = methodBody.code;
 			
 			var abc:ABCByteArray = new ABCByteArray(bytes);
 			
@@ -107,23 +109,29 @@ package com.swfwire.decompiler.abc
 			var instructionId:int = 0;
 			var offsetLookup:Object = {};
 			var reverseOffsetLookup:Object = {};
+			var lengthLookup:Object = {};
+			var position:uint = 0;
+			var newPosition:uint = 0;
 			
 			while(bytes.bytesAvailable > 0)
 			{
-				offsetLookup[instructionId] = bytes.position;
-				reverseOffsetLookup[bytes.position] = instructionId;
-				var opcode:uint = bytes.readUnsignedByte();
+				position = abc.getBytePosition();
+				offsetLookup[instructionId] = position;
+				reverseOffsetLookup[position] = instructionId;
+				var opcode:uint = abc.readU8();
 				var InstructionClass:Class = ABCInstructions.getClass(opcode);
-				dump.push(ABCInstructions.getName(opcode)+' ('+opcode.toString(16)+')');
+				//dump.push(ABCInstructions.getName(opcode)+' ('+opcode.toString(16)+')');
 				if(InstructionClass)
 				{
-					instructions.push(readInstruction(opcode, abc));
+					instructions[instructionId] = readInstruction(opcode, abc);
 				}
-				else
+				if(!instructions[instructionId])
 				{
 					invalid = true;
-					dump.push('			Invalid instruction encountered ('+opcode.toString(16)+').');
+					dump.push('			Invalid instruction encountered ('+opcode.toString(16)+') at id '+instructionId+'.');
 				}
+				newPosition = abc.getBytePosition();
+				lengthLookup[instructionId] = newPosition - position;
 				instructionId++;
 			}
 			
@@ -136,110 +144,110 @@ package com.swfwire.decompiler.abc
 			{
 				function getRef(baseId:uint, offset:int):IInstruction
 				{
-					var baseOp:IInstruction = instructions[baseId];
-					if(!(baseOp is Instruction_lookupswitch))
+					var id:Number = reverseOffsetLookup[offsetLookup[baseId] + offset];
+					if(isNaN(id))
 					{
-						trace('found ref that needs to be written');
+						trace('Encountered an invalid branch.');
+						return null;
 					}
-					var id:uint = reverseOffsetLookup[offsetLookup[baseId] + offset];
 					return instructions[id];
 				}
 				
-				//TODO: finish filling references
 				for(var iter:uint = 0; iter < instructions.length; iter++)
 				{
 					var op:IInstruction = instructions[iter];
+					var opLength:uint = lengthLookup[iter];
 					
 					var op_ifeq:Instruction_ifeq = op as Instruction_ifeq;
 					if(op_ifeq)
 					{
-						op_ifeq.reference = getRef(iter, op_ifeq.offset);
+						op_ifeq.reference = getRef(iter, opLength + op_ifeq.offset);
 					}
 					
 					var op_iffalse:Instruction_iffalse = op as Instruction_iffalse;
 					if(op_iffalse)
 					{
-						op_iffalse.reference = getRef(iter, op_iffalse.offset);
+						op_iffalse.reference = getRef(iter, opLength + op_iffalse.offset);
 					}
 					
 					var op_ifge:Instruction_ifge = op as Instruction_ifge;
 					if(op_ifge)
 					{
-						op_ifge.reference = getRef(iter, op_ifge.offset);
+						op_ifge.reference = getRef(iter, opLength + op_ifge.offset);
 					}
 					
 					var op_ifgt:Instruction_ifgt = op as Instruction_ifgt;
 					if(op_ifgt)
 					{
-						op_ifgt.reference = getRef(iter, op_ifgt.offset);
+						op_ifgt.reference = getRef(iter, opLength + op_ifgt.offset);
 					}
 					
 					var op_ifle:Instruction_ifle = op as Instruction_ifle;
 					if(op_ifle)
 					{
-						op_ifle.reference = getRef(iter, op_ifle.offset);
+						op_ifle.reference = getRef(iter, opLength + op_ifle.offset);
 					}
 					
 					var op_iflt:Instruction_iflt = op as Instruction_iflt;
 					if(op_iflt)
 					{
-						op_iflt.reference = getRef(iter, op_iflt.offset);
+						op_iflt.reference = getRef(iter, opLength + op_iflt.offset);
 					}
 					
 					var op_ifnge:Instruction_ifnge = op as Instruction_ifnge;
 					if(op_ifnge)
 					{
-						op_ifnge.reference = getRef(iter, op_ifnge.offset);
+						op_ifnge.reference = getRef(iter, opLength + op_ifnge.offset);
 					}
 					
 					var op_ifngt:Instruction_ifngt = op as Instruction_ifngt;
 					if(op_ifngt)
 					{
-						op_ifngt.reference = getRef(iter, op_ifngt.offset);
+						op_ifngt.reference = getRef(iter, opLength + op_ifngt.offset);
 					}
 					
 					var op_ifnle:Instruction_ifnle = op as Instruction_ifnle;
 					if(op_ifnle)
 					{
-						op_ifnle.reference = getRef(iter, op_ifnle.offset);
+						op_ifnle.reference = getRef(iter, opLength + op_ifnle.offset);
 					}
 					
 					var op_ifnlt:Instruction_ifnlt = op as Instruction_ifnlt;
 					if(op_ifnlt)
 					{
-						op_ifnlt.reference = getRef(iter, op_ifnlt.offset);
+						op_ifnlt.reference = getRef(iter, opLength + op_ifnlt.offset);
 					}
 					
 					var op_ifne:Instruction_ifne = op as Instruction_ifne;
 					if(op_ifne)
 					{
-						op_ifne.reference = getRef(iter, op_ifne.offset);
+						op_ifne.reference = getRef(iter, opLength + op_ifne.offset);
 					}
 					
 					var op_ifstricteq:Instruction_ifstricteq = op as Instruction_ifstricteq;
 					if(op_ifstricteq)
 					{
-						op_ifstricteq.reference = getRef(iter, op_ifstricteq.offset);
+						op_ifstricteq.reference = getRef(iter, opLength + op_ifstricteq.offset);
 					}
 					
 					var op_ifstrictne:Instruction_ifstrictne = op as Instruction_ifstrictne;
 					if(op_ifstrictne)
 					{
-						op_ifstrictne.reference = getRef(iter, op_ifstrictne.offset);
+						op_ifstrictne.reference = getRef(iter, opLength + op_ifstrictne.offset);
 					}
 					
 					var op_iftrue:Instruction_iftrue = op as Instruction_iftrue;
 					if(op_iftrue)
 					{
-						op_iftrue.reference = getRef(iter, op_iftrue.offset);
+						op_iftrue.reference = getRef(iter, opLength + op_iftrue.offset);
 					}
-					/*
-					var op_ifeq:Instruction_ifeq = op as Instruction_ifeq;
-					if(op_ifeq)
+					
+					var op_jump:Instruction_jump = op as Instruction_jump;
+					if(op_jump)
 					{
-						op_ifeq.reference = getRef(iter, op_ifeq.offset);
+						op_jump.reference = getRef(iter, opLength + op_jump.offset);
 					}
-					*/
+					
 					var op_lookupswitch:Instruction_lookupswitch = op as Instruction_lookupswitch;
 					if(op_lookupswitch)
 					{
@@ -251,6 +259,15 @@ package com.swfwire.decompiler.abc
 							op_lookupswitch.caseReferences[iter2] = getRef(iter, op_lookupswitch.caseOffsets[iter2]);
 						}
 					}
+				}
+				
+				for(var iter3:uint = 0; iter3 < methodBody.exceptions.length; iter3++)
+				{
+					var ex:ExceptionInfoToken = methodBody.exceptions[iter3];
+					
+					ex.fromRef = instructions[reverseOffsetLookup[ex.from]];
+					ex.toRef = instructions[reverseOffsetLookup[ex.to]];
+					ex.targetRef = instructions[reverseOffsetLookup[ex.target]];
 				}
 			}
 			
@@ -407,34 +424,34 @@ package com.swfwire.decompiler.abc
 					op = read_hasnext2(abc);
 					break;
 				case 0x35:
-					//op = read_li8(abc);
+					op = read_li8(abc);
 					break;
 				case 0x36:
-					//op = read_li16(abc);
+					op = read_li16(abc);
 					break;
 				case 0x37:
-					//op = read_li32(abc);
+					op = read_li32(abc);
 					break;
 				case 0x38:
-					//op = read_lf32(abc);
+					op = read_lf32(abc);
 					break;
 				case 0x39:
-					//op = read_lf64(abc);
+					op = read_lf64(abc);
 					break;
 				case 0x3A:
 					op = read_si8(abc);
 					break;
 				case 0x3B:
-					//op = read_si16(abc);
+					op = read_si16(abc);
 					break;
 				case 0x3C:
-					//op = read_si32(abc);
+					op = read_si32(abc);
 					break;
 				case 0x3D:
-					//op = read_sf32(abc);
+					op = read_sf32(abc);
 					break;
 				case 0x3E:
-					//op = read_sf64(abc);
+					op = read_sf64(abc);
 					break;
 				case 0x40:
 					op = read_newfunction(abc);
@@ -479,13 +496,13 @@ package com.swfwire.decompiler.abc
 					op = read_callpropvoid(abc);
 					break;
 				case 0x50:
-					//op = read_sxi1(abc);
+					op = read_sxi1(abc);
 					break;
 				case 0x51:
-					//op = read_sxi8(abc);
+					op = read_sxi8(abc);
 					break;
 				case 0x52:
-					//op = read_sxi16(abc);
+					op = read_sxi16(abc);
 					break;
 				case 0x53:
 					op = read_applytype(abc);
@@ -1859,21 +1876,67 @@ package com.swfwire.decompiler.abc
 		
 		public function read_si8(abc:ABCByteArray):Instruction_si8
 		{
-			var op:Instruction_si8 = new Instruction_si8();
-			
-			op.index = abc.readU30();
-			
-			return op;
+			return new Instruction_si8();
 		}
-		/*
-		public function read_if(abc:ABCByteArray):Instruction_if
+		
+		public function read_si16(abc:ABCByteArray):Instruction_si16
 		{
-			var op:Instruction_if = new Instruction_if();
-			
-			op.offset = abc.readS24();
-			
-			return op;
+			return new Instruction_si16();
 		}
-		*/
+		
+		public function read_si32(abc:ABCByteArray):Instruction_si32
+		{
+			return new Instruction_si32();
+		}
+		
+		public function read_sf32(abc:ABCByteArray):Instruction_sf32
+		{
+			return new Instruction_sf32();
+		}
+		
+		public function read_sf64(abc:ABCByteArray):Instruction_sf64
+		{
+			return new Instruction_sf64();
+		}
+		
+		public function read_li8(abc:ABCByteArray):Instruction_li8
+		{
+			return new Instruction_li8();
+		}
+		
+		public function read_li16(abc:ABCByteArray):Instruction_li16
+		{
+			return new Instruction_li16();
+		}
+		
+		public function read_li32(abc:ABCByteArray):Instruction_li32
+		{
+			return new Instruction_li32();
+		}
+		
+		public function read_lf32(abc:ABCByteArray):Instruction_lf32
+		{
+			return new Instruction_lf32();
+		}
+		
+		public function read_lf64(abc:ABCByteArray):Instruction_lf64
+		{
+			return new Instruction_lf64();
+		}
+		
+		public function read_sxi1(abc:ABCByteArray):Instruction_sxi1
+		{
+			return new Instruction_sxi1();
+		}
+		
+		public function read_sxi8(abc:ABCByteArray):Instruction_sxi8
+		{
+			return new Instruction_sxi8();
+		}
+		
+		public function read_sxi16(abc:ABCByteArray):Instruction_sxi16
+		{
+			return new Instruction_sxi16();
+		}
 	}
 }

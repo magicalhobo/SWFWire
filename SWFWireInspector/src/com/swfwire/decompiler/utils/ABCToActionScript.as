@@ -14,13 +14,15 @@ package com.swfwire.decompiler.utils
 	public class ABCToActionScript
 	{
 		private var abcFile:ABCFile;
+		private var offsetLookup:Object;
 		
 		private var methodLookupCache:Array;
 		private var customNamespaces:Object;
 		
-		public function ABCToActionScript(abcFile:ABCFile)
+		public function ABCToActionScript(abcFile:ABCFile, offsetLookup:Object = null)
 		{
 			this.abcFile = abcFile;
+			this.offsetLookup = offsetLookup;
 			
 			methodLookupCache = new Array();
 			for(var iter:uint = 0; iter < abcFile.methodBodyCount; iter++)
@@ -172,10 +174,17 @@ package com.swfwire.decompiler.utils
 		private function instructionsToString(instructions:Vector.<IInstruction>):String
 		{
 			var lines:Array = [];
-			for each(var instruction:IInstruction in instructions)
+			for(var iter:uint = 0; iter < instructions.length; iter++)
 			{
+				var instruction:IInstruction = instructions[iter];
 				var description:XML = describeType(instruction);
-				var string:String = String(description.@name).replace(/.*Instruction_/, '');
+				var string:String = ''
+				if(offsetLookup && offsetLookup[iter])
+				{
+					//string += offsetLookup[iter]+':\t';
+				}
+				
+				string += String(description.@name).replace(/.*Instruction_/, '');
 				
 				var params:Array = [];
 				for each(var name:String in description.variable.@name)
@@ -185,10 +194,11 @@ package com.swfwire.decompiler.utils
 				}
 				string += '  ' + params.join(', ');
 				
+				
 				lines.push(string);
 				//lines.push(ObjectUtil.objectToString(instruction, 4, 10, 100, 10, '	'));
 			}
-			return lines.join('\n			');;
+			return lines.join('\n			');
 		}
 		
 		public function traitToString(r:ReadableTrait):String

@@ -5,6 +5,7 @@ package com.swfwire.debugger.utils
 	import com.swfwire.decompiler.abc.instructions.IInstruction;
 	import com.swfwire.decompiler.abc.instructions.Instruction_lookupswitch;
 	import com.swfwire.decompiler.abc.tokens.MethodBodyInfoToken;
+	import com.swfwire.decompiler.abc.tokens.MethodInfoToken;
 	import com.swfwire.decompiler.abc.tokens.MultinameToken;
 	import com.swfwire.decompiler.abc.tokens.NamespaceToken;
 	import com.swfwire.decompiler.abc.tokens.StringToken;
@@ -117,6 +118,21 @@ package com.swfwire.debugger.utils
 			
 		}
 		
+		public function findMethodBody(methodIndex:int):MethodBodyInfoToken
+		{
+			var result:MethodBodyInfoToken;
+			for(var iter:* in abcFile.methodBodies)
+			{
+				var mb:MethodBodyInfoToken = abcFile.methodBodies[iter];
+				if(mb.method == methodIndex)
+				{
+					result = mb;
+					break;
+				}
+			}
+			return result;
+		}
+		
 		public function getStringIndex(string:String):int
 		{
 			var index:int = -1;
@@ -192,7 +208,7 @@ package com.swfwire.debugger.utils
 		public function findInstruction(template:InstructionTemplate):Vector.<InstructionLocation>
 		{
 			var locations:Vector.<InstructionLocation> = new Vector.<InstructionLocation>();
-			for(var iter:uint = 0; iter < abcFile.methodBodyCount; iter++)
+			for(var iter:uint = 0; iter < abcFile.methodBodies.length; iter++)
 			{
 				var body:MethodBodyInfoToken = abcFile.methodBodies[iter];
 				for(var iter2:uint = 0; iter2 < body.instructions.length; iter2++)

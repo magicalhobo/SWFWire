@@ -15,7 +15,7 @@
     <sourceAttachmentPath/>
   </compiler>
   <applications>
-    <application path="SWFDecompilerExample.mxml">
+    <application path="SWFWireInspector.mxml">
       <airExcludes/>
     </application>
   </applications>

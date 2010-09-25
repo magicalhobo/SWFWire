@@ -6,10 +6,11 @@
 		<![CDATA[
 			import com.swfwire.utils.DisplayUtil;
 			
-			private var loader:Loader;
+			public var loader:Loader;
 			
 			private function loaderCompleteHandler(ev:Event):void
 			{
+				dispatchEvent(new Event('loaderComplete'));
 				invalidateDisplayList();
 				validateDisplayList();
 			}

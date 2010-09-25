@@ -5,5 +5,6 @@ package com.swfwire.decompiler.abc.instructions
 	public class Instruction_jump extends BaseInstruction
 	{
 		public var offset:int;
+		public var reference:IInstruction;
 	}
 }

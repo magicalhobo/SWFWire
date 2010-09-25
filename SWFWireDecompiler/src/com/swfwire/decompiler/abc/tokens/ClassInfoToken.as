@@ -37,8 +37,8 @@ package com.swfwire.decompiler.abc.tokens
 		{
 			var iter:uint;
 			abc.writeU30(cinit);
-			abc.writeU30(traitCount);
-			for(iter = 0; iter < traitCount; iter++)
+			abc.writeU30(traits.length);
+			for(iter = 0; iter < traits.length; iter++)
 			{
 				traits[iter].write(abc);
 			}

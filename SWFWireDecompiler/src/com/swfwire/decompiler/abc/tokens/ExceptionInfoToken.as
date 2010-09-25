@@ -1,12 +1,16 @@
 package com.swfwire.decompiler.abc.tokens
 {
 	import com.swfwire.decompiler.abc.ABCByteArray;
+	import com.swfwire.decompiler.abc.instructions.IInstruction;
 	
 	public class ExceptionInfoToken implements IToken
 	{
 		public var from:uint;
 		public var to:uint;
 		public var target:uint;
+		public var fromRef:IInstruction;
+		public var toRef:IInstruction;
+		public var targetRef:IInstruction;
 		public var excType:uint;
 		public var varName:uint;
 

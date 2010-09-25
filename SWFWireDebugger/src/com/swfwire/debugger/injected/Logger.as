@@ -13,7 +13,7 @@ package com.swfwire.debugger.injected
 		{
 			if(output)
 			{
-				var str:String = message;
+				var str:String = StringUtil.repeat('	', indent) + message;
 				if(!(message is String))
 				{
 					str = ObjectUtil.objectToString(message, 1, 3, 100, 1000, '	');
@@ -41,7 +41,8 @@ package com.swfwire.debugger.injected
 		{
 			var methodName2:String = new StackInfo(1).functionName;
 			
-			log(StringUtil.repeat('	', indent) + '>> ' + methodName + ' - ' + methodName2);
+			//log(StringUtil.repeat('	', indent) + '>> ' + methodName + ' - ' + methodName2);
+			log(StringUtil.repeat('	', indent) + '>> ' + methodName2);
 			indent++;
 		}
 		
@@ -50,7 +51,8 @@ package com.swfwire.debugger.injected
 			indent--;
 			indent = Math.max(indent, 0);
 			var methodName2:String = new StackInfo(1).functionName;
-			log(StringUtil.repeat('	', indent) + '<< ' + methodName + ' - ' + methodName2);
+			//log(StringUtil.repeat('	', indent) + '<< ' + methodName + ' - ' + methodName2);
+			log(StringUtil.repeat('	', indent) + '<< ' + methodName2);
 		}
 	}
 }

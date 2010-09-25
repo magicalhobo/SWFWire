@@ -80,14 +80,14 @@ package com.swfwire.decompiler.abc.tokens
 			{
 				abc.writeU30(protectedNs);
 			}
-			abc.writeU30(interfaceCount);
+			abc.writeU30(interfaces.length);
 			var iter:uint;
 			for(iter = 0; iter < interfaces.length; iter++)
 			{
 				abc.writeU30(interfaces[iter]);
 			}
 			abc.writeU30(iinit);
-			abc.writeU30(traitCount);
+			abc.writeU30(traits.length);
 			for(iter = 0; iter < traits.length; iter++)
 			{
 				traits[iter].write(abc);

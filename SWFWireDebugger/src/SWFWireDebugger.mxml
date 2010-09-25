@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<s:WindowedApplication xmlns:fx="http://ns.adobe.com/mxml/2009"
-					   xmlns:s="library://ns.adobe.com/flex/spark"
+<s:WindowedApplication xmlns:fx="http://ns.adobe.com/mxml/2009" 
+					   xmlns:s="library://ns.adobe.com/flex/spark" 
 					   xmlns:mx="library://ns.adobe.com/flex/mx"
 					   xmlns:ui="com.swfwire.debugger.flex.ui.*"
 					   showStatusBar="false"
@@ -24,7 +24,10 @@
 			import com.swfwire.decompiler.abc.ABCReaderMetadata;
 			import com.swfwire.decompiler.abc.instructions.*;
 			import com.swfwire.decompiler.abc.tokens.ConstantPoolToken;
+			import com.swfwire.decompiler.abc.tokens.InstanceToken;
 			import com.swfwire.decompiler.abc.tokens.MethodBodyInfoToken;
+			import com.swfwire.decompiler.abc.tokens.MethodInfoToken;
+			import com.swfwire.decompiler.abc.tokens.TraitsInfoToken;
 			import com.swfwire.decompiler.abc.tokens.cpool.CPoolIndex;
 			import com.swfwire.decompiler.abc.tokens.multinames.MultinameQNameToken;
 			import com.swfwire.decompiler.abc.tokens.traits.TraitMethodToken;
@@ -32,6 +35,7 @@
 			import com.swfwire.decompiler.data.swf.SWFHeader;
 			import com.swfwire.decompiler.data.swf.tags.SWFTag;
 			import com.swfwire.decompiler.data.swf9.tags.DoABCTag;
+			import com.swfwire.decompiler.data.swf9.tags.SymbolClassTag;
 			import com.swfwire.utils.Debug;
 			
 			import flash.utils.getTimer;
@@ -58,9 +62,15 @@
 				urlLoader.dataFormat = URLLoaderDataFormat.BINARY;
 				
 				//load('FlexBug.swf');
-				//load('sample.swf');
+				//load('alchemy.swf');
+				
+				Debug.enabled = true;
 				
 				load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpse/bin-debug/SWFCorpse.swf').url);
+				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFWireInspector/bin-debug/SWFWireInspector.swf').url);
+				//load('C:\\www\\htdocs\\workspaces\\fb4_projects\\CamsViewer3_Flex4\\bin\\release\\87\\CamsViewer.swf');
+				//load('C:\\www\\htdocs\\workspaces\\fb4_projects\\CamsLiveBanner\\bin\\release\\33\\CamsLiveBanner.swf');
+				//load('C:\\www\\htdocs\\workspaces\\fb4_projects\\CamsInABox\\flash10\\bin\\release\\CamsInABox.swf');
 				//load('WordSearch.swf');
 			}
 			
@@ -95,6 +105,7 @@
 				var result:SWFReadResult;
 				
 				swfReader.includedTags[0] = true;
+				swfReader.includedTags[76] = true;
 				swfReader.includedTags[82] = true;
 				swfReader.eventDispatcher.addEventListener('tagRead', function(ev:Event):void
 				{
@@ -116,7 +127,29 @@
 				
 				swf.header.signature = SWFHeader.UNCOMPRESSED_SIGNATURE;
 				
-				for(var iTag:uint = 0; iTag < swf.tags.length; iTag++)
+				var mainClass:String = '';
+				var iTag:uint;
+				
+				outer:
+				for(iTag = 0; iTag < swf.tags.length; iTag++)
+				{
+					var sct:SymbolClassTag = swf.tags[iTag] as SymbolClassTag;
+					if(sct)
+					{
+						for(var isym:uint = 0; isym < sct.symbols.length; isym++)
+						{
+							if(sct.symbols[isym].characterId == 0)
+							{
+								mainClass = sct.symbols[isym].className;
+								break outer;
+							}
+						}
+					}
+				}
+				
+				trace('main class: '+mainClass);
+				
+				for(iTag = 0; iTag < swf.tags.length; iTag++)
 				{
 					var abcTag:DoABCTag = swf.tags[iTag] as DoABCTag;
 					if(abcTag)
@@ -135,12 +168,71 @@
 
 						var wrapper:ABCWrapper = new ABCWrapper(abcTag.abcFile, metadata[iTag]);
 						
+						var mainIndex:int = wrapper.getMultinameIndex('', mainClass);
+						var mainInst:InstanceToken = null;
+						
+						for(var i:uint = 0; i < abcTag.abcFile.instances.length; i++)
+						{
+							var inst:InstanceToken = abcTag.abcFile.instances[i];
+							if(inst.name == mainIndex)
+							{
+								mainInst = inst;
+								break;
+							}
+						}
+
+						if(mainInst)
+						{
+							var defcm:MethodInfoToken = new MethodInfoToken();
+							defcm.name = wrapper.addString('SWFCorpse/deferredConstructor');
+							
+							var defcmi:uint = abcTag.abcFile.methods.push(defcm) - 1;
+							
+							var defcmni:int = wrapper.addQName(
+								wrapper.addNamespaceFromString(''), 
+								wrapper.addString('deferredConstructor'));
+
+							var mainTrait:TraitsInfoToken = new TraitsInfoToken(defcmni,
+								TraitsInfoToken.KIND_TRAIT_METHOD,
+								0,
+								new TraitMethodToken(0, defcmi));
+							
+							//Debug.log('test', 'before', mainInst.traits);
+							
+							mainInst.traits.push(mainTrait);
+							//mainInst.traits[10].name = fmi;
+							//abcTag.abcFile.methods[mainInst.iinit].
+							
+							var emptyMethod:MethodBodyInfoToken = new MethodBodyInfoToken(
+								mainInst.iinit, 1, 1, 9, 10);
+							emptyMethod.instructions = new Vector.<IInstruction>();
+							emptyMethod.instructions.push(
+								new Instruction_getlocal0(),
+								new Instruction_pushscope(),
+								new Instruction_getlocal0(),
+								new Instruction_constructsuper(),
+								new Instruction_returnvoid()
+							);
+							
+							abcTag.abcFile.methodBodies.push(emptyMethod);
+							
+							var mainMB:MethodBodyInfoToken = wrapper.findMethodBody(mainInst.iinit);
+							mainMB.method = defcmi;
+							
+							//mainInst.iinit = fci;
+						}
+						
+						//Debug.log('test', 'after', mainInst.traits);
+						
+						//mainInst.iinit--;
+						
 						var traceIndex:int = wrapper.getMultinameIndex('', 'trace');
 						if(traceIndex >= 0)
 						//if(true)
+						//if(false)
 						{
 							var classIndex:int = wrapper.addQName(
-								wrapper.addNamespaceFromString('com.swfwire.debugger.injected'),
+								wrapper.addNamespaceFromString('com.swfwire.debugger.injected'), 
 								wrapper.addString('Logger'));
 							
 							var emptyNS:int = wrapper.addNamespaceFromString('');
@@ -152,11 +244,7 @@
 							
 							var cp:ConstantPoolToken = abcTag.abcFile.cpool;
 							
-							var mn1:* = cp.multinames[methodIndex2].data as MultinameQNameToken;
-							var mn2:* = cp.multinames[methodIndex3].data as MultinameQNameToken;
-							
-							trace(cp.strings[cp.namespaces[mn1.ns].name].utf8+'::'+cp.strings[mn1.name].utf8);
-							trace(cp.strings[cp.namespaces[mn2.ns].name].utf8+'::'+cp.strings[mn2.name].utf8);
+							//Debug.log('test', 'before', abcTag.abcFile.methodBodies);
 							
 							var l:* = wrapper.findInstruction(new InstructionTemplate(Instruction_findpropstrict, {index: traceIndex}));
 							
@@ -190,13 +278,26 @@
 								return b;
 							});
 							
+							for(var i9:int = 0; i9 < abcTag.abcFile.methodBodies.length; i9++)
+							{
+								var mb:MethodBodyInfoToken = abcTag.abcFile.methodBodies[i9];
+								if(mb.initScopeDepth > 1)
+								{
+									var j9:* = abcTag.abcFile.methodBodies[i9].instructions;
+									var j6:int =  wrapper.addString(' (#'+i9+')');
+									j9.unshift(new Instruction_callpropvoid(methodIndex2, 1));
+									j9.unshift(new Instruction_pushstring(j6));
+									j9.unshift(new Instruction_getlex(classIndex));
+								}
+							}
+							
+							/*
 							l = wrapper.findInstruction(new InstructionTemplate(Instruction_pushscope, {}));
 							
 							for(var iter2:* in l)
 							{
 								abcTag.abcFile.methodBodies[l[iter2].methodBody].maxStack += 2;
 							}
-							/*
 							wrapper.replaceInstruction2(l, function(z:InstructionLocation, a:Vector.<IInstruction>):Vector.<IInstruction>
 							{
 								var n:* = abcTag.abcFile.methodBodies[z.methodBody].method;
@@ -234,22 +335,18 @@
 								a.push(new Instruction_callpropvoid(methodIndex2, 1));
 								return a;
 							});
+							*/
+							var m:*;
+							/*
 							l = wrapper.findInstruction(new InstructionTemplate(Instruction_returnvoid, {}));
 							var m:* = wrapper.findInstruction(new InstructionTemplate(Instruction_popscope, {}));
-							
 							for(var iter4:* in m)
 							{
 								l.push(m[iter4]);
 							}
 							*/
 							/*
-							m = wrapper.findInstruction(new InstructionTemplate(Instruction_newfunction, {}));
-							for(var iter5:* in m)
-							{
-								l.push(m[iter5]);
-							}
-							*/
-							/*
+							l = wrapper.findInstruction(new InstructionTemplate(Instruction_newfunction, {}));
 							for(var iter6:* in l)
 							{
 								abcTag.abcFile.methodBodies[l[iter6].methodBody].maxStack += 1;
@@ -285,29 +382,40 @@
 									}
 								}
 								
-								var j6:int =  wrapper.addString(o+' (#'+n+'.'+z.id+')');
+								var j6:int =  wrapper.addString(o+' (#'+n+'.'+z.id+') before');
+								var j7:int =  wrapper.addString(o+' (#'+n+'.'+z.id+') after');
 								
-								a.unshift(new Instruction_callpropvoid(methodIndex3, 1));
+								a.unshift(new Instruction_callpropvoid(methodIndex, 1));
 								a.unshift(new Instruction_pushstring(j6));
 								a.unshift(new Instruction_getlex(classIndex));
+								
+								a.push(new Instruction_getlex(classIndex));
+								a.push(new Instruction_pushstring(j7));
+								a.push(new Instruction_callpropvoid(methodIndex, 1));
 								return a;
 							});
-							
+							*/
+							/*
 							var def:int = wrapper.addString('<default>');
 							var j7:Vector.<IInstruction> = abcTag.abcFile.methodBodies[l[3].methodBody].instructions;
 							j7.unshift(new Instruction_callpropvoid(methodIndex2, 1));
 							j7.unshift(new Instruction_pushstring(def));
 							j7.unshift(new Instruction_getlex(classIndex));
 							*/
-							/*
-							var l:* = wrapper.findInstruction(new InstructionTemplate(Instruction_returnvoid, {}));
-							var m:* = wrapper.findInstruction(new InstructionTemplate(Instruction_returnvalue, {}));
-							
+								
+							l = wrapper.findInstruction(new InstructionTemplate(Instruction_returnvoid, {}));
+							m = wrapper.findInstruction(new InstructionTemplate(Instruction_returnvalue, {}));
 							for(var iter4:* in m)
 							{
 								l.push(m[iter4]);
 							}
-								
+							/*
+							m = wrapper.findInstruction(new InstructionTemplate(Instruction_popscope, {}));
+							for(var iter4:* in m)
+							{
+								l.push(m[iter4]);
+							}
+							*/
 							for(var iter6:* in l)
 							{
 								abcTag.abcFile.methodBodies[l[iter6].methodBody].maxStack += 1;
@@ -315,39 +423,42 @@
 							
 							wrapper.replaceInstruction2(l, function(z:InstructionLocation, a:Vector.<IInstruction>):Vector.<IInstruction>
 							{
-								var n:* = abcTag.abcFile.methodBodies[z.methodBody].method;
-								var o:* = 'unknown';
-								
-								outer:
-								for(var i1:* in abcTag.abcFile.instances)
+								var mb:MethodBodyInfoToken = abcTag.abcFile.methodBodies[z.methodBody];
+								if(mb.initScopeDepth > 1)
 								{
-									var j1:* = abcTag.abcFile.instances[i1];
-									for(var i2:* in j1.traits)
+									var n:* = abcTag.abcFile.methodBodies[z.methodBody].method;
+									var o:* = 'unknown';
+									
+									outer:
+									for(var i1:* in abcTag.abcFile.instances)
 									{
-										var j2:* = j1.traits[i2];
-										var j3:* = j2.data as TraitMethodToken;
-										if(j3)
+										var j1:* = abcTag.abcFile.instances[i1];
+										for(var i2:* in j1.traits)
 										{
-											if(j3.methodId == n)
+											var j2:* = j1.traits[i2];
+											var j3:* = j2.data as TraitMethodToken;
+											if(j3)
 											{
-												var j4:MultinameQNameToken = abcTag.abcFile.cpool.multinames[j2.name].data as MultinameQNameToken;
-												if(j4)
+												if(j3.methodId == n)
 												{
-													var j5:String = abcTag.abcFile.cpool.strings[abcTag.abcFile.cpool.namespaces[j4.ns].name].utf8;
-													j5 += '/' + abcTag.abcFile.cpool.strings[j4.name].utf8;
-													o = j5;
-													break outer;
+													var j4:MultinameQNameToken = abcTag.abcFile.cpool.multinames[j2.name].data as MultinameQNameToken;
+													if(j4)
+													{
+														var j5:String = abcTag.abcFile.cpool.strings[abcTag.abcFile.cpool.namespaces[j4.ns].name].utf8;
+														j5 += '/' + abcTag.abcFile.cpool.strings[j4.name].utf8;
+														o = j5;
+														break outer;
+													}
 												}
 											}
 										}
 									}
+									
+									a.unshift(new Instruction_callpropvoid(methodIndex3, 0));
+									a.unshift(new Instruction_getlex(classIndex));
 								}
-								
-								a.unshift(new Instruction_callpropvoid(methodIndex3, 0));
-								a.unshift(new Instruction_getlex(classIndex));
 								return a;
 							});
-							*/
 							/*
 							for(var i8:int = 0; i8 < abcTag.abcFile.methodBodies.length; i8++)
 							{
@@ -491,6 +602,11 @@
 				
 				var context:LoaderContext = new LoaderContext();
 				context.allowLoadBytesCodeExecution = true;
+				preview.addEventListener('loaderComplete', function(ev:Event):void
+				{
+					var a:* = preview.loader.content;
+					a.deferredConstructor();
+				});
 				preview.loadBytes(result.bytes, context);
 			}
 			

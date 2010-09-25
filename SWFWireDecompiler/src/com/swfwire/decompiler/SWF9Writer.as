@@ -2,8 +2,10 @@ package com.swfwire.decompiler
 {
 	import com.swfwire.decompiler.abc.ABCWriteResult;
 	import com.swfwire.decompiler.abc.ABCWriter;
+	import com.swfwire.decompiler.data.swf.records.SymbolClassRecord;
 	import com.swfwire.decompiler.data.swf.tags.SWFTag;
 	import com.swfwire.decompiler.data.swf9.tags.DoABCTag;
+	import com.swfwire.decompiler.data.swf9.tags.SymbolClassTag;
 	
 	import flash.utils.ByteArray;
 
@@ -21,9 +23,22 @@ package com.swfwire.decompiler
 				case DoABCTag:
 					writeDoABCTag(context, DoABCTag(tag));
 					break;
+				case SymbolClassTag:
+					writeSymbolClassTag(context, SymbolClassTag(tag));
+					break;
 				default:
 					super.writeTag(context, tag);
 					break;
+			}
+		}
+		
+		protected function writeSymbolClassTag(context:SWFWriterContext, tag:SymbolClassTag):void
+		{
+			var numSymbols:uint = tag.symbols.length;
+			context.bytes.writeUI16(numSymbols);
+			for(var iter:uint = 0; iter < numSymbols; iter++)
+			{
+				writeSymbolClassRecord(context, tag.symbols[iter]);
 			}
 		}
 		
@@ -36,6 +51,12 @@ package com.swfwire.decompiler
 			var writeResult:ABCWriteResult = abcWriter.write(tag.abcFile);
 			
 			context.bytes.writeBytes(writeResult.bytes);
+		}
+		
+		protected function writeSymbolClassRecord(context:SWFWriterContext, record:SymbolClassRecord):void
+		{
+			context.bytes.writeUI16(record.characterId);
+			context.bytes.writeString(record.className);
 		}
 	}
 }
