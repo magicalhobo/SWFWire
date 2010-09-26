@@ -2,8 +2,7 @@ package com.swfwire.decompiler
 {
 	import com.swfwire.decompiler.data.swf.SWF;
 	import com.swfwire.decompiler.data.swf.SWFHeader;
-	import com.swfwire.decompiler.data.swf.records.RectangleRecord;
-	import com.swfwire.decompiler.data.swf.records.TagHeaderRecord;
+	import com.swfwire.decompiler.data.swf.records.*;
 	import com.swfwire.decompiler.data.swf.tags.*;
 	import com.swfwire.decompiler.data.swf3.tags.PlaceObject2Tag;
 	import com.swfwire.decompiler.data.swf8.tags.FileAttributesTag;
@@ -16,13 +15,11 @@ package com.swfwire.decompiler
 		
 		public var version:uint = FILE_VERSION;
 
-		public function write(swf:SWF):SWFFileWriteResult
+		public function write(swf:SWF):SWFWriteResult
 		{
-			var result:SWFFileWriteResult = new SWFFileWriteResult();
+			var result:SWFWriteResult = new SWFWriteResult();
 			
 			var context:SWFWriterContext = new SWFWriterContext(new SWFByteArray(new ByteArray()), null, swf.header.fileVersion);
-			
-			context.fileVersion = swf.header.fileVersion;
 			
 			if(swf.header.fileVersion > version)
 			{
@@ -162,7 +159,7 @@ package com.swfwire.decompiler
 			
 			if(tag.matrix)
 			{
-				//tag.matrix = readMatrixRecord(context);
+				//writeMatrixRecord(context, tag.matrix);
 			}
 			
 			if(tag.colorTransform)
@@ -201,5 +198,36 @@ package com.swfwire.decompiler
 			context.bytes.writeSB(nBits, record.yMin);
 			context.bytes.writeSB(nBits, record.yMax);
 		}
+		
+		protected function writeMatrixRecord(context:SWFWriterContext, record:MatrixRecord):void
+		{
+			context.bytes.alignBytes();
+			
+			var hasScale:Boolean = record.scale != null;
+			context.bytes.writeFlag(hasScale);
+			if(hasScale)
+			{
+				var nScaleBits:uint = SWFByteArray.calculateUBBits(Math.max(record.scale.x, record.scale.y));
+				context.bytes.writeUB(5, nScaleBits);
+				context.bytes.writeFB(nScaleBits, record.scale.x);
+				context.bytes.writeFB(nScaleBits, record.scale.y);
+			}
+			
+			var hasRotate:Boolean = record.rotate != null;
+			context.bytes.writeFlag(hasRotate);
+			if(hasRotate)
+			{
+				var nRotateBits:uint = SWFByteArray.calculateUBBits(Math.max(record.rotate.skew0, record.rotate.skew1));
+				context.bytes.writeUB(5, nRotateBits);
+				context.bytes.writeFB(nRotateBits, record.rotate.skew0);
+				context.bytes.writeFB(nRotateBits, record.rotate.skew1);
+			}
+			
+			var nTranslateBits:uint = SWFByteArray.calculateUBBits(Math.max(record.translate.x, record.translate.y));
+			context.bytes.writeUB(5, nTranslateBits);
+			context.bytes.writeSB(nTranslateBits, record.translate.x);
+			context.bytes.writeSB(nTranslateBits, record.translate.y);
+		}
+		
 	}
 }

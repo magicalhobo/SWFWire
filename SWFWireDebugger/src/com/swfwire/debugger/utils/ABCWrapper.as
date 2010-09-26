@@ -2,8 +2,7 @@ package com.swfwire.debugger.utils
 {
 	import com.swfwire.decompiler.abc.ABCFile;
 	import com.swfwire.decompiler.abc.ABCReaderMetadata;
-	import com.swfwire.decompiler.abc.instructions.IInstruction;
-	import com.swfwire.decompiler.abc.instructions.Instruction_lookupswitch;
+	import com.swfwire.decompiler.abc.instructions.*;
 	import com.swfwire.decompiler.abc.tokens.MethodBodyInfoToken;
 	import com.swfwire.decompiler.abc.tokens.MethodInfoToken;
 	import com.swfwire.decompiler.abc.tokens.MultinameToken;
@@ -277,6 +276,137 @@ package com.swfwire.debugger.utils
 					args.push(result[iter]);
 				}
 				abcFile.methodBodies[location.methodBody].instructions.splice.apply(null, args);//(location.id, 1, callback(search));
+			}
+		}
+		
+		public function redirectReferences(methodBody:int, from:IInstruction, to:IInstruction):void
+		{
+			var instructions:Vector.<IInstruction> = abcFile.methodBodies[methodBody].instructions;
+			for(var i:int = 0; i < instructions.length; i++)
+			{
+				var op:IInstruction = instructions[i];
+				switch(Object(op).constructor)
+				{
+					case Instruction_ifeq:
+						var op_ifeq:Instruction_ifeq = op as Instruction_ifeq;
+						if(op_ifeq.reference == from)
+						{
+							op_ifeq.reference = to;
+						}
+						break;
+					case Instruction_iffalse:
+						var op_iffalse:Instruction_iffalse = op as Instruction_iffalse;
+						if(op_iffalse.reference == from)
+						{
+							op_iffalse.reference = to;
+						}
+						break;
+					case Instruction_ifge:
+						var op_ifge:Instruction_ifge = op as Instruction_ifge;
+						if(op_ifge.reference == from)
+						{
+							op_ifge.reference = to;
+						}
+						break;
+					case Instruction_ifgt:
+						var op_ifgt:Instruction_ifgt = op as Instruction_ifgt;
+						if(op_ifgt.reference == from)
+						{
+							op_ifgt.reference = to;
+						}
+						break;
+					case Instruction_ifle:
+						var op_ifle:Instruction_ifle = op as Instruction_ifle;
+						if(op_ifle.reference == from)
+						{
+							op_ifle.reference = to;
+						}
+						break;
+					case Instruction_iflt:
+						var op_iflt:Instruction_iflt = op as Instruction_iflt;
+						if(op_iflt.reference == from)
+						{
+							op_iflt.reference = to;
+						}
+						break;
+					case Instruction_ifnge:
+						var op_ifnge:Instruction_ifnge = op as Instruction_ifnge;
+						if(op_ifnge.reference == from)
+						{
+							op_ifnge.reference = to;
+						}
+						break;
+					case Instruction_ifngt:
+						var op_ifngt:Instruction_ifngt = op as Instruction_ifngt;
+						if(op_ifngt.reference == from)
+						{
+							op_ifngt.reference = to;
+						}
+						break;
+					case Instruction_ifnle:
+						var op_ifnle:Instruction_ifnle = op as Instruction_ifnle;
+						if(op_ifnle.reference == from)
+						{
+							op_ifnle.reference = to;
+						}
+						break;
+					case Instruction_ifnlt:
+						var op_ifnlt:Instruction_ifnlt = op as Instruction_ifnlt;
+						if(op_ifnlt.reference == from)
+						{
+							op_ifnlt.reference = to;
+						}
+						break;
+					case Instruction_ifne:
+						var op_ifne:Instruction_ifne = op as Instruction_ifne;
+						if(op_ifne.reference == from)
+						{
+							op_ifne.reference = to;
+						}
+						break;
+					case Instruction_ifstricteq:
+						var op_ifstricteq:Instruction_ifstricteq = op as Instruction_ifstricteq;
+						if(op_ifstricteq.reference == from)
+						{
+							op_ifstricteq.reference = to;
+						}
+						break;
+					case Instruction_ifstrictne:
+						var op_ifstrictne:Instruction_ifstrictne = op as Instruction_ifstrictne;
+						if(op_ifstrictne.reference == from)
+						{
+							op_ifstrictne.reference = to;
+						}
+						break;
+					case Instruction_iftrue:
+						var op_iftrue:Instruction_iftrue = op as Instruction_iftrue;
+						if(op_iftrue.reference == from)
+						{
+							op_iftrue.reference = to;
+						}
+						break;
+					case Instruction_jump:
+						var op_jump:Instruction_jump = op as Instruction_jump;
+						if(op_jump.reference == from)
+						{
+							op_jump.reference = to;
+						}
+						break;
+					case Instruction_lookupswitch:
+						var op_lookup:Instruction_lookupswitch = op as Instruction_lookupswitch;
+						if(op_lookup.defaultReference == from)
+						{
+							op_lookup.defaultReference = to;
+						}
+						for(var iter:uint = 0; iter < op_lookup.caseReferences.length; iter++)
+						{
+							if(op_lookup.caseReferences[iter] == from)
+							{
+								op_lookup.caseReferences[iter] = to;
+							}
+						}
+						break;
+				}
 			}
 		}
 		

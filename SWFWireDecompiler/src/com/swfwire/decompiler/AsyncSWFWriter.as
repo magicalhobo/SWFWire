@@ -12,77 +12,129 @@ package com.swfwire.decompiler
 	import flash.utils.Timer;
 	import flash.utils.getQualifiedClassName;
 	import flash.utils.getTimer;
-
-	public class AsyncSWFWriter extends SWF9Writer
+	
+	public class AsyncSWFWriter extends SWF10Writer
 	{
 		public var eventDispatcher:EventDispatcher;
 		
 		protected var currentContext:SWFWriterContext;
-		protected var currentWriteResult:SWFFileWriteResult;
-		protected var currentBytes:ByteArray;
+		protected var currentWriteResult:SWFWriteResult;
 		
-		protected var readTimer:Timer;
+		protected var writeTimer:Timer;
 		
 		private var active:Boolean;
 		private var lastRead:uint;
 		
 		public function AsyncSWFWriter()
 		{
+			throw new Error('Not implemented');
 			eventDispatcher = new EventDispatcher();
-			readTimer = new Timer(1, 1);
-			//readTimer.addEventListener(TimerEvent.TIMER, readTimerHandler);
+			writeTimer = new Timer(1, 1);
+			writeTimer.addEventListener(TimerEvent.TIMER, writeTimerHandler);
 		}
-		/*
-		override public function write(swf:SWF):SWFFileWriteResult 
+		
+		override public function write(swf:SWF):SWFWriteResult 
 		{
-			currentWriteResult = new SWFFileWriteResult();
+			currentWriteResult = new SWFWriteResult();
 			
-			currentWriteResult.bytes = new SWFByteArray(new ByteArray());
+			currentContext = new SWFWriterContext(new SWFByteArray(new ByteArray()), null, swf.header.fileVersion);
 			
-			currentContext = new SWFReaderContext(bytes, 0);
-			
-			readSWFHeader(currentContext, currentSWF.header);
-			
-			currentContext.fileVersion = currentSWF.header.fileVersion;
-			
-			if(currentSWF.header.fileVersion > version)
+			if(swf.header.fileVersion > version)
 			{
-				currentWriteResult.warnings.push('Invalid file version ('+currentSWF.header.fileVersion+') in header.');
+				currentWriteResult.warnings.push('Invalid file version ('+swf.header.fileVersion+') in header.');
 			}
 			
-			currentWriteResult.swf = currentSWF;
+			var tagCount:uint = swf.tags.length;
+			var tagBytes:Vector.<ByteArray> = new Vector.<ByteArray>();
+
+			var iter:uint;
+			/*
+			
+			for(iter = 0; iter < tagCount; iter++)
+			{
+				var tag:SWFTag = swf.tags[iter];
+				tagBytes[iter] = new ByteArray();
+				try
+				{
+					currentContext.tagId = iter;
+					currentContext.bytes = new SWFByteArray(tagBytes[iter]);
+					writeTag(currentContext, tag);
+					tag.header.length = tagBytes[iter].length;
+				}
+				catch(e:Error)
+				{
+					currentWriteResult.errors.push('Could not write Tag #'+iter+': '+e);
+				}
+			}
+			*/
+			var bytes1:ByteArray = new ByteArray();
+			var bytes:SWFByteArray = new SWFByteArray(bytes1);
+			currentContext.bytes = bytes;
+			
+			writeSWFHeader(currentContext, swf.header);
+			
+			for(iter = 0; iter < tagCount; iter++)
+			{
+				bytes.alignBytes();
+				var header:TagHeaderRecord = swf.tags[iter].header;
+				writeTagHeaderRecord(currentContext, header);
+				bytes.writeBytes(tagBytes[iter]);
+			}
+			
+			bytes.setBytePosition(4);
+			var tl:uint = bytes.getLength();
+			bytes.writeUI32(tl);
+			
+			bytes.setBytePosition(0);
+			currentWriteResult.bytes = bytes1;
 			
 			active = true;
 			
-			readTimer.start();
+			writeTimer.start();
 			
 			return currentWriteResult;
 		}
 		
-		protected function readTimerHandler(ev:Event):void
+		protected function writeTimerHandler(ev:Event):void
 		{
 			lastRead = getTimer();
 			do
 			{
-				readTagAsync();
+				writeTagAsync();
 			}
 			while((getTimer() - lastRead < 200) && active)
 			if(active)
 			{
-				readTimer.reset();
-				readTimer.start();
+				writeTimer.reset();
+				writeTimer.start();
 			}
 		}
 		
-		protected function readTagAsync():void
+		protected function writeTagAsync():void
 		{
-			var context:SWFReaderContext = currentContext;
+			/*
+			var tag:SWFTag = swf.tags[iter];
+			tagBytes[iter] = new ByteArray();
+			try
+			{
+				currentContext.tagId = iter;
+				currentContext.bytes = new SWFByteArray(tagBytes[iter]);
+				writeTag(currentContext, tag);
+				tag.header.length = tagBytes[iter].length;
+			}
+			catch(e:Error)
+			{
+				currentWriteResult.errors.push('Could not write Tag #'+iter+': '+e);
+			}
+
+			var context:SWFWriterContext = currentContext;
 			var bytes:SWFByteArray = context.bytes;
-			var swf:SWF = currentSWF;
-			var result:SWFReadResult = currentWriteResult;
+			var result:SWFWriteResult = currentWriteResult;
+			var swf:SWF = result.swf;
 			
 			if(bytes.getBytesAvailable() == 0)
 			{
+				result.warnings.push('Expected end tag.');
 				finishAsync();
 			}
 			else
@@ -96,15 +148,21 @@ package com.swfwire.decompiler
 				var expectedEndPosition:uint = startPosition + header.length;
 				
 				var tag:SWFTag;
+				
+				context.tagId = tagId;
+				
+				tag = readTag(context, header);
+				/*
 				try
 				{
-					tag = readTag(context, header);
+				tag = readTag(context, header);
 				}
 				catch(e:Error)
 				{
-					bytes.setBytePosition(startPosition);
-					tag = readUnknownTag(context, header);
+				bytes.setBytePosition(startPosition);
+				tag = readUnknownTag(context, header);
 				}
+				* /
 				
 				tag.header = header;
 				
@@ -137,8 +195,9 @@ package com.swfwire.decompiler
 					finishAsync();
 				}
 			}
+			*/
 		}
-		*/
+				
 		protected function finishAsync():void
 		{
 			active = false;

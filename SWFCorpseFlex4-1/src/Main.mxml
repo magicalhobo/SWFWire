@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" minWidth="955" minHeight="600"
+			   applicationComplete="application1_applicationCompleteHandler(event)">
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import mx.events.FlexEvent;
+			
+			protected function application1_applicationCompleteHandler(event:FlexEvent):void
+			{
+				trace('application complete');
+			}
+
+			protected function button1_clickHandler(event:MouseEvent):void
+			{
+				trace('button clicked');
+			}
+		]]>
+	</fx:Script>
+	<s:Button label="Click Me" horizontalCenter="0" verticalCenter="0" click="button1_clickHandler(event)"/>
+</s:Application>

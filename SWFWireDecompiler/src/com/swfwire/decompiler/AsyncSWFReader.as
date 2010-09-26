@@ -31,7 +31,7 @@ package com.swfwire.decompiler
 			readTimer.addEventListener(TimerEvent.TIMER, readTimerHandler);
 		}
 		
-		override public function readFile(bytes:SWFByteArray):SWFReadResult 
+		override public function read(bytes:SWFByteArray):SWFReadResult 
 		{
 			currentReadResult = new SWFReadResult();
 			
@@ -79,7 +79,7 @@ package com.swfwire.decompiler
 			var context:SWFReaderContext = currentContext;
 			var bytes:SWFByteArray = context.bytes;
 			var result:SWFReadResult = currentReadResult;
-			var swf:SWF = currentReadResult.swf;
+			var swf:SWF = result.swf;
 			
 			if(bytes.getBytesAvailable() == 0)
 			{

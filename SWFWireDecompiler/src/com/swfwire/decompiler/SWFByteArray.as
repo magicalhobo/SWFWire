@@ -15,6 +15,11 @@ package com.swfwire.decompiler
 		private var bytes:ByteArray;
 		private var bitPosition:uint = 0;
 		
+		public static function calculateUBBits(number:uint):uint
+		{
+			return Math.ceil(Math.log(number) * Math.LOG2E);
+		}
+		
 		public function SWFByteArray(bytes:ByteArray)
 		{
 			this.bytes = bytes;
@@ -299,7 +304,30 @@ package com.swfwire.decompiler
 			}
 			return result;
 		}
-		
+		public function writeEncodedUI32(value:uint):void
+		{
+			//Temp hack
+			if(value == 0)
+			{
+				bytes.writeByte(0);
+				return;
+			}
+			var remaining:uint = value;
+			var bytesWritten:uint;
+			var currentByte:uint;
+			while(remaining > 0 && bytesWritten < 5)
+			{
+				currentByte = remaining & filter7;
+				remaining = remaining >> 7;
+				if(remaining > 0)
+				{
+					currentByte = currentByte | (1 << 7);
+				}
+				bytes.writeByte(currentByte);
+				bytesWritten++;
+			}
+		}
+
 		/**
 		 * Bit values
 		 */

@@ -197,7 +197,7 @@
 				
 				loadProgress.setProgress(0, 0);
 				start = getTimer();
-				result = swf.readFile(swfBytes);
+				result = swf.read(swfBytes);
 			}
 			
 			private function doneHandler():void
@@ -352,7 +352,7 @@
 				endTag.header.type = 0;
 				swf.tags.push(endTag);
 				
-				var result:SWFFileWriteResult = swfWriter.write(swf);
+				var result:SWFWriteResult = swfWriter.write(swf);
 				
 				var context:LoaderContext = new LoaderContext();
 				context.allowLoadBytesCodeExecution = true;

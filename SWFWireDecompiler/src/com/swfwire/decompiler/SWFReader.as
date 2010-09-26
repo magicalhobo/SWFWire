@@ -25,14 +25,9 @@ package com.swfwire.decompiler
 	{
 		private static var FILE_VERSION:uint = 1;
 		
-		public var version:uint;
+		public var version:uint = FILE_VERSION;
 		
-		public function SWFReader()
-		{
-			version = FILE_VERSION;
-		}
-		
-		public function readFile(bytes:SWFByteArray):SWFReadResult 
+		public function read(bytes:SWFByteArray):SWFReadResult 
 		{
 			var result:SWFReadResult = new SWFReadResult();
 			

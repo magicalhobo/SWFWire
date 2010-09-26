@@ -1,7 +1,5 @@
 package com.swfwire.utils
 {
-	import com.swfwire.utils.Debug;
-
 	public class StringUtil
 	{
 		public static var INDENT:String = '\t';
@@ -48,7 +46,6 @@ package com.swfwire.utils
 		public static function getNamedSubstitutes(str:String, pattern:String = '{(.*?)}'):Array
 		{
 			var matches:Array = str.match(new RegExp(pattern, 'g'));
-			Debug.log('StringUtil.getNamedSubstitutes', '', matches);
 			return matches;
 		}
 		public static function getSubstitutingSetter(host:*, prop:String, substitutions:Object):Function

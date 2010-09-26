@@ -7,7 +7,10 @@ package com.swfwire.debugger.injected
 	
 	public class Logger
 	{
-		public static var output:TextArea
+		public static var output:TextArea;
+		public static var buffer:String;
+		
+		private static var indent:int = 0;
 		
 		public static function log(message:*):void
 		{
@@ -35,14 +38,10 @@ package com.swfwire.debugger.injected
 			}
 		}
 		
-		private static var indent:int = 0;
-		
 		public static function enterFunction(methodName:String = 'unk'):void
 		{
 			var methodName2:String = new StackInfo(1).functionName;
-			
-			//log(StringUtil.repeat('	', indent) + '>> ' + methodName + ' - ' + methodName2);
-			log(StringUtil.repeat('	', indent) + '>> ' + methodName2);
+			log('>> ' + methodName2);
 			indent++;
 		}
 		
@@ -51,8 +50,7 @@ package com.swfwire.debugger.injected
 			indent--;
 			indent = Math.max(indent, 0);
 			var methodName2:String = new StackInfo(1).functionName;
-			//log(StringUtil.repeat('	', indent) + '<< ' + methodName + ' - ' + methodName2);
-			log(StringUtil.repeat('	', indent) + '<< ' + methodName2);
+			log('<< ' + methodName2);
 		}
 	}
 }

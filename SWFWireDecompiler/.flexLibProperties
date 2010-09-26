@@ -14,7 +14,7 @@
     <classEntry path="com.swfwire.decompiler.SWF9Reader"/>
     <classEntry path="com.swfwire.decompiler.SWFByteArray"/>
     <classEntry path="com.swfwire.decompiler.SWFReadResult"/>
-    <classEntry path="com.swfwire.decompiler.SWFFileWriteResult"/>
+    <classEntry path="com.swfwire.decompiler.SWFWriteResult"/>
     <classEntry path="com.swfwire.decompiler.SWFNormalizer"/>
     <classEntry path="com.swfwire.decompiler.SWFReader"/>
     <classEntry path="com.swfwire.decompiler.SWFReaderContext"/>

@@ -18,7 +18,7 @@
 			import com.swfwire.decompiler.AsyncSWFReaderFiltered;
 			import com.swfwire.decompiler.SWF10Writer;
 			import com.swfwire.decompiler.SWFByteArray;
-			import com.swfwire.decompiler.SWFFileWriteResult;
+			import com.swfwire.decompiler.SWFWriteResult;
 			import com.swfwire.decompiler.SWFReadResult;
 			import com.swfwire.decompiler.SWFWriter;
 			import com.swfwire.decompiler.abc.ABCReaderMetadata;
@@ -66,7 +66,8 @@
 				
 				Debug.enabled = true;
 				
-				load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpse/bin-debug/SWFCorpse.swf').url);
+				load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpseFlex4-1/bin-debug/Main.swf').url);
+				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpse/bin-debug/SWFCorpse.swf').url);
 				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFWireInspector/bin-debug/SWFWireInspector.swf').url);
 				//load('C:\\www\\htdocs\\workspaces\\fb4_projects\\CamsViewer3_Flex4\\bin\\release\\87\\CamsViewer.swf');
 				//load('C:\\www\\htdocs\\workspaces\\fb4_projects\\CamsLiveBanner\\bin\\release\\33\\CamsLiveBanner.swf');
@@ -119,7 +120,7 @@
 					inject(result.swf, result.abcMetadata);
 				});
 				
-				result = swfReader.readFile(swfBytes);
+				result = swfReader.read(swfBytes);
 			}
 			
 			private function inject(swf:SWF, metadata:Vector.<ABCReaderMetadata>):void
@@ -429,37 +430,10 @@
 								var mb:MethodBodyInfoToken = abcTag.abcFile.methodBodies[z.methodBody];
 								if(mb.initScopeDepth > 1)
 								{
-									var n:* = abcTag.abcFile.methodBodies[z.methodBody].method;
-									var o:* = 'unknown';
-									
-									outer:
-									for(var i1:* in abcTag.abcFile.instances)
-									{
-										var j1:* = abcTag.abcFile.instances[i1];
-										for(var i2:* in j1.traits)
-										{
-											var j2:* = j1.traits[i2];
-											var j3:* = j2.data as TraitMethodToken;
-											if(j3)
-											{
-												if(j3.methodId == n)
-												{
-													var j4:MultinameQNameToken = abcTag.abcFile.cpool.multinames[j2.name].data as MultinameQNameToken;
-													if(j4)
-													{
-														var j5:String = abcTag.abcFile.cpool.strings[abcTag.abcFile.cpool.namespaces[j4.ns].name].utf8;
-														j5 += '/' + abcTag.abcFile.cpool.strings[j4.name].utf8;
-														o = j5;
-														break outer;
-													}
-												}
-											}
-										}
-									}
-									
 									a.unshift(new Instruction_callpropvoid(methodIndex3, 0));
 									a.unshift(new Instruction_getlex(classIndex));
 								}
+								wrapper.redirectReferences(z.methodBody, a[a.length - 1], a[0]);
 								return a;
 							});
 							/*
@@ -594,7 +568,7 @@
 
 				var swfWriter:SWF10Writer = new SWF10Writer();
 				
-				var result:SWFFileWriteResult = swfWriter.write(swf);
+				var result:SWFWriteResult = swfWriter.write(swf);
 				
 				writeProgress.setProgress(1, 1);
 				
@@ -638,7 +612,7 @@
 		<s:BorderContainer width="100%" height="100%" borderColor="#666666">
 			<ui:PreviewPanel id="preview" width="100%" height="100%"/>
 		</s:BorderContainer>
-		<mx:TextArea id="logOut" width="100%" height="100" editable="false"/>
+		<mx:TextArea id="logOut" width="100%" height="100" editable="false" fontFamily="Courier New" fontSize="11"/>
 	</mx:VDividedBox>
 	<mx:ProgressBar id="loadProgress" width="100%" mode="manual" labelPlacement="center" label="Loading SWF: %3%%"/>
 	<mx:ProgressBar id="readProgress" width="100%" mode="manual" labelPlacement="center" label="Reading SWF: %3%%"/>
