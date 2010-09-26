@@ -2,7 +2,7 @@ package com.swfwire.decompiler.abc.instructions
 {
 	import com.swfwire.decompiler.abc.*;
 	
-	public class Instruction_findproperty extends BaseInstruction
+	public class Instruction_findproperty implements IInstruction
 	{
 		public var index:uint;
 

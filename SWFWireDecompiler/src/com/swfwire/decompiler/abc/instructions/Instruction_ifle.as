@@ -2,7 +2,7 @@ package com.swfwire.decompiler.abc.instructions
 {
 	import com.swfwire.decompiler.abc.*;
 	
-	public class Instruction_ifle extends BaseInstruction
+	public class Instruction_ifle implements IInstruction
 	{
 		public var offset:int;
 		public var reference:IInstruction;

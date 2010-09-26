@@ -2,7 +2,7 @@ package com.swfwire.decompiler.abc.instructions
 {
 	import com.swfwire.decompiler.abc.*;
 	
-	public class Instruction_hasnext extends BaseInstruction
+	public class Instruction_hasnext implements IInstruction
 	{
 	}
 }

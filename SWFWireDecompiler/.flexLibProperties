@@ -28,8 +28,6 @@
     <classEntry path="com.swfwire.decompiler.abc.LocalRegisters"/>
     <classEntry path="com.swfwire.decompiler.abc.OperandStack"/>
     <classEntry path="com.swfwire.decompiler.abc.ScopeStack"/>
-    <classEntry path="com.swfwire.decompiler.abc.instructions.BaseInstruction"/>
-    <classEntry path="com.swfwire.decompiler.abc.instructions.BaseInstruction_li"/>
     <classEntry path="com.swfwire.decompiler.abc.instructions.BaseInstruction_si"/>
     <classEntry path="com.swfwire.decompiler.abc.instructions.BaseInstruction_sxi"/>
     <classEntry path="com.swfwire.decompiler.abc.instructions.IInstruction"/>
@@ -385,6 +383,7 @@
     <classEntry path="com.swfwire.decompiler.abc.ABCWriteResult"/>
     <classEntry path="com.swfwire.decompiler.abc.ABCReaderMetadata"/>
     <classEntry path="com.swfwire.decompiler.abc.MethodBodyReadResult"/>
+    <classEntry path="com.swfwire.decompiler.abc.instructions.InstructionEnd"/>
   </includeClasses>
   <includeResources/>
   <namespaceManifests/>

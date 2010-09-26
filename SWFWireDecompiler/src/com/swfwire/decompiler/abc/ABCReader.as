@@ -134,130 +134,136 @@ package com.swfwire.decompiler.abc
 				lengthLookup[instructionId] = newPosition - position;
 				instructionId++;
 			}
+			instructions[instructionId] = new InstructionEnd();
+			offsetLookup[instructionId] = newPosition;
+			reverseOffsetLookup[newPosition] = instructionId;
+			lengthLookup[newPosition] = 0;
 			
 			if(invalid)
 			{
 				trace(dump.join('\n'));
 				throw new Error('Encountered an unknown instruction.');
 			}
-			else
+
+			function getRef(baseId:uint, offset:int):IInstruction
 			{
-				function getRef(baseId:uint, offset:int):IInstruction
+				offset = offsetLookup[baseId] + offset;
+				if(reverseOffsetLookup.hasOwnProperty(offset))
 				{
-					var id:Number = reverseOffsetLookup[offsetLookup[baseId] + offset];
-					if(isNaN(id))
-					{
-						trace('Encountered an invalid branch.');
-						return null;
-					}
+					var id:uint = reverseOffsetLookup[offset];
 					return instructions[id];
 				}
-				
-				for(var iter:uint = 0; iter < instructions.length; iter++)
+				else
 				{
-					var op:IInstruction = instructions[iter];
-					var opLength:uint = lengthLookup[iter];
+					trace('Encountered an invalid branch.');
+					return null;
+				}
+			}
+			
+			for(var iter:uint = 0; iter < instructions.length; iter++)
+			{
+				var op:IInstruction = instructions[iter];
+				var opLength:uint = lengthLookup[iter];
+				
+				var op_ifeq:Instruction_ifeq = op as Instruction_ifeq;
+				if(op_ifeq)
+				{
+					op_ifeq.reference = getRef(iter, opLength + op_ifeq.offset);
+				}
+				
+				var op_iffalse:Instruction_iffalse = op as Instruction_iffalse;
+				if(op_iffalse)
+				{
+					op_iffalse.reference = getRef(iter, opLength + op_iffalse.offset);
+				}
+				
+				var op_ifge:Instruction_ifge = op as Instruction_ifge;
+				if(op_ifge)
+				{
+					op_ifge.reference = getRef(iter, opLength + op_ifge.offset);
+				}
+				
+				var op_ifgt:Instruction_ifgt = op as Instruction_ifgt;
+				if(op_ifgt)
+				{
+					op_ifgt.reference = getRef(iter, opLength + op_ifgt.offset);
+				}
+				
+				var op_ifle:Instruction_ifle = op as Instruction_ifle;
+				if(op_ifle)
+				{
+					op_ifle.reference = getRef(iter, opLength + op_ifle.offset);
+				}
+				
+				var op_iflt:Instruction_iflt = op as Instruction_iflt;
+				if(op_iflt)
+				{
+					op_iflt.reference = getRef(iter, opLength + op_iflt.offset);
+				}
+				
+				var op_ifnge:Instruction_ifnge = op as Instruction_ifnge;
+				if(op_ifnge)
+				{
+					op_ifnge.reference = getRef(iter, opLength + op_ifnge.offset);
+				}
+				
+				var op_ifngt:Instruction_ifngt = op as Instruction_ifngt;
+				if(op_ifngt)
+				{
+					op_ifngt.reference = getRef(iter, opLength + op_ifngt.offset);
+				}
+				
+				var op_ifnle:Instruction_ifnle = op as Instruction_ifnle;
+				if(op_ifnle)
+				{
+					op_ifnle.reference = getRef(iter, opLength + op_ifnle.offset);
+				}
+				
+				var op_ifnlt:Instruction_ifnlt = op as Instruction_ifnlt;
+				if(op_ifnlt)
+				{
+					op_ifnlt.reference = getRef(iter, opLength + op_ifnlt.offset);
+				}
+				
+				var op_ifne:Instruction_ifne = op as Instruction_ifne;
+				if(op_ifne)
+				{
+					op_ifne.reference = getRef(iter, opLength + op_ifne.offset);
+				}
+				
+				var op_ifstricteq:Instruction_ifstricteq = op as Instruction_ifstricteq;
+				if(op_ifstricteq)
+				{
+					op_ifstricteq.reference = getRef(iter, opLength + op_ifstricteq.offset);
+				}
+				
+				var op_ifstrictne:Instruction_ifstrictne = op as Instruction_ifstrictne;
+				if(op_ifstrictne)
+				{
+					op_ifstrictne.reference = getRef(iter, opLength + op_ifstrictne.offset);
+				}
+				
+				var op_iftrue:Instruction_iftrue = op as Instruction_iftrue;
+				if(op_iftrue)
+				{
+					op_iftrue.reference = getRef(iter, opLength + op_iftrue.offset);
+				}
+				
+				var op_jump:Instruction_jump = op as Instruction_jump;
+				if(op_jump)
+				{
+					op_jump.reference = getRef(iter, opLength + op_jump.offset);
+				}
+				
+				var op_lookupswitch:Instruction_lookupswitch = op as Instruction_lookupswitch;
+				if(op_lookupswitch)
+				{
+					op_lookupswitch.defaultReference = getRef(iter, op_lookupswitch.defaultOffset);
+					op_lookupswitch.caseReferences = new Vector.<IInstruction>();
 					
-					var op_ifeq:Instruction_ifeq = op as Instruction_ifeq;
-					if(op_ifeq)
+					for(var iter2:uint = 0; iter2 < op_lookupswitch.caseOffsets.length; iter2++)
 					{
-						op_ifeq.reference = getRef(iter, opLength + op_ifeq.offset);
-					}
-					
-					var op_iffalse:Instruction_iffalse = op as Instruction_iffalse;
-					if(op_iffalse)
-					{
-						op_iffalse.reference = getRef(iter, opLength + op_iffalse.offset);
-					}
-					
-					var op_ifge:Instruction_ifge = op as Instruction_ifge;
-					if(op_ifge)
-					{
-						op_ifge.reference = getRef(iter, opLength + op_ifge.offset);
-					}
-					
-					var op_ifgt:Instruction_ifgt = op as Instruction_ifgt;
-					if(op_ifgt)
-					{
-						op_ifgt.reference = getRef(iter, opLength + op_ifgt.offset);
-					}
-					
-					var op_ifle:Instruction_ifle = op as Instruction_ifle;
-					if(op_ifle)
-					{
-						op_ifle.reference = getRef(iter, opLength + op_ifle.offset);
-					}
-					
-					var op_iflt:Instruction_iflt = op as Instruction_iflt;
-					if(op_iflt)
-					{
-						op_iflt.reference = getRef(iter, opLength + op_iflt.offset);
-					}
-					
-					var op_ifnge:Instruction_ifnge = op as Instruction_ifnge;
-					if(op_ifnge)
-					{
-						op_ifnge.reference = getRef(iter, opLength + op_ifnge.offset);
-					}
-					
-					var op_ifngt:Instruction_ifngt = op as Instruction_ifngt;
-					if(op_ifngt)
-					{
-						op_ifngt.reference = getRef(iter, opLength + op_ifngt.offset);
-					}
-					
-					var op_ifnle:Instruction_ifnle = op as Instruction_ifnle;
-					if(op_ifnle)
-					{
-						op_ifnle.reference = getRef(iter, opLength + op_ifnle.offset);
-					}
-					
-					var op_ifnlt:Instruction_ifnlt = op as Instruction_ifnlt;
-					if(op_ifnlt)
-					{
-						op_ifnlt.reference = getRef(iter, opLength + op_ifnlt.offset);
-					}
-					
-					var op_ifne:Instruction_ifne = op as Instruction_ifne;
-					if(op_ifne)
-					{
-						op_ifne.reference = getRef(iter, opLength + op_ifne.offset);
-					}
-					
-					var op_ifstricteq:Instruction_ifstricteq = op as Instruction_ifstricteq;
-					if(op_ifstricteq)
-					{
-						op_ifstricteq.reference = getRef(iter, opLength + op_ifstricteq.offset);
-					}
-					
-					var op_ifstrictne:Instruction_ifstrictne = op as Instruction_ifstrictne;
-					if(op_ifstrictne)
-					{
-						op_ifstrictne.reference = getRef(iter, opLength + op_ifstrictne.offset);
-					}
-					
-					var op_iftrue:Instruction_iftrue = op as Instruction_iftrue;
-					if(op_iftrue)
-					{
-						op_iftrue.reference = getRef(iter, opLength + op_iftrue.offset);
-					}
-					
-					var op_jump:Instruction_jump = op as Instruction_jump;
-					if(op_jump)
-					{
-						op_jump.reference = getRef(iter, opLength + op_jump.offset);
-					}
-					
-					var op_lookupswitch:Instruction_lookupswitch = op as Instruction_lookupswitch;
-					if(op_lookupswitch)
-					{
-						op_lookupswitch.defaultReference = getRef(iter, op_lookupswitch.defaultOffset);
-						op_lookupswitch.caseReferences = new Vector.<IInstruction>();
-						
-						for(var iter2:uint = 0; iter2 < op_lookupswitch.caseOffsets.length; iter2++)
-						{
-							op_lookupswitch.caseReferences[iter2] = getRef(iter, op_lookupswitch.caseOffsets[iter2]);
-						}
+						op_lookupswitch.caseReferences[iter2] = getRef(iter, op_lookupswitch.caseOffsets[iter2]);
 					}
 				}
 				

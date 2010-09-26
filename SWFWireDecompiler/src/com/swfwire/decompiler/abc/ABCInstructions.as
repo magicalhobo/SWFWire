@@ -337,8 +337,7 @@ package com.swfwire.decompiler.abc
 			0xEF: Instruction_debug,
 			0xF0: Instruction_debugline,
 			0xF1: Instruction_debugfile,
-			0xF2: Instruction_0xF2,
-			0xFF: null
+			0xF2: Instruction_0xF2
 		};
 		
 		private static var instructionIds:Dictionary = new Dictionary();

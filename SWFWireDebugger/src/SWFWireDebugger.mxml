@@ -72,6 +72,7 @@
 				//load('C:\\www\\htdocs\\workspaces\\fb4_projects\\CamsLiveBanner\\bin\\release\\33\\CamsLiveBanner.swf');
 				//load('C:\\www\\htdocs\\workspaces\\fb4_projects\\CamsInABox\\flash10\\bin\\release\\CamsInABox.swf');
 				//load('WordSearch.swf');
+				//load('SlowMoPlayer.swf');
 			}
 			
 			private function loadProgressHandler(ev:ProgressEvent):void
@@ -184,7 +185,7 @@
 						if(mainInst)
 						{
 							var defcm:MethodInfoToken = new MethodInfoToken();
-							defcm.name = wrapper.addString('SWFCorpse/deferredConstructor');
+							defcm.name = wrapper.addString(mainClass+'/deferredConstructor');
 							
 							var defcmi:uint = abcTag.abcFile.methods.push(defcm) - 1;
 							
@@ -226,9 +227,7 @@
 						
 						//mainInst.iinit--;
 						
-						var traceIndex:int = wrapper.getMultinameIndex('', 'trace');
-						if(traceIndex >= 0)
-						//if(true)
+						if(true)
 						//if(false)
 						{
 							var classIndex:int = wrapper.addQName(
@@ -246,45 +245,49 @@
 							
 							//Debug.log('test', 'before', abcTag.abcFile.methodBodies);
 							
-							var l:* = wrapper.findInstruction(new InstructionTemplate(Instruction_findpropstrict, {index: traceIndex}));
-							
-							for(var iter:* in l)
+							var traceIndex:int = wrapper.getMultinameIndex('', 'trace');
+							//trace('traceIndex: '+traceIndex);
+							if(traceIndex >= 0)
 							{
-								abcTag.abcFile.methodBodies[l[iter].methodBody].maxStack += 1;
+								var l:* = wrapper.findInstruction(new InstructionTemplate(Instruction_findpropstrict, {index: traceIndex}));
+								
+								for(var iter:* in l)
+								{
+									abcTag.abcFile.methodBodies[l[iter].methodBody].maxStack += 1;
+								}
+								
+								wrapper.replaceInstruction2(l, function(z:*, a:Vector.<IInstruction>):Vector.<IInstruction>
+								{
+									var b:Vector.<IInstruction> = new Vector.<IInstruction>();
+									b.push(new Instruction_getlex(classIndex));
+									return b;
+								});
+							
+								var methodIndex:int = wrapper.addQName(emptyNS, wrapper.addString('log'));
+								
+								l = wrapper.findInstruction(new InstructionTemplate(Instruction_callpropvoid, {index: traceIndex}));
+								wrapper.replaceInstruction2(l, function(z:*, a:Vector.<IInstruction>):Vector.<IInstruction>
+								{
+									var b:Vector.<IInstruction> = new Vector.<IInstruction>();
+									b.push(new Instruction_callpropvoid(methodIndex, Object(a[0]).argCount));
+									return b;
+								});
+								
+								l = wrapper.findInstruction(new InstructionTemplate(Instruction_callproperty, {index: traceIndex}));
+								wrapper.replaceInstruction2(l, function(z:*, a:Vector.<IInstruction>):Vector.<IInstruction>
+								{
+									var b:Vector.<IInstruction> = new Vector.<IInstruction>();
+									b.push(new Instruction_callproperty(methodIndex, Object(a[0]).argCount));
+									return b;
+								});
 							}
-							
-							wrapper.replaceInstruction2(l, function(z:*, a:Vector.<IInstruction>):Vector.<IInstruction>
-							{
-								var b:Vector.<IInstruction> = new Vector.<IInstruction>();
-								b.push(new Instruction_getlex(classIndex));
-								return b;
-							});
-							
-							var methodIndex:int = wrapper.addQName(emptyNS, wrapper.addString('log'));
-							
-							l = wrapper.findInstruction(new InstructionTemplate(Instruction_callpropvoid, {index: traceIndex}));
-							wrapper.replaceInstruction2(l, function(z:*, a:Vector.<IInstruction>):Vector.<IInstruction>
-							{
-								var b:Vector.<IInstruction> = new Vector.<IInstruction>();
-								b.push(new Instruction_callpropvoid(methodIndex, Object(a[0]).argCount));
-								return b;
-							});
-							
-							l = wrapper.findInstruction(new InstructionTemplate(Instruction_callproperty, {index: traceIndex}));
-							wrapper.replaceInstruction2(l, function(z:*, a:Vector.<IInstruction>):Vector.<IInstruction>
-							{
-								var b:Vector.<IInstruction> = new Vector.<IInstruction>();
-								b.push(new Instruction_callproperty(methodIndex, Object(a[0]).argCount));
-								return b;
-							});
-							
 							for(var i9:int = 0; i9 < abcTag.abcFile.methodBodies.length; i9++)
 							{
 								var mb:MethodBodyInfoToken = abcTag.abcFile.methodBodies[i9];
 								if(mb.initScopeDepth > 1)
 								{
 									var j9:* = abcTag.abcFile.methodBodies[i9].instructions;
-									var j6:int =  wrapper.addString(' (#'+i9+')');
+									var j6:int =  wrapper.addString(String(i9));
 									j9.unshift(new Instruction_callpropvoid(methodIndex2, 1));
 									j9.unshift(new Instruction_pushstring(j6));
 									j9.unshift(new Instruction_getlex(classIndex));
@@ -582,6 +585,12 @@
 					}
 				}
 				
+				var diff:uint = getTimer() - start;
+				
+				trace('Modifying swf took: '+diff+'ms');
+				logOut.text += 'Modifying swf took: '+diff+'ms\n';
+				
+				start = getTimer();
 
 				var swfWriter:SWF10Writer = new SWF10Writer();
 				
@@ -589,7 +598,10 @@
 				
 				writeProgress.setProgress(1, 1);
 				
-				logOut.text += 'Writing swf took: '+(getTimer() - start)+'ms';
+				diff = getTimer() - start;
+				
+				trace('Writing swf took: '+diff+'ms');
+				logOut.text += 'Writing swf took: '+diff+'ms\n';
 				
 				Debug.dump(result, 4);
 				

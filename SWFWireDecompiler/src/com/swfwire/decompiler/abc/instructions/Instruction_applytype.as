@@ -5,7 +5,7 @@ package com.swfwire.decompiler.abc.instructions
 	/**
 	 * Takes 1 argument, pops an object, then argCount values off the stack, pushes an any(*)
 	 */
-	public class Instruction_applytype extends BaseInstruction
+	public class Instruction_applytype implements IInstruction
 	{
 		public var argCount:uint;
 

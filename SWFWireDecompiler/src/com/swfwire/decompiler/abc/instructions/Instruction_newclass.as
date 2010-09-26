@@ -2,7 +2,7 @@ package com.swfwire.decompiler.abc.instructions
 {
 	import com.swfwire.decompiler.abc.*;
 	
-	public class Instruction_newclass extends BaseInstruction
+	public class Instruction_newclass implements IInstruction
 	{
 		//classInfo
 		public var index:uint;

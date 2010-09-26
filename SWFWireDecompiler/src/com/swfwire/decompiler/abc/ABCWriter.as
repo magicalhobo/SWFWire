@@ -86,7 +86,10 @@ package com.swfwire.decompiler.abc
 				
 				position = abc.getBytePosition();
 				
-				abc.writeU8(id);
+				if(InstructionClass != InstructionEnd)
+				{
+					abc.writeU8(id);
+				}
 				writeInstruction(abc, instruction);
 				
 				endPosition = abc.getBytePosition();
@@ -218,9 +221,10 @@ package com.swfwire.decompiler.abc
 		public function writeInstruction(abc:ABCByteArray, instruction:IInstruction):void
 		{
 			var op:* = instruction;
-			
+
 			switch(Object(instruction).constructor)
 			{
+				case InstructionEnd:
 				case Instruction_0x01:
 				case Instruction_nop:
 				case Instruction_throw:

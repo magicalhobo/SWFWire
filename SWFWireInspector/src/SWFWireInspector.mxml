@@ -13,39 +13,34 @@
 			
 			import com.magicalhobo.air.utils.WindowTracker;
 			import com.swfwire.decompiler.*;
-			import com.swfwire.decompiler.abc.ABCByteArray;
-			import com.swfwire.decompiler.abc.ABCFile;
 			import com.swfwire.decompiler.abc.instructions.*;
 			import com.swfwire.decompiler.abc.tokens.*;
-			import com.swfwire.decompiler.abc.tokens.multinames.MultinameQNameToken;
-			import com.swfwire.decompiler.abc.tokens.traits.TraitMethodToken;
-			import com.swfwire.decompiler.abc.tokens.traits.TraitSlotToken;
 			import com.swfwire.decompiler.data.swf.*;
 			import com.swfwire.decompiler.data.swf.records.*;
-			import com.swfwire.decompiler.data.swf.structures.MatrixTranslateStructure;
 			import com.swfwire.decompiler.data.swf.tags.*;
 			import com.swfwire.decompiler.data.swf2.tags.DefineBitsJPEG2Tag;
 			import com.swfwire.decompiler.data.swf2.tags.DefineShape2Tag;
 			import com.swfwire.decompiler.data.swf3.tags.DefineShape3Tag;
 			import com.swfwire.decompiler.data.swf3.tags.PlaceObject2Tag;
 			import com.swfwire.decompiler.data.swf8.tags.DefineShape4Tag;
-			import com.swfwire.decompiler.data.swf8.tags.FileAttributesTag;
 			import com.swfwire.decompiler.data.swf9.tags.DoABCTag;
 			import com.swfwire.decompiler.utils.*;
 			import com.swfwire.utils.*;
 			
-			import flash.utils.getTimer;
-			
 			import mx.controls.Alert;
-			import mx.core.UIComponent;
 			import mx.events.ListEvent;
-			import mx.events.ResizeEvent;
 			import mx.managers.DragManager;
 			
 			private var loader:Loader;
 			private var urlLoader:URLLoader;
 			private var windowTracker:WindowTracker;
 			private var appUpdater:ApplicationUpdaterUI;
+			private var result:SWFReadResult;
+			private var translator:ABCToActionScript;
+			private var lastSource:ByteArray;
+			private var lastResult:SWFReadResult;
+			private var tagDumpCache:Array;
+			private var tagHexCache:Array;
 			
 			private function main():void
 			{
@@ -88,115 +83,7 @@
 				{
 					updateClasses();
 				});
-				
-				/*
-				detailsPanel.actionScript.exportLabel.addEventListener(MouseEvent.CLICK, function(ev:Event):void
-				{
-					var tagId:uint = detailsPanel.tagList.dataProvider[detailsPanel.tagList.selectedIndex].id;
-					var metadata:Object = lastResult.tagMetadata[tagId];
-					
-					var swfWriter:SWFWriter = new SWFWriter();
-					
-					var swf:SWF = new SWF();
-					swf.header = new SWFHeader();
-					swf.header.fileVersion = 10;
-					swf.header.frameCount = 1;
-					swf.header.frameRate = 24;
-					swf.header.frameSize = new RectangleRecord();
-					swf.header.frameSize.nBits = 14;
-					swf.header.frameSize.xMin = 0
-					swf.header.frameSize.xMax = 800 * 20;
-					swf.header.frameSize.yMin = 0;
-					swf.header.frameSize.yMax = 600 * 20;
-					swf.header.signature = SWFHeader.UNCOMPRESSED_SIGNATURE;
-					swf.tags = new Vector.<SWFTag>();
-					
-					var tag:UnknownTag = new UnknownTag();
-					tag.header = new TagHeaderRecord();
-					tag.header.type = 82;
-					tag.content = new ByteArray();
-					tag.content.writeBytes(lastSource, metadata.contentStart, metadata.contentLength);
-					
-					swf.tags.push(tag);
-
-					var endTag:EndTag = new EndTag();
-					endTag.header = new TagHeaderRecord();
-					endTag.header.type = 0;
-					swf.tags.push(endTag);
-					
-					var result:SWFFileWriteResult = swfWriter.write(swf);
-					
-					var swfReaderTemp:SWF10Reader = new SWF10Reader();
-					var readResult:SWFFileReadResult = swfReaderTemp.readFile(new SWFByteArray(result.bytes));
-					
-					Debug.dump(readResult, 10);
-					
-					var catalog:ByteArray = new ByteArray();
-					catalog.writeUTFBytes('<?xml version="1.0" encoding ="utf-8"?>\
-<swc xmlns="http://www.adobe.com/flash/swccatalog/9">\
-  <versions>\
-    <swc version="1.2" />\
-    <flex version="4.0.0" build="14159" minimumSupportedVersion="3.0.0" />\
-  </versions>\
-  <features>\
-    <feature-script-deps />\
-    <feature-files />\
-  </features>\
-  <libraries>\
-    <library path="library.swf">\
-    </library>\
-  </libraries>\
-  <files>\
-  </files>\
-</swc>');
-					
-					var bytesOut:ByteArray = new ByteArray();
-					
-					var fz:FZip = new FZip();
-					fz.addFile("library.swf", result.bytes);
-					fz.addFile("catalog.xml", catalog);
-					fz.serialize(bytesOut);
-					
-					var file:FileReference = new FileReference();
-					file.save(bytesOut);
-				});
-				*/
-				
-				/*
-				swf.writeFB(24, 3.1415);
-				
-				swf.setBytePosition(0);
-				
-				trace(swf.readFB(24));
-				
-				return;
-				
-				ByteArrayUtil.dumpHex(bytes);
-				
-				trace(swf.getFBSize(2.5));
-				
-				return;
-				*/
-				
-				/*
-				var nm:NativeMenu = new NativeMenu();
-				nm.items = [new NativeMenuItem('File')];
-				nativeWindow.menu = nm;
-				*/
-				
-				//urlLoader.load(new URLRequest('http://flashcdn.iminlikewithyou.com/Main.swf?av=595'));
-				//urlLoader.load(new URLRequest('Main.swf'));
-				//urlLoader.load(new URLRequest('../../SampleSWF/bin-debug/SampleSWF.swf?nocache='+Math.random()));
-				//urlLoader.load(new URLRequest('to_decompile_cs5.swf?nocache='+Math.random()));
-				//urlLoader.load(new URLRequest('builtin.abc'));
-				//urlLoader.load(new URLRequest('hwa_test'));
-				//urlLoader.load(new URLRequest('rectangle.swf'));
-				//urlLoader.load(new URLRequest('goto_16001.swf'));
-				//urlLoader.load(new URLRequest('file:///F:/www/hobo.webhop.net/htdocs/misc/audioPlayer/AudioPlayer.swf'));
-				//urlLoader.load(new URLRequest('../SWFDecompilerCorpse/bin-debug/flashpro_cs5.swf'));
-				//urlLoader.load(new URLRequest('fleshtone05.swf'));
-				//load('Main.swf');
-				
+								
 				if(Config.TESTING)
 				{
 					load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpse/bin-debug/SWFCorpse.swf').url);
@@ -251,15 +138,6 @@
 				loadProgress.setProgress(ev.bytesLoaded, ev.bytesTotal);
 			}
 			
-			private function inspectHandler(ev:ContextMenuEvent):void
-			{
-				/*
-				var objects:Array =  content.getObjectsUnderPoint(new Point(content.mouseX, content.mouseY));
-				objects.shift();
-				*/
-				//bottomPanel.outputLog.text += objects.join('\n')+'\n';
-			}
-			
 			private function completeHandler(ev:Event):void
 			{
 				log('Done loading.');
@@ -285,8 +163,6 @@
 					logPanel.verticalScrollPosition = logPanel.maxVerticalScrollPosition;
 				}
 			}
-			
-			private var result:SWFReadResult;
 			
 			private function parse(bytes:ByteArray):void
 			{
@@ -329,19 +205,7 @@
 				currentState = 'loaded';
 				
 				loadProgress.setProgress(1, 1);
-				
-				/*
-				detailsPanel.infoCount = result.info.length;
-				if(result.warnings.length > 0)
-				{
-					detailsPanel.swf.warnings.text = result.info.join('\n');
-				}
-				else
-				{
-					detailsPanel.swf.warnings.text = 'No info!';
-				}
-				*/
-				
+
 				if(result.errors.length > 0)
 				{
 					log(result.warnings.length+' errors:');
@@ -373,11 +237,7 @@
 				for(var iterTag:uint = 0; iterTag < result.tagMetadata.length; iterTag++)
 				{
 					var metadata:Object = result.tagMetadata[iterTag];
-					//log(metadata.name);
-					//log('Offset: '+ByteArrayUtil.toHexString(metadata.start));
-					//log(ByteArrayUtil.bytesToString(bytes, metadata.start, metadata.length)+'\n');
 					var label:String = metadata.name.substr(metadata.name.indexOf('::') + 2);
-					//label = StringUtil.padEnd(String(iterTag), StringUtil.repeat(' ', max)) + label;
 					dp.push({name: label, id: iterTag, displayId: iterTag, size: metadata.length});
 				}
 				
@@ -400,25 +260,8 @@
 				detailsPanel.actionScript.currentState = 'classes';
 				
 				updateBottomPanel();
-				
-				/*
-				ByteArrayUtil.dumpHex(result.uncompressedBytes, result.tagMetadata[22].start, result.tagMetadata[22].length);
-				ByteArrayUtil.dumpHex(result.uncompressedBytes, result.tagMetadata[23].start, result.tagMetadata[23].length);
-				*/
-				
-				//printAllPackages(result.swf);
-				
-				/*
-				var context2:LoaderContext = new LoaderContext(false, ApplicationDomain.currentDomain);
-				context2.allowLoadBytesCodeExecution = true;
-				loader.loadBytes(bytes, context2);
-				
-				content.addChild(loader);
-				*/
 				return;
 			}
-			
-			private var translator:ABCToActionScript;
 			
 			private function parseABC(tag:DoABCTag, id:uint):void
 			{
@@ -450,11 +293,6 @@
 				updateClasses();
 			}
 			
-
-			private var lastSource:ByteArray;
-			private var lastResult:SWFReadResult;
-			
-			private var tagDumpCache:Array;
 			private function getTagDump(tagId:uint, object:Object):void
 			{
 				var dump:String;
@@ -516,11 +354,6 @@
 				
 				var result:SWFFileWriteResult = swfWriter.write(swf);
 				
-				var swfReaderTemp:SWF10Reader = new SWF10Reader();
-				var readResult:SWFReadResult = swfReaderTemp.readFile(new SWFByteArray(result.bytes));
-				
-				//Debug.dump(readResult, 10);
-				
 				var context:LoaderContext = new LoaderContext();
 				context.allowLoadBytesCodeExecution = true;
 				
@@ -544,7 +377,6 @@
 				});
 			}
 			
-			private var tagHexCache:Array;
 			private function getTagHex(item:Object):void
 			{
 				var hex:String;
@@ -732,18 +564,6 @@
 						rc.traits.push(r);
 					}
 					
-	
-					
-					/*
-					var classDump:String = 'package '+item.packageName+'\n' +
-						'{\n'+
-						'	public class '+item.name+'\n'+
-						'	{\n' +
-						'		'+item.properties.join('\n		')+'\n'+
-						'	}\n'+
-						'}';
-					detailsPanel.actionScript.classes.text = classDump;
-					*/
 					detailsPanel.actionScript.classes.text = translator.classToString(rc);
 				}
 			}

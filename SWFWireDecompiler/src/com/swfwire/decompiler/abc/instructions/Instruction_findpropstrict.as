@@ -2,7 +2,7 @@ package com.swfwire.decompiler.abc.instructions
 {
 	import com.swfwire.decompiler.abc.*;
 	
-	public class Instruction_findpropstrict extends BaseInstruction
+	public class Instruction_findpropstrict implements IInstruction
 	{
 		//multiname
 		public var index:uint;

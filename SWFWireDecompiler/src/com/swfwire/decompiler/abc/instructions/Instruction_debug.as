@@ -2,7 +2,7 @@ package com.swfwire.decompiler.abc.instructions
 {
 	import com.swfwire.decompiler.abc.*;
 	
-	public class Instruction_debug extends BaseInstruction
+	public class Instruction_debug implements IInstruction
 	{
 		public static const TYPE_DI_LOCAL:uint = 1;
 		

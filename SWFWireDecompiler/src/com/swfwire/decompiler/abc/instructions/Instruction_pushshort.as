@@ -2,7 +2,7 @@ package com.swfwire.decompiler.abc.instructions
 {
 	import com.swfwire.decompiler.abc.*;
 	
-	public class Instruction_pushshort extends BaseInstruction
+	public class Instruction_pushshort implements IInstruction
 	{
 		public var value:uint;
 		

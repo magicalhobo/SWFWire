@@ -2,7 +2,7 @@ package com.swfwire.decompiler.abc.instructions
 {
 	import com.swfwire.decompiler.abc.*;
 	
-	public class Instruction_pushstring extends BaseInstruction
+	public class Instruction_pushstring implements IInstruction
 	{
 		//cpool.strings
 		public var index:uint;

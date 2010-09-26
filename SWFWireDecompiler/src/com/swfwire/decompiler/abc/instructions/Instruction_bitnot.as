@@ -2,7 +2,7 @@ package com.swfwire.decompiler.abc.instructions
 {
 	import com.swfwire.decompiler.abc.*;
 	
-	public class Instruction_bitnot extends BaseInstruction
+	public class Instruction_bitnot implements IInstruction
 	{
 	}
 }

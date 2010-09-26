@@ -74,6 +74,11 @@ package
 		
 		custom function customMethod(param1:Object):Boolean
 		{
+			if(publicStaticVar == protectedStaticVar)
+			{
+				return false;
+			}
+			
 			trace('test');
 			try
 			{

@@ -2,7 +2,7 @@ package com.swfwire.decompiler.abc.instructions
 {
 	import com.swfwire.decompiler.abc.*;
 	
-	public class Instruction_debugfile extends BaseInstruction
+	public class Instruction_debugfile implements IInstruction
 	{
 		//String constant pool
 		public var index:uint;
