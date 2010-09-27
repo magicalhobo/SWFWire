@@ -168,29 +168,6 @@
 			
 			private function parse(bytes:ByteArray):void
 			{
-				var swfBytes:SWFByteArray = new SWFByteArray(bytes);
-				var swf:AsyncSWFReader = new AsyncSWFReader();
-				
-				swf.addEventListener(AsyncSWFReaderEvent.TAG_READ, tagReadHandler);
-				swf.addEventListener(AsyncSWFReaderEvent.READ_COMPLETE, readCompleteHandler);
-				
-				swf.read(swfBytes);
-			}
-			
-			private function tagReadHandler(ev:AsyncSWFReaderEvent):void
-			{
-				var current:uint = ev.context.bytes.getBytePosition();
-				var max:uint = ev.context.bytes.getLength();
-				trace('Read '+current+' bytes out of '+max);
-			}
-			
-			private function readCompleteHandler(ev:AsyncSWFReaderEvent):void
-			{
-				Debug.dump(ev.result.swf);
-			}
-			
-			private function parse1(bytes:ByteArray):void
-			{
 				log('Parsing '+bytes.length+' bytes...');
 				
 				var context:LoaderContext = new LoaderContext(false, ApplicationDomain.currentDomain);
@@ -210,14 +187,14 @@
 				result = swf.read(swfBytes);
 			}
 			
-			private function tagReadHandler1(ev:AsyncSWFReaderEvent):void
+			private function tagReadHandler(ev:AsyncSWFReaderEvent):void
 			{
 				var current:uint = ev.context.bytes.getBytePosition();
 				var max:uint = ev.context.bytes.getLength();
 				parseProgress.setProgress(current, max);
 			}
 			
-			private function readCompleteHandler1(ev:AsyncSWFReaderEvent):void
+			private function readCompleteHandler(ev:AsyncSWFReaderEvent):void
 			{
 				log('Parsing '+result.tagMetadata.length+' tags ('+ev.context.bytes.getLength()+' bytes) took '+(getTimer() - parseStart)+'ms.');
 				doneHandler();
