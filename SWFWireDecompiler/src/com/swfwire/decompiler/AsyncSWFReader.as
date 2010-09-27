@@ -3,6 +3,7 @@ package com.swfwire.decompiler
 	import com.swfwire.decompiler.data.swf.*;
 	import com.swfwire.decompiler.data.swf.records.*;
 	import com.swfwire.decompiler.data.swf.tags.*;
+	import com.swfwire.decompiler.events.AsyncSWFReaderEvent;
 	
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
@@ -12,51 +13,69 @@ package com.swfwire.decompiler
 	import flash.utils.getQualifiedClassName;
 	import flash.utils.getTimer;
 
+	[Event(type="com.swfwire.decompiler.events.AsyncSWFReaderEvent", name="tagRead")]
+	[Event(type="com.swfwire.decompiler.events.AsyncSWFReaderEvent", name="readComplete")]
+	
 	public class AsyncSWFReader extends SWF10Reader
 	{
-		public var eventDispatcher:EventDispatcher;
+		public function get active():Boolean
+		{
+			return _active;
+		}
+		public function get currentContext():SWFReaderContext
+		{
+			return _currentContext;
+		}
+		public function get currentReadResult():SWFReadResult
+		{
+			return _currentReadResult;
+		}
 		
-		protected var currentContext:SWFReaderContext;
-		protected var currentReadResult:SWFReadResult;
+		protected var _currentContext:SWFReaderContext;
+		protected var _currentReadResult:SWFReadResult;
 		
 		protected var readTimer:Timer;
 		
-		private var active:Boolean;
+		private var _active:Boolean;
 		private var lastRead:uint;
 		
 		public function AsyncSWFReader()
 		{
-			eventDispatcher = new EventDispatcher();
 			readTimer = new Timer(1, 1);
 			readTimer.addEventListener(TimerEvent.TIMER, readTimerHandler);
 		}
 		
 		override public function read(bytes:SWFByteArray):SWFReadResult 
 		{
-			currentReadResult = new SWFReadResult();
+			if(_active)
+			{
+				return null;
+			}
+			
+			_currentReadResult = new SWFReadResult();
 			
 			var swf:SWF = new SWF();
 			swf.header = new SWFHeader();
 			swf.tags = new Vector.<SWFTag>();
 			
-			currentContext = new SWFReaderContext(bytes, 0, currentReadResult);
+			_currentContext = new SWFReaderContext(bytes, 0, _currentReadResult);
 			
-			readSWFHeader(currentContext, swf.header);
+			readSWFHeader(_currentContext, swf.header);
 			
-			currentContext.fileVersion = swf.header.fileVersion;
+			_currentContext.fileVersion = swf.header.fileVersion;
 			
 			if(swf.header.fileVersion > version)
 			{
-				currentReadResult.warnings.push('Invalid file version ('+swf.header.fileVersion+') in header.');
+				_currentReadResult.warnings.push('Invalid file version ('+swf.header.fileVersion+') in header.');
 			}
 			
-			currentReadResult.swf = swf;
+			_currentReadResult.swf = swf;
 			
-			active = true;
+			_active = true;
 			
 			readTimer.start();
 			
-			return currentReadResult;
+			return _currentReadResult;
 		}
 		
 		protected function readTimerHandler(ev:Event):void
@@ -66,8 +85,8 @@ package com.swfwire.decompiler
 			{
 				readTagAsync();
 			}
-			while((getTimer() - lastRead < 200) && active)
-			if(active)
+			while((getTimer() - lastRead < 200) && _active)
+			if(_active)
 			{
 				readTimer.reset();
 				readTimer.start();
@@ -76,9 +95,9 @@ package com.swfwire.decompiler
 		
 		protected function readTagAsync():void
 		{
-			var context:SWFReaderContext = currentContext;
+			var context:SWFReaderContext = _currentContext;
 			var bytes:SWFByteArray = context.bytes;
-			var result:SWFReadResult = currentReadResult;
+			var result:SWFReadResult = _currentReadResult;
 			var swf:SWF = result.swf;
 			
 			if(bytes.getBytesAvailable() == 0)
@@ -100,18 +119,16 @@ package com.swfwire.decompiler
 				
 				context.tagId = tagId;
 				
-				tag = readTag(context, header);
-				/*
 				try
 				{
 					tag = readTag(context, header);
 				}
 				catch(e:Error)
 				{
+					result.warnings.push('Error parsing Tag #'+tagId+': '+e);
 					bytes.setBytePosition(startPosition);
 					tag = readUnknownTag(context, header);
 				}
-				*/
 				
 				tag.header = header;
 				
@@ -137,7 +154,7 @@ package com.swfwire.decompiler
 					result.warnings.push('Unknown tag type: '+header.type+' (id: '+tagId+')');
 				}
 				
-				eventDispatcher.dispatchEvent(new Event('tagRead'));
+				dispatchEvent(new AsyncSWFReaderEvent(AsyncSWFReaderEvent.TAG_READ, _currentContext, _currentReadResult));
 				
 				if(tag is EndTag)
 				{
@@ -148,8 +165,8 @@ package com.swfwire.decompiler
 		
 		protected function finishAsync():void
 		{
-			active = false;
-			eventDispatcher.dispatchEvent(new Event('done'));
+			_active = false;
+			dispatchEvent(new AsyncSWFReaderEvent(AsyncSWFReaderEvent.READ_COMPLETE, _currentContext, _currentReadResult));
 		}
 	}
 }

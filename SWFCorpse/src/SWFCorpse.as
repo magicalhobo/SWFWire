@@ -109,6 +109,11 @@ package
 			}
 		}
 		
+		protected function constructObject():void
+		{
+			var temp:Object = {name: 'value'};
+		}
+		
 		public function SWFCorpse()
 		{
 			trace('Starting constructor');

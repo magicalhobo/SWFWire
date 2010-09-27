@@ -14,6 +14,7 @@ package com.swfwire.decompiler
 	import com.swfwire.utils.ByteArrayUtil;
 	
 	import flash.display.Scene;
+	import flash.events.EventDispatcher;
 	import flash.geom.Matrix;
 	import flash.sampler.NewObjectSample;
 	import flash.utils.ByteArray;
@@ -21,7 +22,7 @@ package com.swfwire.decompiler
 	import flash.utils.Endian;
 	import flash.utils.getQualifiedClassName;
 	
-	public class SWFReader
+	public class SWFReader extends EventDispatcher
 	{
 		private static var FILE_VERSION:uint = 1;
 		

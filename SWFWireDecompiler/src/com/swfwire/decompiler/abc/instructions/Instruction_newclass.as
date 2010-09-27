@@ -4,7 +4,6 @@ package com.swfwire.decompiler.abc.instructions
 	
 	public class Instruction_newclass implements IInstruction
 	{
-		//classInfo
 		public var index:uint;
 
 		public function Instruction_newclass(index:uint = 0)

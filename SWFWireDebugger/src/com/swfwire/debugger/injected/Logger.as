@@ -14,13 +14,20 @@ package com.swfwire.debugger.injected
 		
 		public static function log(message:*):void
 		{
+			var str:String = StringUtil.indent(message, StringUtil.repeat('	', indent));
+			/*
+			trace(str);
+			return;
+			*/
 			if(output)
 			{
+				/*
 				var str:String = StringUtil.repeat('	', indent) + message;
 				if(!(message is String))
 				{
 					str = ObjectUtil.objectToString(message, 1, 3, 100, 1000, '	');
 				}
+				*/
 				if(output.text == '')
 				{
 					output.text += str;
@@ -38,11 +45,13 @@ package com.swfwire.debugger.injected
 			}
 		}
 		
-		public static function enterFunction(methodName:String = 'unk'):void
+		public static function enterFunction(methodName:String = 'unk', caller:* = null, params:Object = null):void
 		{
 			var methodName2:String = new StackInfo(1).functionName;
 			log('>> ' + methodName2);
+			//log(caller);
 			indent++;
+			log(ObjectUtil.objectToString(params, 2, 2, 50, 50, '	'));
 		}
 		
 		public static function exitFunction(methodName:String = 'unk'):void

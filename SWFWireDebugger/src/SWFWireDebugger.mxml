@@ -18,8 +18,8 @@
 			import com.swfwire.decompiler.AsyncSWFReaderFiltered;
 			import com.swfwire.decompiler.SWF10Writer;
 			import com.swfwire.decompiler.SWFByteArray;
-			import com.swfwire.decompiler.SWFWriteResult;
 			import com.swfwire.decompiler.SWFReadResult;
+			import com.swfwire.decompiler.SWFWriteResult;
 			import com.swfwire.decompiler.SWFWriter;
 			import com.swfwire.decompiler.abc.ABCReaderMetadata;
 			import com.swfwire.decompiler.abc.instructions.*;
@@ -27,18 +27,23 @@
 			import com.swfwire.decompiler.abc.tokens.InstanceToken;
 			import com.swfwire.decompiler.abc.tokens.MethodBodyInfoToken;
 			import com.swfwire.decompiler.abc.tokens.MethodInfoToken;
+			import com.swfwire.decompiler.abc.tokens.ParamInfoToken;
 			import com.swfwire.decompiler.abc.tokens.TraitsInfoToken;
 			import com.swfwire.decompiler.abc.tokens.cpool.CPoolIndex;
 			import com.swfwire.decompiler.abc.tokens.multinames.MultinameQNameToken;
 			import com.swfwire.decompiler.abc.tokens.traits.TraitMethodToken;
 			import com.swfwire.decompiler.data.swf.SWF;
 			import com.swfwire.decompiler.data.swf.SWFHeader;
+			import com.swfwire.decompiler.data.swf.tags.MetadataTag;
 			import com.swfwire.decompiler.data.swf.tags.SWFTag;
 			import com.swfwire.decompiler.data.swf9.tags.DoABCTag;
 			import com.swfwire.decompiler.data.swf9.tags.SymbolClassTag;
+			import com.swfwire.decompiler.events.AsyncSWFReaderEvent;
 			import com.swfwire.utils.Debug;
 			
 			import flash.utils.getTimer;
+			
+			import mx.managers.SystemManager;
 			
 			private var windowTracker:WindowTracker;
 			private var appUpdater:ApplicationUpdaterUI;
@@ -66,8 +71,8 @@
 				
 				Debug.enabled = true;
 				
-				load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpseFlex4-1/bin-debug/Main.swf').url);
-				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpse/bin-debug/SWFCorpse.swf').url);
+				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpseFlex4-1/bin-debug/Main.swf').url);
+				load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpse/bin-debug/SWFCorpse.swf').url);
 				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFWireInspector/bin-debug/SWFWireInspector.swf').url);
 				//load('C:\\www\\htdocs\\workspaces\\fb4_projects\\CamsViewer3_Flex4\\bin\\release\\87\\CamsViewer.swf');
 				//load('C:\\www\\htdocs\\workspaces\\fb4_projects\\CamsLiveBanner\\bin\\release\\33\\CamsLiveBanner.swf');
@@ -109,13 +114,13 @@
 				swfReader.includedTags[0] = true;
 				swfReader.includedTags[76] = true;
 				swfReader.includedTags[82] = true;
-				swfReader.eventDispatcher.addEventListener('tagRead', function(ev:Event):void
+				swfReader.addEventListener(AsyncSWFReaderEvent.TAG_READ, function(ev:Event):void
 				{
 					var current:uint = swfBytes.getBytePosition();
 					var max:uint = swfBytes.getLength();
 					readProgress.setProgress(current, max);
 				});
-				swfReader.eventDispatcher.addEventListener('done', function(ev:Event):void
+				swfReader.addEventListener(AsyncSWFReaderEvent.READ_COMPLETE, function(ev:Event):void
 				{
 					inject(result.swf, result.abcMetadata);
 				});
@@ -156,18 +161,6 @@
 					var abcTag:DoABCTag = swf.tags[iTag] as DoABCTag;
 					if(abcTag)
 					{
-						/*
-						if(iTag == 306)
-						{
-							Debug.maxProperties = 200;
-							Debug.dump(abcTag.abcFile.methodBodies[5].instructions, 5);
-						}
-						else
-						{
-							continue;
-						}
-						*/
-
 						var wrapper:ABCWrapper = new ABCWrapper(abcTag.abcFile, metadata[iTag]);
 						
 						var mainIndex:int = wrapper.getMultinameIndex('', mainClass);
@@ -282,6 +275,7 @@
 									return b;
 								});
 							}
+							
 							for(var i9:int = 0; i9 < abcTag.abcFile.methodBodies.length; i9++)
 							{
 								var mb:MethodBodyInfoToken = abcTag.abcFile.methodBodies[i9];
@@ -289,7 +283,24 @@
 								{
 									var j9:* = abcTag.abcFile.methodBodies[i9].instructions;
 									var j6:int =  wrapper.addString(String(i9));
-									j9.unshift(new Instruction_callpropvoid(methodIndex2, 1));
+									
+									var paramCount:uint = abcTag.abcFile.methods[mb.method].paramCount;
+
+									abcTag.abcFile.methodBodies[i9].maxStack += paramCount * 2 + 3;
+									
+									j9.unshift(new Instruction_callpropvoid(methodIndex2, 3));
+									
+									j9.unshift(new Instruction_newobject(paramCount));
+
+									for(var i10:int = paramCount - 1; i10 >= 0; i10--)
+									{
+										var paramName:ParamInfoToken = abcTag.abcFile.methods[mb.method].paramNames[i10];
+										j9.unshift(new Instruction_getlocal(i10));
+										j9.unshift(new Instruction_pushstring(paramName.value));
+									}
+									
+									j9.unshift(new Instruction_getlocal0());
+									
 									j9.unshift(new Instruction_pushstring(j6));
 									j9.unshift(new Instruction_getlex(classIndex));
 								}

@@ -71,7 +71,11 @@ package com.swfwire.utils
 					{
 						for each(name in description.variable.@name)
 						{
-							props[name] = variable[name];
+							//Not sure what to do with variables in custom namespaces yet
+							if(!description.variable.@uri)
+							{
+								props[name] = variable[name];
+							}
 						}
 						for each(name in description.accessor.(@access == 'readwrite' || @access == 'readonly').@name)
 						{
