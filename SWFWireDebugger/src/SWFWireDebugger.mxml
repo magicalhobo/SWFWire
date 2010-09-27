@@ -66,19 +66,12 @@
 				urlLoader.addEventListener(Event.COMPLETE,			 loadCompleteHandler);
 				urlLoader.dataFormat = URLLoaderDataFormat.BINARY;
 				
-				//load('FlexBug.swf');
-				//load('alchemy.swf');
-				
 				Debug.enabled = true;
 				
 				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpseFlex4-1/bin-debug/Main.swf').url);
 				load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpse/bin-debug/SWFCorpse.swf').url);
 				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFWireInspector/bin-debug/SWFWireInspector.swf').url);
-				//load('C:\\www\\htdocs\\workspaces\\fb4_projects\\CamsViewer3_Flex4\\bin\\release\\87\\CamsViewer.swf');
-				//load('C:\\www\\htdocs\\workspaces\\fb4_projects\\CamsLiveBanner\\bin\\release\\33\\CamsLiveBanner.swf');
-				//load('C:\\www\\htdocs\\workspaces\\fb4_projects\\CamsInABox\\flash10\\bin\\release\\CamsInABox.swf');
-				//load('WordSearch.swf');
-				//load('SlowMoPlayer.swf');
+				//load('temp.swf');
 			}
 			
 			private function loadProgressHandler(ev:ProgressEvent):void

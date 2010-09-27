@@ -13,13 +13,66 @@ package
 	
 	public class SWFCorpse extends Sprite
 	{
-		namespace custom = "http://magicalhobo.com/custom";
+		internal namespace custom = "http://magicalhobo.com/custom";
 		
 		public static var publicStaticVar:Boolean;
 		protected static var protectedStaticVar:Boolean;
 		private static var privateStaticVar:Boolean;
 		internal static var internalStaticVar:Boolean;
 		custom static var customStaticVar:Boolean;
+		
+		public static function playground():void
+		{
+		}
+		
+		public static function returnBoolean():Boolean
+		{
+			return true;
+		}
+		
+		public static function returnByte():Number
+		{
+			return 1;
+		}
+		
+		public static function returnNumber():Number
+		{
+			return 1000.0001;
+		}
+		
+		public static function returnString():String
+		{
+			return 'string';;
+		}
+		
+		public static function returnObject():Object
+		{
+			return {name: 'value'};
+		}
+		
+		public static function returnClosure():Object
+		{
+			return function():void
+			{
+			}
+		}
+		
+		public static function tryCatchFinally():void
+		{
+			try
+			{
+				throw new Error();
+			}
+			catch(e:Error)
+			{
+				trace('caught: '+e);
+			}
+			finally
+			{
+				trace('finally!');
+			}
+		}
+		
 		
 		public static function publicStaticMethod(param1:String):Boolean
 		{
@@ -74,24 +127,6 @@ package
 		
 		custom function customMethod(param1:Object):Boolean
 		{
-			if(publicStaticVar == protectedStaticVar)
-			{
-				return false;
-			}
-			
-			trace('test');
-			try
-			{
-				throw new Error();
-			}
-			catch(e:Error)
-			{
-				trace('caught: '+e);
-			}
-			finally
-			{
-				trace('finally!');
-			}
 			return true;
 		}
 		
@@ -107,11 +142,6 @@ package
 					trace('event was something else');
 					break;
 			}
-		}
-		
-		protected function constructObject():void
-		{
-			var temp:Object = {name: 'value'};
 		}
 		
 		public function SWFCorpse()

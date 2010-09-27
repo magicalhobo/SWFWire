@@ -86,7 +86,7 @@ package com.swfwire.decompiler.abc
 				
 				position = abc.getBytePosition();
 				
-				if(InstructionClass != InstructionEnd)
+				if(InstructionClass != EndInstruction)
 				{
 					abc.writeU8(id);
 				}
@@ -124,7 +124,7 @@ package com.swfwire.decompiler.abc
 
 			switch(Object(instruction).constructor)
 			{
-				case InstructionEnd:
+				case EndInstruction:
 				case Instruction_0x01:
 				case Instruction_nop:
 				case Instruction_throw:

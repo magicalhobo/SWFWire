@@ -1,6 +1,6 @@
 package com.swfwire.decompiler.abc.instructions
 {
-	public class InstructionEnd implements IInstruction
+	public class EndInstruction implements IInstruction
 	{
 	}
 }

@@ -93,9 +93,6 @@ package com.swfwire.decompiler.abc
 
 		private function readMethodBody(methodBody:MethodBodyInfoToken):MethodBodyReadResult
 		{
-			//trace('parsing: '+bytes.length+' bytes');
-			//ByteArrayUtil.dumpHex(bytes);
-			
 			var bytes:ByteArray = methodBody.code;
 			
 			var abc:ABCByteArray = new ABCByteArray(bytes);
@@ -120,7 +117,6 @@ package com.swfwire.decompiler.abc
 				reverseOffsetLookup[position] = instructionId;
 				var opcode:uint = abc.readU8();
 				var InstructionClass:Class = ABCInstructions.getClass(opcode);
-				//dump.push(ABCInstructions.getName(opcode)+' ('+opcode.toString(16)+')');
 				if(InstructionClass)
 				{
 					instructions[instructionId] = readInstruction(opcode, abc);
@@ -134,7 +130,7 @@ package com.swfwire.decompiler.abc
 				lengthLookup[instructionId] = newPosition - position;
 				instructionId++;
 			}
-			instructions[instructionId] = new InstructionEnd();
+			instructions[instructionId] = new EndInstruction();
 			offsetLookup[instructionId] = newPosition;
 			reverseOffsetLookup[newPosition] = instructionId;
 			lengthLookup[newPosition] = 0;

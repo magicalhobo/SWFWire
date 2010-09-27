@@ -1,7 +1,11 @@
 package com.swfwire.decompiler.utils
 {
 	import com.swfwire.decompiler.abc.ABCFile;
-	import com.swfwire.decompiler.abc.instructions.IInstruction;
+	import com.swfwire.decompiler.abc.AVM2;
+	import com.swfwire.decompiler.abc.LocalRegisters;
+	import com.swfwire.decompiler.abc.OperandStack;
+	import com.swfwire.decompiler.abc.ScopeStack;
+	import com.swfwire.decompiler.abc.instructions.*;
 	import com.swfwire.decompiler.abc.tokens.*;
 	import com.swfwire.decompiler.abc.tokens.multinames.*;
 	import com.swfwire.decompiler.abc.tokens.traits.*;
@@ -66,7 +70,7 @@ package com.swfwire.decompiler.utils
 			var cpool:ConstantPoolToken = abcFile.cpool;
 			r.declaration = new ReadableMultiname();
 			multinameTraitToString(traitInfo.name, r.declaration);
-			if(traitInfo.kind == 0)
+			if(traitInfo.kind == TraitsInfoToken.KIND_TRAIT_SLOT)
 			{
 				var slotInfo:TraitSlotToken = TraitSlotToken(traitInfo.data);
 				
@@ -75,7 +79,7 @@ package com.swfwire.decompiler.utils
 				getReadableMultiname(slotInfo.typeName, r.type);
 				//result = traitName+':'+multinameTypeToString(TraitSlotToken(traitInfo.data).typeName, r);
 			}
-			else if(traitInfo.kind == 1)
+			else if(traitInfo.kind == TraitsInfoToken.KIND_TRAIT_METHOD)
 			{
 				r.traitType = ReadableTrait.TYPE_METHOD;
 				var traitMethod:TraitMethodToken = TraitMethodToken(traitInfo.data);
@@ -97,14 +101,14 @@ package com.swfwire.decompiler.utils
 				r.type = new ReadableMultiname(); 
 				getReadableMultiname(methodInfo.returnType, r.type);
 			}
-			else if(traitInfo.kind == 6)
+			else if(traitInfo.kind == TraitsInfoToken.KIND_TRAIT_CONST)
 			{
 				r.traitType = ReadableTrait.TYPE_PROPERTY;
 				r.type = new ReadableMultiname();
 				getReadableMultiname(TraitSlotToken(traitInfo.data).typeName, r.type);
 				r.isConst = true;
 			}
-			if(traitInfo.kind == 0 || traitInfo.kind == 6)
+			if(traitInfo.kind == TraitsInfoToken.KIND_TRAIT_SLOT || traitInfo.kind == TraitsInfoToken.KIND_TRAIT_CONST)
 			{
 				var slotInfo2:TraitSlotToken = TraitSlotToken(traitInfo.data);
 				switch(slotInfo2.vKind)
@@ -152,15 +156,15 @@ package com.swfwire.decompiler.utils
 		{
 			var result:String = '';
 			var ns:NamespaceToken = abcFile.cpool.namespaces[index];
-			if(ns.kind == 0x05)
+			if(ns.kind == NamespaceToken.KIND_PrivateNs)
 			{
 				result = 'private';
 			}
-			else if(ns.kind == 0x17)
+			else if(ns.kind == NamespaceToken.KIND_PackageInternalNs)
 			{
 				result = 'internal';
 			}
-			else if(ns.kind == 0x18 || ns.kind == 0x1A)
+			else if(ns.kind == NamespaceToken.KIND_ProtectedNamespace || ns.kind == NamespaceToken.KIND_StaticProtectedNs)
 			{
 				result = 'protected';
 			}
@@ -171,31 +175,272 @@ package com.swfwire.decompiler.utils
 			return result;
 		}
 		
-		private function instructionsToString(instructions:Vector.<IInstruction>):String
+		private function instructionsToString(instructions:Vector.<IInstruction>, 
+											  start:uint = 0,
+											  hitmap:Object = null, 
+											  positionLookup:Dictionary = null,
+											  stopOnJump:Boolean = false):String
 		{
 			var lines:Array = [];
-			for(var iter:uint = 0; iter < instructions.length; iter++)
+			
+			var scope:ScopeStack = new ScopeStack(0);
+			var locals:LocalRegisters = new LocalRegisters();
+			var stack:OperandStack = new OperandStack(0);
+			var localCount:uint = 0;
+			
+			locals.setName(0, 'this');
+			locals.setName(1, 'arg0');
+			locals.setName(2, 'arg1');
+			locals.setName(3, 'arg2');
+			
+			if(!hitmap)
 			{
-				var instruction:IInstruction = instructions[iter];
-				var description:XML = describeType(instruction);
-				var string:String = ''
-				if(offsetLookup && offsetLookup[iter])
+				hitmap = {};
+			}
+			if(!positionLookup)
+			{
+				positionLookup = new Dictionary();
+				for(var iter1:uint = 0; iter1 < instructions.length; iter1++)
 				{
-					//string += offsetLookup[iter]+':\t';
+					positionLookup[instructions[iter1]] = iter1;
 				}
-				
-				string += String(description.@name).replace(/.*Instruction_/, '');
-				
+			}
+			
+			for(var iter:uint = start; iter < instructions.length; iter++)
+			{
+				if(hitmap[iter])
+				{
+					trace('already hit');
+					break;
+				}
+				hitmap[iter] = 1;
+				var op:IInstruction = instructions[iter];
 				var params:Array = [];
-				for each(var name:String in description.variable.@name)
+				var line:String = '';
+				var tempInt:int;
+				var tempInt2:int;
+				var tempStr:String;
+				var tempStr2:String;
+				var tempStr3:String;
+				var mn:MultinameToken;
+				var rmn:ReadableMultiname;
+				if(op is EndInstruction)
 				{
-					params.push(name+': '+instruction[name]);
-					//props[name] = variable[name];
 				}
-				string += '  ' + params.join(', ');
-				
-				
-				lines.push(string);
+				else if(op is Instruction_debug || op is Instruction_debugfile || op is Instruction_debugline)
+				{
+				}
+				else if(op is Instruction_label)
+				{
+				}
+				else if(op is Instruction_jump)
+				{
+					trace('jump!');
+					if(stopOnJump)
+					{
+						trace('stopping...');
+						break;
+					}
+					tempInt = positionLookup[Instruction_jump(op).reference];
+					iter = tempInt;
+				}
+				else if(op is Instruction_ifstrictne)
+				{
+					trace('strictne jump!');
+					tempInt = positionLookup[Instruction_ifstrictne(op).reference];
+					tempStr = instructionsToString(instructions, tempInt, hitmap, positionLookup, true);
+					tempStr3 = instructionsToString(instructions, iter + 1, hitmap, positionLookup, true);
+					
+					tempStr2 = 'if('+stack.pop() + ' !== ' + stack.pop()+'){\n'+tempStr+'}\nelse {\n'+tempStr3+'}';
+					
+					lines.push(tempStr2);
+				}
+				else if(op is Instruction_getlocal0)
+				{
+					stack.push(locals.getName(0));
+				}
+				else if(op is Instruction_getlocal1)
+				{
+					stack.push(locals.getName(1));
+				}
+				else if(op is Instruction_getlocal2)
+				{
+					stack.push(locals.getName(2));
+				}
+				else if(op is Instruction_getlocal3)
+				{
+					stack.push(locals.getName(3));
+				}
+				else if(op is Instruction_getlocal)
+				{
+					stack.push(locals.getName(Instruction_getlocal(op).index));
+				}
+				else if(op is Instruction_setlocal0)
+				{
+					locals.setName(0, stack.pop());
+				}
+				else if(op is Instruction_setlocal1)
+				{
+					locals.setName(1, stack.pop());
+				}
+				else if(op is Instruction_setlocal2)
+				{
+					locals.setName(2, stack.pop());
+				}
+				else if(op is Instruction_setlocal3)
+				{
+					locals.setName(3, stack.pop());
+				}
+				else if(op is Instruction_setlocal)
+				{
+					locals.setName(Instruction_setlocal(op).index, stack.pop());
+				}
+				else if(op is Instruction_findpropstrict)
+				{
+					tempInt = Instruction_findpropstrict(op).index;
+					mn = abcFile.cpool.multinames[tempInt];
+					switch(mn.kind)
+					{
+						case MultinameToken.KIND_QName:
+							rmn = new ReadableMultiname();
+							getReadableMultiname(tempInt, rmn);
+							tempStr = this.multinameTypeToString(rmn);
+							stack.push(tempStr);
+							stack.push(tempStr);
+							//lines.push('findprop - '+tempStr);
+							break;
+					}
+				}
+				else if(op is Instruction_getproperty)
+				{
+					tempInt = Instruction_getproperty(op).index;
+					mn = abcFile.cpool.multinames[tempInt];
+					switch(mn.kind)
+					{
+						case MultinameToken.KIND_QName:
+							var obj:String = stack.pop();
+							
+							rmn = new ReadableMultiname();
+							getReadableMultiname(tempInt, rmn);
+							tempStr = this.multinameTypeToString(rmn);
+							
+							if(obj != tempStr)
+							{
+								tempStr = obj+'.'+tempStr;
+							}
+							tempStr = tempStr;
+							stack.push(tempStr);
+							//lines.push('getprop - '+tempStr);
+							break;
+					}
+				}
+				else if(op is Instruction_callproperty)
+				{
+					tempInt = Instruction_callproperty(op).index;
+					mn = abcFile.cpool.multinames[tempInt];
+					switch(mn.kind)
+					{
+						case MultinameToken.KIND_QName:
+							var args:Array = [];
+							for(tempInt2 = Instruction_callproperty(op).argCount - 1; tempInt2 >= 0; tempInt2--)
+							{
+								args.unshift(stack.pop());
+							}
+							
+							tempStr2 = stack.pop();
+							
+							rmn = new ReadableMultiname();
+							getReadableMultiname(tempInt, rmn);
+							tempStr = this.multinameTypeToString(rmn);
+							
+							if(tempStr2 != tempStr)
+							{
+								tempStr = tempStr2+'.'+tempStr;
+							}
+							
+							tempStr = tempStr+'('+args.join(', ')+')';
+							localCount++;
+							stack.push('local_'+localCount);
+							lines.push('var local_'+localCount+':* = '+tempStr+';');
+							break;
+					}
+				}
+				else if(op is Instruction_convert_d)
+				{
+					stack.push('Number('+stack.pop()+')');
+				}
+				else if(op is Instruction_pushscope)
+				{
+					scope.push(stack.pop());
+				}
+				else if(op is Instruction_pushbyte)
+				{
+					stack.push(Instruction_pushbyte(op).byteValue);
+				}
+				else if(op is Instruction_pushshort)
+				{
+					stack.push(Instruction_pushshort(op).value);
+				}
+				else if(op is Instruction_pushdouble)
+				{
+					stack.push(abcFile.cpool.doubles[Instruction_pushdouble(op).index]);
+				}
+				else if(op is Instruction_pushstring)
+				{
+					stack.push('"'+abcFile.cpool.strings[Instruction_pushstring(op).index].utf8+'"');
+				}
+				else if(op is Instruction_pushtrue)
+				{
+					stack.push('true');
+				}
+				else if(op is Instruction_pop)
+				{
+					stack.pop();
+				}
+				else if(op is Instruction_newobject)
+				{
+					var argCount:uint = Instruction_newobject(op).argCount;
+					line += '{';
+					for(var iter2:int = 0; iter2 < argCount; iter2++)
+					{
+						var valN:* = stack.pop();
+						var nameN:* = stack.pop();
+						line += nameN+': '+valN;
+					}
+					line += '}';
+					stack.push(line);
+				}
+				else if(op is Instruction_returnvalue)
+				{
+					var str:String = stack.pop();
+					lines.push('return '+str+';');
+				}
+				else if(op is Instruction_returnvoid)
+				{
+					lines.push('return;');
+				}
+				//else
+				if(true)
+				{
+					var description:XML = describeType(op);
+					var string:String = '    '
+					if(offsetLookup && offsetLookup[iter])
+					{
+						//string += offsetLookup[iter]+':\t';
+					}
+					
+					string += String(description.@name).replace(/.*Instruction_/, '');
+					
+					for each(var name:String in description.variable.@name)
+					{
+						params.push(name+': '+op[name]);
+						//props[name] = variable[name];
+					}
+					string += '  ' + params.join(', ');
+					
+					
+					lines.push(string);
+				}
 				//lines.push(ObjectUtil.objectToString(instruction, 4, 10, 100, 10, '	'));
 			}
 			return lines.join('\n			');
@@ -305,6 +550,7 @@ package com.swfwire.decompiler.utils
 		public function classToString(c:ReadableClass):String
 		{
 			var properties:Array = [];
+			//properties.push(traitToString(c.traits[iter]));
 			for(var iter:String in c.traits)
 			{
 				properties.push(traitToString(c.traits[iter]));
@@ -312,7 +558,7 @@ package com.swfwire.decompiler.utils
 			var result:String = 
 'package '+c.className.namespace+'\n' +
 '{\n' +
-'	public class '+c.className.name+' extends '+c.superName.namespace+'::'+c.superName.name+'\n' +
+'	public class '+c.className.name+' extends '+multinameTypeToString(c.superName)+'\n' +
 '	{\n' +
 '		' + properties.join('\n		') + '\n' +
 '	}\n' +
