@@ -1,8 +1,6 @@
 package com.swfwire.utils
 {
 	import flash.utils.getTimer;
-	import com.swfwire.utils.ObjectUtil;
-	import com.swfwire.utils.StringUtil;
 
 	public class Debug
 	{

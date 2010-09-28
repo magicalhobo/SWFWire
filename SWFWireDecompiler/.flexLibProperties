@@ -371,7 +371,6 @@
     <classEntry path="com.swfwire.decompiler.data.swf9.tags.DoABCTag"/>
     <classEntry path="com.swfwire.decompiler.data.swf9.tags.StartSound2Tag"/>
     <classEntry path="com.swfwire.decompiler.data.swf9.tags.SymbolClassTag"/>
-    <classEntry path="com.swfwire.utils.ByteArrayUtil"/>
     <classEntry path="com.swfwire.decompiler.SWF9Writer"/>
     <classEntry path="com.swfwire.decompiler.SWF10Writer"/>
     <classEntry path="com.swfwire.decompiler.AsyncSWFReaderFiltered"/>

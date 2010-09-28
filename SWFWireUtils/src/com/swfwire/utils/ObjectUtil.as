@@ -2,7 +2,6 @@ package com.swfwire.utils
 {
 	import flash.utils.describeType;
 	import flash.utils.getTimer;
-	import com.swfwire.utils.StringUtil;
 	
 	public class ObjectUtil
 	{
@@ -67,14 +66,14 @@ package com.swfwire.utils
 					var props:Object = {};
 					
 					var name:String;
+					var node:XML;
 					if(description)
 					{
-						for each(name in description.variable.@name)
+						for each(node in description.variable)
 						{
-							//Not sure what to do with variables in custom namespaces yet
-							if(!description.variable.@uri)
+							if(!node.hasOwnProperty('@uri'))
 							{
-								props[name] = variable[name];
+								props[node.@name] = variable[node.@name];
 							}
 						}
 						for each(name in description.accessor.(@access == 'readwrite' || @access == 'readonly').@name)

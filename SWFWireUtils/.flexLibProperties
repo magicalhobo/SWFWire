@@ -2,6 +2,10 @@
 <flexLibProperties includeAllClasses="true" version="3">
   <includeClasses>
     <classEntry path="com.swfwire.utils.ArrayUtil"/>
+    <classEntry path="com.swfwire.utils.Debug"/>
+    <classEntry path="com.swfwire.utils.StringUtil"/>
+    <classEntry path="com.swfwire.utils.ByteArrayUtil"/>
+    <classEntry path="com.swfwire.utils.ObjectUtil"/>
   </includeClasses>
   <includeResources/>
   <namespaceManifests/>

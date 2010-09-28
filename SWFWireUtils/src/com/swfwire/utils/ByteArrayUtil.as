@@ -1,7 +1,6 @@
 package com.swfwire.utils
 {
 	import flash.utils.ByteArray;
-	import com.swfwire.utils.StringUtil;
 
 	public class ByteArrayUtil
 	{
