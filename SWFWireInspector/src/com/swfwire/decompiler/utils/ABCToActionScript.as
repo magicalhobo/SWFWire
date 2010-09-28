@@ -211,7 +211,7 @@ package com.swfwire.decompiler.utils
 				if(hitmap[iter])
 				{
 					trace('already hit');
-					break;
+					//break;
 				}
 				hitmap[iter] = 1;
 				var op:IInstruction = instructions[iter];
@@ -224,6 +224,57 @@ package com.swfwire.decompiler.utils
 				var tempStr3:String;
 				var mn:MultinameToken;
 				var rmn:ReadableMultiname;
+				
+				if(true)
+				{
+					var description:XML = describeType(op);
+					var string:String = '    '
+					string += '#'+iter+'	';
+					/*
+					if(offsetLookup && offsetLookup[iter])
+					{
+					string += '#'+offsetLookup[iter]+'	';
+					}
+					*/
+					
+					if(op is EndInstruction)
+					{
+						string += '-';
+					}
+					else
+					{
+						string += String(description.@name).replace(/.*Instruction_/, '');
+					}
+					
+					for each(var name:String in description.variable.@name)
+					{
+						if(name.toLowerCase().indexOf('offset') != -1)
+						{
+							continue;
+						}
+						var prop:* = op[name];
+						if(prop is IInstruction)
+						{
+							prop = '#'+positionLookup[prop];
+						}
+						else if(prop is Vector.<IInstruction>)
+						{
+							var props:Array = [];
+							for(tempInt = 0; tempInt < prop.length; tempInt++)
+							{
+								props.push('#'+positionLookup[prop[tempInt]]);
+							}
+							prop = props.join(', ');
+						}
+						params.push(name+': '+prop);
+						//props[name] = variable[name];
+					}
+					string += '  ' + params.join(', ');
+					
+					
+					lines.push(string);
+				}
+				
 				if(op is EndInstruction)
 				{
 				}
@@ -233,16 +284,45 @@ package com.swfwire.decompiler.utils
 				else if(op is Instruction_label)
 				{
 				}
+				else if(op is Instruction_lookupswitch)
+				{
+					tempInt = stack.pop();
+					
+					if(Instruction_lookupswitch(op).caseReferences.hasOwnProperty(tempInt))
+					{
+						tempInt2 = positionLookup[Instruction_lookupswitch(op).caseReferences[tempInt]];
+					}
+					else
+					{
+						tempInt2 = positionLookup[Instruction_lookupswitch(op).defaultReference];
+					}
+					
+					if(!hitmap[tempInt2])
+					{
+						iter = tempInt2 - 1;
+					}
+					else
+					{
+						break;
+					}
+				}
 				else if(op is Instruction_jump)
 				{
 					trace('jump!');
 					if(stopOnJump)
 					{
-						trace('stopping...');
-						break;
+						trace('not stopping...');
+						//break;
 					}
 					tempInt = positionLookup[Instruction_jump(op).reference];
-					iter = tempInt;
+					if(!hitmap[tempInt] || !stopOnJump)
+					{
+						iter = tempInt - 1;
+					}
+					else
+					{
+						break;
+					}
 				}
 				else if(op is Instruction_ifstrictne)
 				{
@@ -250,8 +330,25 @@ package com.swfwire.decompiler.utils
 					tempInt = positionLookup[Instruction_ifstrictne(op).reference];
 					tempStr = instructionsToString(instructions, tempInt, hitmap, positionLookup, true);
 					tempStr3 = instructionsToString(instructions, iter + 1, hitmap, positionLookup, true);
+					trace(tempStr);
+					tempStr = StringUtil.indent(tempStr, '	');
+					tempStr3 = StringUtil.indent(tempStr3, '	');
 					
-					tempStr2 = 'if('+stack.pop() + ' !== ' + stack.pop()+'){\n'+tempStr+'}\nelse {\n'+tempStr3+'}';
+					tempStr2 = 'if('+stack.pop() + ' !== ' + stack.pop()+')\n{\n'+tempStr+'\n}\nelse\n{\n'+tempStr3+'\n}';
+					
+					lines.push(tempStr2);
+				}
+				else if(op is Instruction_iffalse)
+				{
+					trace('strictne jump!');
+					tempInt = positionLookup[Instruction_iffalse(op).reference];
+					tempStr = instructionsToString(instructions, tempInt, hitmap, positionLookup, true);
+					tempStr3 = instructionsToString(instructions, iter + 1, hitmap, positionLookup, true);
+					trace(tempStr);
+					tempStr = StringUtil.indent(tempStr, '	');
+					tempStr3 = StringUtil.indent(tempStr3, '	');
+					
+					tempStr2 = 'if('+stack.pop() + ' == false)\n{\n'+tempStr+'\n}\nelse\n{\n'+tempStr3+'\n}';
 					
 					lines.push(tempStr2);
 				}
@@ -369,6 +466,10 @@ package com.swfwire.decompiler.utils
 				{
 					stack.push('Number('+stack.pop()+')');
 				}
+				else if(op is Instruction_kill)
+				{
+					locals.setName(Instruction_kill(op).index, 'undefined');
+				}
 				else if(op is Instruction_pushscope)
 				{
 					scope.push(stack.pop());
@@ -392,6 +493,10 @@ package com.swfwire.decompiler.utils
 				else if(op is Instruction_pushtrue)
 				{
 					stack.push('true');
+				}
+				else if(op is Instruction_pushfalse)
+				{
+					stack.push('false');
 				}
 				else if(op is Instruction_pop)
 				{
@@ -420,20 +525,28 @@ package com.swfwire.decompiler.utils
 					lines.push('return;');
 				}
 				//else
-				if(true)
+				if(false)
 				{
 					var description:XML = describeType(op);
 					var string:String = '    '
+					string += '#'+iter+'	';
+					/*
 					if(offsetLookup && offsetLookup[iter])
 					{
-						//string += offsetLookup[iter]+':\t';
+						string += '#'+offsetLookup[iter]+'	';
 					}
+					*/
 					
 					string += String(description.@name).replace(/.*Instruction_/, '');
 					
 					for each(var name:String in description.variable.@name)
 					{
-						params.push(name+': '+op[name]);
+						var prop:* = op[name];
+						if(prop is IInstruction)
+						{
+							prop = prop+'@'+positionLookup[prop];
+						}
+						params.push(name+': '+prop);
 						//props[name] = variable[name];
 					}
 					string += '  ' + params.join(', ');
@@ -443,7 +556,7 @@ package com.swfwire.decompiler.utils
 				}
 				//lines.push(ObjectUtil.objectToString(instruction, 4, 10, 100, 10, '	'));
 			}
-			return lines.join('\n			');
+			return lines.join('\n');
 		}
 		
 		public function traitToString(r:ReadableTrait):String
@@ -506,7 +619,7 @@ package com.swfwire.decompiler.utils
 				
 				if(r.instructions && r.instructions.length > 0)
 				{
-					pieces.push('\n		{\n			'+instructionsToString(r.instructions)+'\n		}');
+					pieces.push('\n		{\n'+StringUtil.indent(instructionsToString(r.instructions), '			')+'\n		}');
 				}
 				else
 				{

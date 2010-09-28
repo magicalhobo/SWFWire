@@ -25,6 +25,31 @@ package
 		{
 		}
 		
+		public static function testIfElse():void
+		{
+			if(1)
+			{
+				trace('1');
+			}
+			else
+			{
+				trace('2');
+			}
+		}
+		
+		public static function testSwitch():void
+		{
+			switch(1)
+			{
+				case 1:
+					trace('1');
+					break;
+				case 2:
+					trace('2');
+					break;
+			}
+		}
+		
 		public static function returnBoolean():Boolean
 		{
 			return true;
@@ -57,7 +82,7 @@ package
 			}
 		}
 		
-		public static function tryCatchFinally():void
+		public static function testTryCatchFinally():void
 		{
 			try
 			{
