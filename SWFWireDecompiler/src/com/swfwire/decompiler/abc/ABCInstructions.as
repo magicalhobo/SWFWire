@@ -334,10 +334,12 @@ package com.swfwire.decompiler.abc
 			0xD5: Instruction_setlocal1,
 			0xD6: Instruction_setlocal2,
 			0xD7: Instruction_setlocal3,
+			//0xEE => abs_jump,
 			0xEF: Instruction_debug,
 			0xF0: Instruction_debugline,
 			0xF1: Instruction_debugfile,
 			0xF2: Instruction_0xF2
+			//0xF3 => timestamp,
 		};
 		
 		private static var instructionIds:Dictionary = new Dictionary();

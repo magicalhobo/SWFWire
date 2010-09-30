@@ -211,7 +211,7 @@ package com.swfwire.decompiler.utils
 				if(hitmap[iter])
 				{
 					trace('already hit');
-					//break;
+					break;
 				}
 				hitmap[iter] = 1;
 				var op:IInstruction = instructions[iter];
@@ -225,7 +225,11 @@ package com.swfwire.decompiler.utils
 				var mn:MultinameToken;
 				var rmn:ReadableMultiname;
 				
-				if(true)
+				const showByteCode:Boolean = true;
+				const showActionScript:Boolean = true;
+				const showDebug:Boolean = false;
+				
+				if(showByteCode)
 				{
 					var description:XML = describeType(op);
 					var string:String = '    '
@@ -237,9 +241,14 @@ package com.swfwire.decompiler.utils
 					}
 					*/
 					
+					if(!showDebug && (op is Instruction_debug || op is Instruction_debugfile || op is Instruction_debugline))
+					{
+						continue;
+					}
+					
 					if(op is EndInstruction)
 					{
-						string += '-';
+						string += '';
 					}
 					else
 					{
@@ -275,286 +284,312 @@ package com.swfwire.decompiler.utils
 					lines.push(string);
 				}
 				
-				if(op is EndInstruction)
+				if(showActionScript)
 				{
-				}
-				else if(op is Instruction_debug || op is Instruction_debugfile || op is Instruction_debugline)
-				{
-				}
-				else if(op is Instruction_label)
-				{
-				}
-				else if(op is Instruction_lookupswitch)
-				{
-					tempInt = stack.pop();
-					
-					if(Instruction_lookupswitch(op).caseReferences.hasOwnProperty(tempInt))
+					if(op is EndInstruction)
 					{
-						tempInt2 = positionLookup[Instruction_lookupswitch(op).caseReferences[tempInt]];
 					}
-					else
+					else if(op is Instruction_debug || op is Instruction_debugfile || op is Instruction_debugline)
 					{
-						tempInt2 = positionLookup[Instruction_lookupswitch(op).defaultReference];
 					}
-					
-					if(!hitmap[tempInt2])
+					else if(op is Instruction_label)
 					{
-						iter = tempInt2 - 1;
 					}
-					else
+					else if(op is Instruction_lookupswitch)
 					{
-						break;
-					}
-				}
-				else if(op is Instruction_jump)
-				{
-					trace('jump!');
-					if(stopOnJump)
-					{
-						trace('not stopping...');
-						//break;
-					}
-					tempInt = positionLookup[Instruction_jump(op).reference];
-					if(!hitmap[tempInt] || !stopOnJump)
-					{
-						iter = tempInt - 1;
-					}
-					else
-					{
-						break;
-					}
-				}
-				else if(op is Instruction_ifstrictne)
-				{
-					trace('strictne jump!');
-					tempInt = positionLookup[Instruction_ifstrictne(op).reference];
-					tempStr = instructionsToString(instructions, tempInt, hitmap, positionLookup, true);
-					tempStr3 = instructionsToString(instructions, iter + 1, hitmap, positionLookup, true);
-					trace(tempStr);
-					tempStr = StringUtil.indent(tempStr, '	');
-					tempStr3 = StringUtil.indent(tempStr3, '	');
-					
-					tempStr2 = 'if('+stack.pop() + ' !== ' + stack.pop()+')\n{\n'+tempStr+'\n}\nelse\n{\n'+tempStr3+'\n}';
-					
-					lines.push(tempStr2);
-				}
-				else if(op is Instruction_iffalse)
-				{
-					trace('strictne jump!');
-					tempInt = positionLookup[Instruction_iffalse(op).reference];
-					tempStr = instructionsToString(instructions, tempInt, hitmap, positionLookup, true);
-					tempStr3 = instructionsToString(instructions, iter + 1, hitmap, positionLookup, true);
-					trace(tempStr);
-					tempStr = StringUtil.indent(tempStr, '	');
-					tempStr3 = StringUtil.indent(tempStr3, '	');
-					
-					tempStr2 = 'if('+stack.pop() + ' == false)\n{\n'+tempStr+'\n}\nelse\n{\n'+tempStr3+'\n}';
-					
-					lines.push(tempStr2);
-				}
-				else if(op is Instruction_getlocal0)
-				{
-					stack.push(locals.getName(0));
-				}
-				else if(op is Instruction_getlocal1)
-				{
-					stack.push(locals.getName(1));
-				}
-				else if(op is Instruction_getlocal2)
-				{
-					stack.push(locals.getName(2));
-				}
-				else if(op is Instruction_getlocal3)
-				{
-					stack.push(locals.getName(3));
-				}
-				else if(op is Instruction_getlocal)
-				{
-					stack.push(locals.getName(Instruction_getlocal(op).index));
-				}
-				else if(op is Instruction_setlocal0)
-				{
-					locals.setName(0, stack.pop());
-				}
-				else if(op is Instruction_setlocal1)
-				{
-					locals.setName(1, stack.pop());
-				}
-				else if(op is Instruction_setlocal2)
-				{
-					locals.setName(2, stack.pop());
-				}
-				else if(op is Instruction_setlocal3)
-				{
-					locals.setName(3, stack.pop());
-				}
-				else if(op is Instruction_setlocal)
-				{
-					locals.setName(Instruction_setlocal(op).index, stack.pop());
-				}
-				else if(op is Instruction_findpropstrict)
-				{
-					tempInt = Instruction_findpropstrict(op).index;
-					mn = abcFile.cpool.multinames[tempInt];
-					switch(mn.kind)
-					{
-						case MultinameToken.KIND_QName:
-							rmn = new ReadableMultiname();
-							getReadableMultiname(tempInt, rmn);
-							tempStr = this.multinameTypeToString(rmn);
-							stack.push(tempStr);
-							stack.push(tempStr);
-							//lines.push('findprop - '+tempStr);
-							break;
-					}
-				}
-				else if(op is Instruction_getproperty)
-				{
-					tempInt = Instruction_getproperty(op).index;
-					mn = abcFile.cpool.multinames[tempInt];
-					switch(mn.kind)
-					{
-						case MultinameToken.KIND_QName:
-							var obj:String = stack.pop();
-							
-							rmn = new ReadableMultiname();
-							getReadableMultiname(tempInt, rmn);
-							tempStr = this.multinameTypeToString(rmn);
-							
-							if(obj != tempStr)
-							{
-								tempStr = obj+'.'+tempStr;
-							}
-							tempStr = tempStr;
-							stack.push(tempStr);
-							//lines.push('getprop - '+tempStr);
-							break;
-					}
-				}
-				else if(op is Instruction_callproperty)
-				{
-					tempInt = Instruction_callproperty(op).index;
-					mn = abcFile.cpool.multinames[tempInt];
-					switch(mn.kind)
-					{
-						case MultinameToken.KIND_QName:
-							var args:Array = [];
-							for(tempInt2 = Instruction_callproperty(op).argCount - 1; tempInt2 >= 0; tempInt2--)
-							{
-								args.unshift(stack.pop());
-							}
-							
-							tempStr2 = stack.pop();
-							
-							rmn = new ReadableMultiname();
-							getReadableMultiname(tempInt, rmn);
-							tempStr = this.multinameTypeToString(rmn);
-							
-							if(tempStr2 != tempStr)
-							{
-								tempStr = tempStr2+'.'+tempStr;
-							}
-							
-							tempStr = tempStr+'('+args.join(', ')+')';
-							localCount++;
-							stack.push('local_'+localCount);
-							lines.push('var local_'+localCount+':* = '+tempStr+';');
-							break;
-					}
-				}
-				else if(op is Instruction_convert_d)
-				{
-					stack.push('Number('+stack.pop()+')');
-				}
-				else if(op is Instruction_kill)
-				{
-					locals.setName(Instruction_kill(op).index, 'undefined');
-				}
-				else if(op is Instruction_pushscope)
-				{
-					scope.push(stack.pop());
-				}
-				else if(op is Instruction_pushbyte)
-				{
-					stack.push(Instruction_pushbyte(op).byteValue);
-				}
-				else if(op is Instruction_pushshort)
-				{
-					stack.push(Instruction_pushshort(op).value);
-				}
-				else if(op is Instruction_pushdouble)
-				{
-					stack.push(abcFile.cpool.doubles[Instruction_pushdouble(op).index]);
-				}
-				else if(op is Instruction_pushstring)
-				{
-					stack.push('"'+abcFile.cpool.strings[Instruction_pushstring(op).index].utf8+'"');
-				}
-				else if(op is Instruction_pushtrue)
-				{
-					stack.push('true');
-				}
-				else if(op is Instruction_pushfalse)
-				{
-					stack.push('false');
-				}
-				else if(op is Instruction_pop)
-				{
-					stack.pop();
-				}
-				else if(op is Instruction_newobject)
-				{
-					var argCount:uint = Instruction_newobject(op).argCount;
-					line += '{';
-					for(var iter2:int = 0; iter2 < argCount; iter2++)
-					{
-						var valN:* = stack.pop();
-						var nameN:* = stack.pop();
-						line += nameN+': '+valN;
-					}
-					line += '}';
-					stack.push(line);
-				}
-				else if(op is Instruction_returnvalue)
-				{
-					var str:String = stack.pop();
-					lines.push('return '+str+';');
-				}
-				else if(op is Instruction_returnvoid)
-				{
-					lines.push('return;');
-				}
-				//else
-				if(false)
-				{
-					var description:XML = describeType(op);
-					var string:String = '    '
-					string += '#'+iter+'	';
-					/*
-					if(offsetLookup && offsetLookup[iter])
-					{
-						string += '#'+offsetLookup[iter]+'	';
-					}
-					*/
-					
-					string += String(description.@name).replace(/.*Instruction_/, '');
-					
-					for each(var name:String in description.variable.@name)
-					{
-						var prop:* = op[name];
-						if(prop is IInstruction)
+						tempInt = stack.pop();
+						
+						if(Instruction_lookupswitch(op).caseReferences.hasOwnProperty(tempInt))
 						{
-							prop = prop+'@'+positionLookup[prop];
+							tempInt2 = positionLookup[Instruction_lookupswitch(op).caseReferences[tempInt]];
 						}
-						params.push(name+': '+prop);
-						//props[name] = variable[name];
+						else
+						{
+							tempInt2 = positionLookup[Instruction_lookupswitch(op).defaultReference];
+						}
+						
+						if(!hitmap[tempInt2])
+						{
+							iter = tempInt2 - 1;
+						}
+						else
+						{
+							break;
+						}
 					}
-					string += '  ' + params.join(', ');
-					
-					
-					lines.push(string);
+					else if(op is Instruction_jump)
+					{
+						trace('jump!');
+						if(stopOnJump)
+						{
+							trace('not stopping...');
+							//break;
+						}
+						tempInt = positionLookup[Instruction_jump(op).reference];
+						if(!hitmap[tempInt] || !stopOnJump)
+						{
+							iter = tempInt - 1;
+						}
+						else
+						{
+							break;
+						}
+					}
+					else if(op is Instruction_ifstrictne)
+					{
+						trace('strictne jump!');
+						tempInt = positionLookup[Instruction_ifstrictne(op).reference];
+						tempStr = instructionsToString(instructions, tempInt, hitmap, positionLookup, true);
+						tempStr3 = instructionsToString(instructions, iter + 1, hitmap, positionLookup, true);
+						trace(tempStr);
+						tempStr = StringUtil.indent(tempStr, '	');
+						tempStr3 = StringUtil.indent(tempStr3, '	');
+						
+						tempStr2 = 'if('+stack.pop() + ' !== ' + stack.pop()+')\n{\n'+tempStr+'\n}\nelse\n{\n'+tempStr3+'\n}';
+						
+						lines.push(tempStr2);
+					}
+					else if(op is Instruction_iftrue)
+					{
+						trace('iftrue jump!');
+						tempInt = positionLookup[Instruction_iftrue(op).reference];
+						tempStr = instructionsToString(instructions, tempInt, hitmap, positionLookup, true);
+						tempStr3 = instructionsToString(instructions, iter + 1, hitmap, positionLookup, true);
+						trace(tempStr);
+						tempStr = StringUtil.indent(tempStr, '	');
+						tempStr3 = StringUtil.indent(tempStr3, '	');
+						//this is stupid
+						if(tempInt > iter)
+						{
+							tempStr2 = 'if('+stack.pop() + ' == true)\n{\n'+tempStr+'\n}\nelse\n{\n'+tempStr3+'\n}';
+						}
+						else
+						{
+							tempStr2 = 'while('+stack.pop() + ' == true)\n{\n'+tempStr+'\n}\n'+tempStr3+'\n';
+						}
+						
+						lines.push(tempStr2);
+					}
+					else if(op is Instruction_iffalse)
+					{
+						trace('iffalse jump!');
+						tempInt = positionLookup[Instruction_iffalse(op).reference];
+						tempStr = instructionsToString(instructions, tempInt, hitmap, positionLookup, true);
+						tempStr3 = instructionsToString(instructions, iter + 1, hitmap, positionLookup, true);
+						trace(tempStr);
+						tempStr = StringUtil.indent(tempStr, '	');
+						tempStr3 = StringUtil.indent(tempStr3, '	');
+						
+						tempStr2 = 'if('+stack.pop() + ' == false)\n{\n'+tempStr+'\n}\nelse\n{\n'+tempStr3+'\n}';
+						
+						lines.push(tempStr2);
+					}
+					else if(op is Instruction_getlocal0)
+					{
+						stack.push(locals.getName(0));
+					}
+					else if(op is Instruction_getlocal1)
+					{
+						stack.push(locals.getName(1));
+					}
+					else if(op is Instruction_getlocal2)
+					{
+						stack.push(locals.getName(2));
+					}
+					else if(op is Instruction_getlocal3)
+					{
+						stack.push(locals.getName(3));
+					}
+					else if(op is Instruction_getlocal)
+					{
+						stack.push(locals.getName(Instruction_getlocal(op).index));
+					}
+					else if(op is Instruction_setlocal0)
+					{
+						locals.setName(0, stack.pop());
+					}
+					else if(op is Instruction_setlocal1)
+					{
+						locals.setName(1, stack.pop());
+					}
+					else if(op is Instruction_setlocal2)
+					{
+						locals.setName(2, stack.pop());
+					}
+					else if(op is Instruction_setlocal3)
+					{
+						locals.setName(3, stack.pop());
+					}
+					else if(op is Instruction_setlocal)
+					{
+						locals.setName(Instruction_setlocal(op).index, stack.pop());
+					}
+					else if(op is Instruction_findpropstrict)
+					{
+						tempInt = Instruction_findpropstrict(op).index;
+						mn = abcFile.cpool.multinames[tempInt];
+						switch(mn.kind)
+						{
+							case MultinameToken.KIND_QName:
+								rmn = new ReadableMultiname();
+								getReadableMultiname(tempInt, rmn);
+								tempStr = this.multinameTypeToString(rmn);
+								stack.push(tempStr);
+								stack.push(tempStr);
+								//lines.push('findprop - '+tempStr);
+								break;
+						}
+					}
+					else if(op is Instruction_getproperty)
+					{
+						tempInt = Instruction_getproperty(op).index;
+						mn = abcFile.cpool.multinames[tempInt];
+						switch(mn.kind)
+						{
+							case MultinameToken.KIND_QName:
+								var obj:String = stack.pop();
+								
+								rmn = new ReadableMultiname();
+								getReadableMultiname(tempInt, rmn);
+								tempStr = this.multinameTypeToString(rmn);
+								
+								if(obj != tempStr)
+								{
+									tempStr = obj+'.'+tempStr;
+								}
+								tempStr = tempStr;
+								stack.push(tempStr);
+								//lines.push('getprop - '+tempStr);
+								break;
+						}
+					}
+					else if(op is Instruction_callproperty)
+					{
+						tempInt = Instruction_callproperty(op).index;
+						mn = abcFile.cpool.multinames[tempInt];
+						switch(mn.kind)
+						{
+							case MultinameToken.KIND_QName:
+								var args:Array = [];
+								for(tempInt2 = Instruction_callproperty(op).argCount - 1; tempInt2 >= 0; tempInt2--)
+								{
+									args.unshift(stack.pop());
+								}
+								
+								tempStr2 = stack.pop();
+								
+								rmn = new ReadableMultiname();
+								getReadableMultiname(tempInt, rmn);
+								tempStr = this.multinameTypeToString(rmn);
+								
+								if(tempStr2 != tempStr)
+								{
+									tempStr = tempStr2+'.'+tempStr;
+								}
+								
+								tempStr = tempStr+'('+args.join(', ')+')';
+								localCount++;
+								stack.push('local_'+localCount);
+								lines.push('var local_'+localCount+':* = '+tempStr+';');
+								break;
+						}
+					}
+					else if(op is Instruction_convert_d)
+					{
+						stack.push('Number('+stack.pop()+')');
+					}
+					else if(op is Instruction_kill)
+					{
+						locals.setName(Instruction_kill(op).index, 'undefined');
+					}
+					else if(op is Instruction_pushscope)
+					{
+						scope.push(stack.pop());
+					}
+					else if(op is Instruction_pushbyte)
+					{
+						stack.push(Instruction_pushbyte(op).byteValue);
+					}
+					else if(op is Instruction_pushshort)
+					{
+						stack.push(Instruction_pushshort(op).value);
+					}
+					else if(op is Instruction_pushdouble)
+					{
+						stack.push(abcFile.cpool.doubles[Instruction_pushdouble(op).index]);
+					}
+					else if(op is Instruction_pushstring)
+					{
+						stack.push('"'+abcFile.cpool.strings[Instruction_pushstring(op).index].utf8+'"');
+					}
+					else if(op is Instruction_pushtrue)
+					{
+						stack.push('true');
+					}
+					else if(op is Instruction_pushfalse)
+					{
+						stack.push('false');
+					}
+					else if(op is Instruction_pop)
+					{
+						stack.pop();
+					}
+					else if(op is Instruction_newobject)
+					{
+						var argCount:uint = Instruction_newobject(op).argCount;
+						line += '{';
+						for(var iter2:int = 0; iter2 < argCount; iter2++)
+						{
+							var valN:* = stack.pop();
+							var nameN:* = stack.pop();
+							line += nameN+': '+valN;
+						}
+						line += '}';
+						stack.push(line);
+					}
+					else if(op is Instruction_returnvalue)
+					{
+						var str:String = stack.pop();
+						lines.push('return '+str+';');
+						break;
+					}
+					else if(op is Instruction_returnvoid)
+					{
+						lines.push('return;');
+						break;
+					}
+					//else
+					if(false)
+					{
+						var description:XML = describeType(op);
+						var string:String = '    '
+						string += '#'+iter+'	';
+						/*
+						if(offsetLookup && offsetLookup[iter])
+						{
+							string += '#'+offsetLookup[iter]+'	';
+						}
+						*/
+						
+						string += String(description.@name).replace(/.*Instruction_/, '');
+						
+						for each(var name:String in description.variable.@name)
+						{
+							var prop:* = op[name];
+							if(prop is IInstruction)
+							{
+								prop = prop+'@'+positionLookup[prop];
+							}
+							params.push(name+': '+prop);
+							//props[name] = variable[name];
+						}
+						string += '  ' + params.join(', ');
+						
+						
+						lines.push(string);
+					}
+					//lines.push(ObjectUtil.objectToString(instruction, 4, 10, 100, 10, '	'));
 				}
-				//lines.push(ObjectUtil.objectToString(instruction, 4, 10, 100, 10, '	'));
 			}
 			return lines.join('\n');
 		}

@@ -6,6 +6,7 @@ package
 	import flash.display.StageScaleMode;
 	import flash.events.Event;
 	import flash.events.MouseEvent;
+	import flash.system.Security;
 	
 	import org.osmf.display.ScaleMode;
 	
@@ -25,6 +26,22 @@ package
 		{
 		}
 		
+		public static function testInfiniteFor():void
+		{
+			for(;;)
+			{
+				trace('infinity!');
+			}
+		}
+		
+		public static function testInfiniteWhile():void
+		{
+			while(true)
+			{
+				trace('infinity!');
+			}
+		}
+		
 		public static function testIfElse():void
 		{
 			if(1)
@@ -37,9 +54,9 @@ package
 			}
 		}
 		
-		public static function testSwitch():void
+		public static function testSwitch(myArg:uint):void
 		{
-			switch(1)
+			switch(myArg)
 			{
 				case 1:
 					trace('1');
@@ -173,6 +190,8 @@ package
 		{
 			trace('Starting constructor');
 			trace('stage: '+stage);
+			
+			Security.allowDomain('swfwire.com');
 			
 			stage.scaleMode = StageScaleMode.NO_SCALE;
 			stage.align = StageAlign.TOP_LEFT;

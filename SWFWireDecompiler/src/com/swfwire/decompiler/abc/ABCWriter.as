@@ -86,7 +86,7 @@ package com.swfwire.decompiler.abc
 				
 				position = abc.getBytePosition();
 				
-				if(InstructionClass != EndInstruction)
+				if(InstructionClass != EndInstruction && InstructionClass != UnknownInstruction)
 				{
 					abc.writeU8(id);
 				}
@@ -444,6 +444,9 @@ package com.swfwire.decompiler.abc
 				case Instruction_0xF2:
 					write_0xF2(op, abc);
 					break;
+				case UnknownInstruction:
+					writeUnknown(op, abc);
+					break;
 				default:
 					throw new Error('uh oh, can\'t write: '+getQualifiedClassName(op));
 					break;
@@ -548,6 +551,11 @@ package com.swfwire.decompiler.abc
 					}
 					break;
 			}
+		}
+		
+		public function writeUnknown(op:UnknownInstruction, abc:ABCByteArray):void
+		{
+			abc.writeU8(op.type);
 		}
 		
 		public function write_0xF2(op:Instruction_0xF2, abc:ABCByteArray):void

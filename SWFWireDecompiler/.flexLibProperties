@@ -384,6 +384,7 @@
     <classEntry path="com.swfwire.decompiler.abc.MethodBodyReadResult"/>
     <classEntry path="com.swfwire.decompiler.abc.instructions.EndInstruction"/>
     <classEntry path="com.swfwire.decompiler.events.AsyncSWFReaderEvent"/>
+    <classEntry path="com.swfwire.decompiler.abc.instructions.UnknownInstruction"/>
   </includeClasses>
   <includeResources/>
   <namespaceManifests/>

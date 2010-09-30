@@ -3,12 +3,16 @@ package com.swfwire.debugger.utils
 	import com.swfwire.decompiler.abc.ABCFile;
 	import com.swfwire.decompiler.abc.ABCReaderMetadata;
 	import com.swfwire.decompiler.abc.instructions.*;
+	import com.swfwire.decompiler.abc.tokens.ConstantPoolToken;
+	import com.swfwire.decompiler.abc.tokens.InstanceToken;
 	import com.swfwire.decompiler.abc.tokens.MethodBodyInfoToken;
 	import com.swfwire.decompiler.abc.tokens.MethodInfoToken;
 	import com.swfwire.decompiler.abc.tokens.MultinameToken;
 	import com.swfwire.decompiler.abc.tokens.NamespaceToken;
 	import com.swfwire.decompiler.abc.tokens.StringToken;
+	import com.swfwire.decompiler.abc.tokens.TraitsInfoToken;
 	import com.swfwire.decompiler.abc.tokens.multinames.MultinameQNameToken;
+	import com.swfwire.decompiler.abc.tokens.traits.TraitMethodToken;
 	import com.swfwire.utils.Debug;
 	
 	import flash.utils.Dictionary;
@@ -421,6 +425,57 @@ package com.swfwire.debugger.utils
 			return index;
 		}
 		
+		public function getEmptyConstructorInstructions():Vector.<IInstruction>
+		{
+			return Vector.<IInstruction>([
+				new Instruction_getlocal0(),
+				new Instruction_pushscope(),
+				new Instruction_getlocal0(),
+				new Instruction_constructsuper(),
+				new Instruction_returnvoid()]);
+		}
+		
+		public function getEmptyMethodInstructions():Vector.<IInstruction>
+		{
+			return Vector.<IInstruction>([
+				new Instruction_getlocal0(),
+				new Instruction_pushscope(),
+				new Instruction_returnvoid()]);
+		}
+		
+		public function getMethodBody(packageName:String, className:String, name:String):MethodBodyInfoToken
+		{
+			var result:MethodBodyInfoToken;
+			var cpool:ConstantPoolToken = abcFile.cpool;
+			
+			outer:
+			for(var i:uint = 0; i < abcFile.instances.length; i++)
+			{
+				var inst:InstanceToken = abcFile.instances[i];
+				var imn:MultinameQNameToken = cpool.multinames[inst.name].data as MultinameQNameToken;
+				
+				if(cpool.strings[cpool.namespaces[imn.ns].name].utf8 == packageName && cpool.strings[imn.name].utf8 == className)
+				{
+					for(var i2:uint = 0; i2 < inst.traits.length; i2++)
+					{
+						var t:TraitsInfoToken = inst.traits[i2];
+						if(t.kind == TraitsInfoToken.KIND_TRAIT_METHOD)
+						{
+							var mn:MultinameQNameToken = cpool.multinames[t.name].data as MultinameQNameToken;
+							if(cpool.strings[cpool.namespaces[mn.ns].name].utf8 == '' && cpool.strings[mn.name].utf8 == name)
+							{
+								var m:TraitMethodToken = t.data as TraitMethodToken;
+								result = findMethodBody(m.methodId);
+								break outer;
+							}
+						}
+					}
+				}
+			}
+			
+			return result;
+		}
+
 		public function addQName(namespace:int, name:int):int
 		{
 			var multinames:Vector.<MultinameToken> = abcFile.cpool.multinames;

@@ -11,6 +11,7 @@
 			
 			import com.magicalhobo.air.utils.WindowTracker;
 			import com.swfwire.debugger.injected.Logger;
+			import com.swfwire.debugger.injected.Security;
 			import com.swfwire.debugger.utils.ABCWrapper;
 			import com.swfwire.debugger.utils.InstructionLocation;
 			import com.swfwire.debugger.utils.InstructionTemplate;
@@ -45,6 +46,8 @@
 			
 			import mx.managers.SystemManager;
 			
+			private static var imports:Array = [com.swfwire.debugger.injected.Security];
+			
 			private var windowTracker:WindowTracker;
 			private var appUpdater:ApplicationUpdaterUI;
 			private var urlLoader:URLLoader;
@@ -72,6 +75,32 @@
 				load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpse/bin-debug/SWFCorpse.swf').url);
 				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFWireInspector/bin-debug/SWFWireInspector.swf').url);
 				//load('temp.swf');
+				
+				preview.addEventListener(MouseEvent.CONTEXT_MENU, inspectHandler);
+			}
+			
+			private function inspectHandler(ev:MouseEvent):void
+			{
+				var point:Point = preview.localToGlobal(new Point(preview.mouseX, preview.mouseY));
+				
+				var objects:Array = preview.getObjectsUnderPoint(point);
+				//objects.shift();
+				
+				var target:DisplayObject = objects[0];
+				
+				var path:Array = [];
+				var currentTarget:DisplayObject = target;
+				
+				while(currentTarget && currentTarget.parent)
+				{
+					path.push(currentTarget.name);
+					currentTarget = currentTarget.parent;
+				}
+				
+				inspectOut.text += path.reverse().join('.')+'\n';
+				
+				Debug.dump(objects, 2);
+				//trace(objects.join('\n'));
 			}
 			
 			private function loadProgressHandler(ev:ProgressEvent):void
@@ -149,6 +178,15 @@
 				
 				trace('main class: '+mainClass);
 				
+				var mainClassPackage:String = '';
+				var mainClassName:String = mainClass;
+				
+				if(mainClass.indexOf('.') >= 0)
+				{
+					mainClassName = mainClass.substr(mainClass.lastIndexOf('.') + 1);
+					mainClassPackage = mainClass.substr(0, mainClass.lastIndexOf('.'));
+				}
+				
 				for(iTag = 0; iTag < swf.tags.length; iTag++)
 				{
 					var abcTag:DoABCTag = swf.tags[iTag] as DoABCTag;
@@ -156,19 +194,29 @@
 					{
 						var wrapper:ABCWrapper = new ABCWrapper(abcTag.abcFile, metadata[iTag]);
 						
-						var mainIndex:int = wrapper.getMultinameIndex('', mainClass);
+						var allowDomainIndex:int = wrapper.getMultinameIndex('flash.system', 'Security');
+						if(allowDomainIndex >= 0)
+						{
+							var allowDomain:MultinameQNameToken = abcTag.abcFile.cpool.multinames[allowDomainIndex].data as MultinameQNameToken;
+							abcTag.abcFile.cpool.namespaces[allowDomain.ns].name = wrapper.addString('com.swfwire.debugger.injected');
+						}
+						
+						var mainIndex:int = wrapper.getMultinameIndex(mainClassPackage, mainClassName);
 						var mainInst:InstanceToken = null;
 						
-						for(var i:uint = 0; i < abcTag.abcFile.instances.length; i++)
+						if(mainIndex >= 0)
 						{
-							var inst:InstanceToken = abcTag.abcFile.instances[i];
-							if(inst.name == mainIndex)
+							for(var i:uint = 0; i < abcTag.abcFile.instances.length; i++)
 							{
-								mainInst = inst;
-								break;
+								var inst:InstanceToken = abcTag.abcFile.instances[i];
+								if(inst.name == mainIndex)
+								{
+									mainInst = inst;
+									break;
+								}
 							}
 						}
-
+						
 						if(mainInst)
 						{
 							var defcm:MethodInfoToken = new MethodInfoToken();
@@ -193,14 +241,7 @@
 							
 							var emptyMethod:MethodBodyInfoToken = new MethodBodyInfoToken(
 								mainInst.iinit, 1, 1, 9, 10);
-							emptyMethod.instructions = new Vector.<IInstruction>();
-							emptyMethod.instructions.push(
-								new Instruction_getlocal0(),
-								new Instruction_pushscope(),
-								new Instruction_getlocal0(),
-								new Instruction_constructsuper(),
-								new Instruction_returnvoid()
-							);
+							emptyMethod.instructions = wrapper.getEmptyConstructorInstructions();
 							
 							abcTag.abcFile.methodBodies.push(emptyMethod);
 							
@@ -215,25 +256,19 @@
 						//mainInst.iinit--;
 						
 						if(true)
-						//if(false)
 						{
-							var classIndex:int = wrapper.addQName(
+							var loggerClassIndex:int = wrapper.addQName(
 								wrapper.addNamespaceFromString('com.swfwire.debugger.injected'), 
 								wrapper.addString('Logger'));
 							
 							var emptyNS:int = wrapper.addNamespaceFromString('');
 							
-							var temp:* = abcTag.abcFile.cpool.namespaces[emptyNS];
-							
-							var methodIndex2:int = wrapper.addQName(emptyNS, wrapper.addString('enterFunction'));
-							var methodIndex3:int = wrapper.addQName(emptyNS, wrapper.addString('exitFunction'));
+							var enterFunctionIndex:int = wrapper.addQName(emptyNS, wrapper.addString('enterFunction'));
+							var exitFunctionIndex:int = wrapper.addQName(emptyNS, wrapper.addString('exitFunction'));
 							
 							var cp:ConstantPoolToken = abcTag.abcFile.cpool;
 							
-							//Debug.log('test', 'before', abcTag.abcFile.methodBodies);
-							
 							var traceIndex:int = wrapper.getMultinameIndex('', 'trace');
-							//trace('traceIndex: '+traceIndex);
 							if(traceIndex >= 0)
 							{
 								var l:* = wrapper.findInstruction(new InstructionTemplate(Instruction_findpropstrict, {index: traceIndex}));
@@ -246,7 +281,7 @@
 								wrapper.replaceInstruction2(l, function(z:*, a:Vector.<IInstruction>):Vector.<IInstruction>
 								{
 									var b:Vector.<IInstruction> = new Vector.<IInstruction>();
-									b.push(new Instruction_getlex(classIndex));
+									b.push(new Instruction_getlex(loggerClassIndex));
 									return b;
 								});
 							
@@ -281,135 +316,39 @@
 
 									abcTag.abcFile.methodBodies[i9].maxStack += paramCount * 2 + 3;
 									
-									j9.unshift(new Instruction_callpropvoid(methodIndex2, 3));
+									j9.unshift(new Instruction_callpropvoid(enterFunctionIndex, 3));
 									
-									j9.unshift(new Instruction_newobject(paramCount));
-
-									for(var i10:int = paramCount - 1; i10 >= 0; i10--)
+									if(paramCount > 0)
 									{
-										var paramName:ParamInfoToken = abcTag.abcFile.methods[mb.method].paramNames[i10];
-										j9.unshift(new Instruction_getlocal(i10));
-										j9.unshift(new Instruction_pushstring(paramName.value));
+										j9.unshift(new Instruction_newobject(paramCount));
+	
+										for(var i10:int = paramCount - 1; i10 >= 0; i10--)
+										{
+											var paramName:ParamInfoToken = abcTag.abcFile.methods[mb.method].paramNames[i10];
+											j9.unshift(new Instruction_getlocal(i10));
+											if(paramName)
+											{
+												j9.unshift(new Instruction_pushstring(paramName.value));
+											}
+											else
+											{
+												j9.unshift(new Instruction_pushstring(wrapper.addString('param'+i10)));
+											}
+										}
+									}
+									else
+									{
+										j9.unshift(new Instruction_pushnull());
 									}
 									
 									j9.unshift(new Instruction_getlocal0());
 									
 									j9.unshift(new Instruction_pushstring(j6));
-									j9.unshift(new Instruction_getlex(classIndex));
+									j9.unshift(new Instruction_getlex(loggerClassIndex));
 								}
 							}
 							
-							/*
-							l = wrapper.findInstruction(new InstructionTemplate(Instruction_pushscope, {}));
-							
-							for(var iter2:* in l)
-							{
-								abcTag.abcFile.methodBodies[l[iter2].methodBody].maxStack += 2;
-							}
-							wrapper.replaceInstruction2(l, function(z:InstructionLocation, a:Vector.<IInstruction>):Vector.<IInstruction>
-							{
-								var n:* = abcTag.abcFile.methodBodies[z.methodBody].method;
-								var o:* = 'unknown';
-								
-								outer:
-								for(var i1:* in abcTag.abcFile.instances)
-								{
-									var j1:* = abcTag.abcFile.instances[i1];
-									for(var i2:* in j1.traits)
-									{
-										var j2:* = j1.traits[i2];
-										var j3:* = j2.data as TraitMethodToken;
-										if(j3)
-										{
-											if(j3.methodId == n)
-											{
-												var j4:MultinameQNameToken = abcTag.abcFile.cpool.multinames[j2.name].data as MultinameQNameToken;
-												if(j4)
-												{
-													var j5:String = abcTag.abcFile.cpool.strings[abcTag.abcFile.cpool.namespaces[j4.ns].name].utf8;
-													j5 += '/' + abcTag.abcFile.cpool.strings[j4.name].utf8;
-													o = j5;
-													break outer;
-												}
-											}
-										}
-									}
-								}
-								
-								var j6:int =  wrapper.addString(o+' (#'+n+'.'+z.id+')');
-								
-								a.push(new Instruction_getlex(classIndex));
-								a.push(new Instruction_pushstring(j6));
-								a.push(new Instruction_callpropvoid(methodIndex2, 1));
-								return a;
-							});
-							*/
 							var m:*;
-							/*
-							l = wrapper.findInstruction(new InstructionTemplate(Instruction_returnvoid, {}));
-							var m:* = wrapper.findInstruction(new InstructionTemplate(Instruction_popscope, {}));
-							for(var iter4:* in m)
-							{
-								l.push(m[iter4]);
-							}
-							*/
-							/*
-							l = wrapper.findInstruction(new InstructionTemplate(Instruction_newfunction, {}));
-							for(var iter6:* in l)
-							{
-								abcTag.abcFile.methodBodies[l[iter6].methodBody].maxStack += 1;
-							}
-							
-							wrapper.replaceInstruction2(l, function(z:InstructionLocation, a:Vector.<IInstruction>):Vector.<IInstruction>
-							{
-								var n:* = abcTag.abcFile.methodBodies[z.methodBody].method;
-								var o:* = 'unknown';
-								
-								outer:
-								for(var i1:* in abcTag.abcFile.instances)
-								{
-									var j1:* = abcTag.abcFile.instances[i1];
-									for(var i2:* in j1.traits)
-									{
-										var j2:* = j1.traits[i2];
-										var j3:* = j2.data as TraitMethodToken;
-										if(j3)
-										{
-											if(j3.methodId == n)
-											{
-												var j4:MultinameQNameToken = abcTag.abcFile.cpool.multinames[j2.name].data as MultinameQNameToken;
-												if(j4)
-												{
-													var j5:String = abcTag.abcFile.cpool.strings[abcTag.abcFile.cpool.namespaces[j4.ns].name].utf8;
-													j5 += '/' + abcTag.abcFile.cpool.strings[j4.name].utf8;
-													o = j5;
-													break outer;
-												}
-											}
-										}
-									}
-								}
-								
-								var j6:int =  wrapper.addString(o+' (#'+n+'.'+z.id+') before');
-								var j7:int =  wrapper.addString(o+' (#'+n+'.'+z.id+') after');
-								
-								a.unshift(new Instruction_callpropvoid(methodIndex, 1));
-								a.unshift(new Instruction_pushstring(j6));
-								a.unshift(new Instruction_getlex(classIndex));
-								
-								a.push(new Instruction_getlex(classIndex));
-								a.push(new Instruction_pushstring(j7));
-								a.push(new Instruction_callpropvoid(methodIndex, 1));
-								return a;
-							});
-							*/
-							/*
-							var def:int = wrapper.addString('<default>');
-							var j7:Vector.<IInstruction> = abcTag.abcFile.methodBodies[l[3].methodBody].instructions;
-							j7.unshift(new Instruction_callpropvoid(methodIndex2, 1));
-							j7.unshift(new Instruction_pushstring(def));
-							j7.unshift(new Instruction_getlex(classIndex));
-							*/
 								
 							l = wrapper.findInstruction(new InstructionTemplate(Instruction_returnvoid, {}));
 							m = wrapper.findInstruction(new InstructionTemplate(Instruction_returnvalue, {}));
@@ -417,13 +356,7 @@
 							{
 								l.push(m[iter4]);
 							}
-							/*
-							m = wrapper.findInstruction(new InstructionTemplate(Instruction_popscope, {}));
-							for(var iter4:* in m)
-							{
-								l.push(m[iter4]);
-							}
-							*/
+							
 							for(var iter6:* in l)
 							{
 								abcTag.abcFile.methodBodies[l[iter6].methodBody].maxStack += 1;
@@ -434,131 +367,12 @@
 								var mb:MethodBodyInfoToken = abcTag.abcFile.methodBodies[z.methodBody];
 								if(mb.initScopeDepth > 1)
 								{
-									a.unshift(new Instruction_callpropvoid(methodIndex3, 0));
-									a.unshift(new Instruction_getlex(classIndex));
+									a.unshift(new Instruction_callpropvoid(exitFunctionIndex, 0));
+									a.unshift(new Instruction_getlex(loggerClassIndex));
 								}
 								wrapper.redirectReferences(z.methodBody, a[a.length - 1], a[0]);
 								return a;
 							});
-							/*
-							for(var i8:int = 0; i8 < abcTag.abcFile.methodBodies.length; i8++)
-							{
-								abcTag.abcFile.methodBodies[i8].maxStack += 5;
-								var j8:* = abcTag.abcFile.methodBodies[i8].instructions;
-								var j9:* = abcTag.abcFile.methodBodies[i8].initScopeDepth;
-								if(j9 == 1)
-								{
-									j8.splice(2, 0, new Instruction_callpropvoid(methodIndex2, 0));
-									j8.splice(2, 0, new Instruction_getlex(classIndex));
-								}
-								else
-								{
-									j8.unshift(new Instruction_callpropvoid(methodIndex2, 0));
-									j8.unshift(new Instruction_getlex(classIndex));
-								}
-							}
-							*/
-							/*
-							var l:* = wrapper.findInstruction(new InstructionTemplate(Instruction_lookupswitch, {}));
-							
-							if(l.length > 0)
-							{
-								Debug.dump(l);
-							}
-							*/
-							/*
-							wrapper.replaceInstruction2(l, function(z:InstructionLocation, a:Vector.<IInstruction>):Vector.<IInstruction>
-							{
-								var n:* = abcTag.abcFile.methodBodies[z.methodBody].method;
-								var o:* = 'unknown';
-								
-								outer:
-								for(var i1:* in abcTag.abcFile.instances)
-								{
-									var j1:* = abcTag.abcFile.instances[i1];
-									for(var i2:* in j1.traits)
-									{
-										var j2:* = j1.traits[i2];
-										var j3:* = j2.data as TraitMethodToken;
-										if(j3)
-										{
-											if(j3.methodId == n)
-											{
-												var j4:MultinameQNameToken = abcTag.abcFile.cpool.multinames[j2.name].data as MultinameQNameToken;
-												if(j4)
-												{
-													var j5:String = abcTag.abcFile.cpool.strings[abcTag.abcFile.cpool.namespaces[j4.ns].name].utf8;
-													j5 += '/' + abcTag.abcFile.cpool.strings[j4.name].utf8;
-													o = j5;
-													break outer;
-												}
-											}
-										}
-									}
-								}
-								
-								a.unshift(new Instruction_callpropvoid(methodIndex3, 0));
-								a.unshift(new Instruction_getlex(classIndex));
-								return a;
-							});
-							*/
-							/*
-							for(var i9:int = 0; i9 < abcTag.abcFile.methodBodies.length; i9++)
-							{
-								var j9:* = abcTag.abcFile.methodBodies[i9].instructions;
-								//j9.unshift(new Instruction_0x01());
-								//j9.unshift(new Instruction_nop());
-							}
-							*/
-							/*
-							wrapper.replaceInstructions(
-								Vector.<IInstruction>([new Instruction_findpropstrict(index)]),
-								Vector.<IInstruction>([new Instruction_getlex(classIndex)]));
-							
-							var methodIndex:int = wrapper.addQName(1, wrapper.addString('log'));
-							wrapper.replaceInstructions2(
-								Vector.<InstructionTemplate>([new InstructionTemplate(Instruction_findpropstrict, {index: index})]),
-								function(match:Vector.<IInstruction>):Vector.<IInstruction>
-								{
-									return Vector.<IInstruction>([Instruction_getlex(classIndex)]);
-								});
-							/*
-							wrapper.replaceInstructions2([{type: Instruction_findpropstrict, index: index}], function(a:Vector.<IInstruction>):Vector.<IInstruction>
-							{
-								var replacement:Vector.<IInstruction> = new Vector.<IInstruction>();
-								
-								return replacement;
-							});
-							*/
-							/*
-							wrapper.replaceInstructions(
-								Vector.<IInstruction>([new Instruction_callpropvoid(traceIndex, 1)]),
-								Vector.<IInstruction>([new Instruction_callpropvoid(methodIndex, 1)]));
-							*/
-							//update(callpropvoid, where index = 123, update index = 124)
-							//replaceInstruction(callpropvoid, where index = 123, update index = 124)
-							
-							/*
-							var findProp:Instruction_findpropstrict = abcTag.abcFile.methodBodies[1].instructions[2] as Instruction_findpropstrict;
-							findProp.index = classIndex;
-							*/
-							/*
-							var getLex:Instruction_getlex = new Instruction_getlex();
-							getLex.index = classIndex;
-							abcTag.abcFile.methodBodies[1].instructions[2] = getLex;
-							
-							var callProp:Instruction_callpropvoid = abcTag.abcFile.methodBodies[1].instructions[4] as Instruction_callpropvoid;
-							callProp.index = methodIndex;
-							*/
-							
-							//Debug.dump(abcTag.abcFile.methodBodies, 5);
-							/*
-							if(iTag == 306)
-							{
-								Debug.maxProperties = 200;
-								Debug.dump(abcTag.abcFile.methodBodies[5].instructions, 5);
-							}
-							*/
 						}
 					}
 				}
@@ -607,17 +421,43 @@
 				writeProgress.setProgress(0, 0);
 				urlLoader.load(new URLRequest(url));
 			}
+
+			protected function showMethodEntry_clickHandler(event:MouseEvent):void
+			{
+				Logger.showMethodEntry = showMethodEntry.selected;
+			}
+
+			protected function dumpArguments_clickHandler(event:MouseEvent):void
+			{
+				Logger.dumpArguments = dumpArguments.selected;
+			}
+
+			protected function showTrace_clickHandler(event:MouseEvent):void
+			{
+				Logger.showTrace = showTrace.selected;
+			}
 		]]>
 	</fx:Script>
 	<s:layout>
 		<s:VerticalLayout paddingLeft="5" paddingTop="5" paddingRight="5" paddingBottom="5"/>
 	</s:layout>
-	<mx:VDividedBox width="100%" height="100%">
-		<s:BorderContainer width="100%" height="100%" borderColor="#666666">
-			<ui:PreviewPanel id="preview" width="100%" height="100%"/>
+	<mx:HDividedBox width="100%" height="100%">
+		<s:BorderContainer height="100%">
+			<s:layout>
+				<s:VerticalLayout/>
+			</s:layout>
+			<s:CheckBox id="showMethodEntry" label="Show method entry" click="showMethodEntry_clickHandler(event)" selected="true"/>
+			<s:CheckBox id="dumpArguments" label="Dump arguments" click="dumpArguments_clickHandler(event)" selected="true"/>
+			<s:CheckBox id="showTrace" label="Show trace" click="showTrace_clickHandler(event)" selected="true"/>
 		</s:BorderContainer>
-		<mx:TextArea id="logOut" width="100%" height="100" editable="false" fontFamily="Courier New" fontSize="11"/>
-	</mx:VDividedBox>
+		<mx:VDividedBox width="100%" height="100%">
+			<mx:HDividedBox width="100%" height="100%">
+				<ui:PreviewPanel id="preview" width="100%" height="100%"/>
+				<mx:TextArea id="inspectOut" width="100%" height="100%"/>
+			</mx:HDividedBox>
+			<mx:TextArea id="logOut" width="100%" height="100%" editable="false" fontFamily="Courier New" fontSize="11"/>
+		</mx:VDividedBox>
+	</mx:HDividedBox>
 	<mx:ProgressBar id="loadProgress" width="100%" mode="manual" labelPlacement="center" label="Loading SWF: %3%%"/>
 	<mx:ProgressBar id="readProgress" width="100%" mode="manual" labelPlacement="center" label="Reading SWF: %3%%"/>
 	<mx:ProgressBar id="writeProgress" width="100%" mode="manual" labelPlacement="center" label="Writing SWF: %3%%"/>

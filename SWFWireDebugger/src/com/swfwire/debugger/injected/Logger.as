@@ -7,12 +7,16 @@ package com.swfwire.debugger.injected
 	
 	public class Logger
 	{
+		public static var showMethodEntry:Boolean = true;
+		public static var dumpArguments:Boolean = true;
+		public static var showTrace:Boolean = true;
+		
 		public static var output:TextArea;
 		public static var buffer:String;
 		
 		private static var indent:int = 0;
 		
-		public static function log(message:*):void
+		public static function _log(message:*):void
 		{
 			var str:String = StringUtil.indent(message, StringUtil.repeat('	', indent));
 			/*
@@ -45,21 +49,39 @@ package com.swfwire.debugger.injected
 			}
 		}
 		
+		public static function log(message:*):void
+		{
+			if(showTrace)
+			{
+				_log(message);
+			}
+		}
+		
 		public static function enterFunction(methodName:String = 'unk', caller:* = null, params:Object = null):void
 		{
-			var methodName2:String = new StackInfo(1).functionName;
-			log('>> ' + methodName2);
+			if(showMethodEntry)
+			{
+				var methodName2:String = new StackInfo(1).functionName;
+				_log('>> ' + methodName2);
+			}
 			//log(caller);
 			indent++;
-			log(ObjectUtil.objectToString(params, 2, 2, 50, 50, '	'));
+			if(dumpArguments && params)
+			{
+				_log(ObjectUtil.objectToString(params, 2, 2, 50, 50, '	'));
+			}
 		}
 		
 		public static function exitFunction(methodName:String = 'unk'):void
 		{
 			indent--;
 			indent = Math.max(indent, 0);
-			var methodName2:String = new StackInfo(1).functionName;
-			log('<< ' + methodName2);
+			if(showMethodEntry)
+			{
+				var methodName2:String = new StackInfo(1).functionName;
+				//_log('<< ' + methodName2);
+				_log('<<');
+			}
 		}
 	}
 }
