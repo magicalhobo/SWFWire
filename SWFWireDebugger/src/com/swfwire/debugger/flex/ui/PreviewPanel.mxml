@@ -37,10 +37,14 @@
 			
 			public function loadBytes(bytes:ByteArray, context:LoaderContext):void
 			{
-				if(!loader)
+				if(loader)
+				{
+					loader.unloadAndStop();
+				}
+				else
 				{
 					loader = new Loader();
-					loader.contentLoaderInfo.addEventListener(Event.COMPLETE, loaderCompleteHandler);
+					loader.contentLoaderInfo.addEventListener(Event.COMPLETE, loaderCompleteHandler, false, 0, true);
 					addChild(loader);
 				}
 				loader.loadBytes(bytes, context);

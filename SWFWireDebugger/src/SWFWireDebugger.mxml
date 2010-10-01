@@ -90,6 +90,14 @@
 				
 				preview.addEventListener(MouseEvent.CONTEXT_MENU, inspectHandler);
 				
+				preview.addEventListener('loaderComplete', function(ev:Event):void
+				{
+					var a:* = preview.loader.content;
+					a.deferredConstructor();
+					preview.invalidateDisplayList();
+					preview.validateDisplayList();
+				});
+				
 				Debug.enabled = true;
 				
 				var context:LoaderContext = new LoaderContext();
@@ -507,13 +515,6 @@
 				var context:LoaderContext = new LoaderContext();
 				context.allowLoadBytesCodeExecution = true;
 				context.applicationDomain = new ApplicationDomain(injectedAppDomain);
-				preview.addEventListener('loaderComplete', function(ev:Event):void
-				{
-					var a:* = preview.loader.content;
-					a.deferredConstructor();
-					preview.invalidateDisplayList();
-					preview.validateDisplayList();
-				});
 				preview.loadBytes(bytes, context);
 			}
 			
