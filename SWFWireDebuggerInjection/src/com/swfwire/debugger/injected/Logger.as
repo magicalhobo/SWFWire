@@ -7,11 +7,13 @@ package com.swfwire.debugger.injected
 	
 	public class Logger
 	{
+		public static var logToTrace:Boolean = false;
+		public static var logToOutput:Boolean = true;
 		public static var showMethodEntry:Boolean = true;
 		public static var showMethodExit:Boolean = true;
-		public static var dumpArguments:Boolean = true;
-		public static var showTrace:Boolean = true;
-		public static var logToOutput:Boolean = true;
+		public static var showTraceStatements:Boolean = true;
+		public static var showArguments:Boolean = false;
+		public static var showReturn:Boolean = false;
 		
 		public static var output:*;
 		public static var buffer:String = '';
@@ -23,7 +25,7 @@ package com.swfwire.debugger.injected
 		{
 			if(buffer)
 			{
-				if(showTrace)
+				if(logToTrace)
 				{
 					trace(buffer.substr(0, -1));
 				}
@@ -57,7 +59,7 @@ package com.swfwire.debugger.injected
 
 		public static function log(message:*):void
 		{
-			if(showTrace)
+			if(showTraceStatements)
 			{
 				_log(message);
 			}
@@ -68,10 +70,10 @@ package com.swfwire.debugger.injected
 			if(showMethodEntry)
 			{
 				var methodName2:String = new StackInfo(1).functionName;
-				_log('>> ' + methodName2);
+				_log('> ' + methodName2);
 			}
 			indent++;
-			if(dumpArguments && params)
+			if(showArguments && params)
 			{
 				_log(ObjectUtil.objectToString(params, 2, 2, 50, 50, '	'));
 			}
@@ -81,7 +83,7 @@ package com.swfwire.debugger.injected
 			if(showMethodEntry)
 			{
 				var methodName2:String = new StackInfo(1).functionName;
-				_log('>> ' + methodName2);
+				_log('> ' + methodName2);
 			}
 			indent++;
 			return;
@@ -94,12 +96,10 @@ package com.swfwire.debugger.injected
 		
 		public static function exitFunction(methodName:String = 'unk', returnValue:* = null):void
 		{
-			/*
-			if(returnValue)
+			if(showReturn && returnValue)
 			{
-				_log(ObjectUtil.objectToString(returnValue, 2, 2, 50, 50, '	'));
+				_log('return '+ObjectUtil.objectToString(returnValue, 2, 2, 50, 50, '	'));
 			}
-			*/
 			indent--;
 			//indent = Math.max(indent, 0);
 			
@@ -110,11 +110,20 @@ package com.swfwire.debugger.injected
 				//var methodName2:String = new StackInfo(1).functionName;
 				//_log('<< ' + methodName2);
 
-				_log('<< '+(getTimer() - start)+'ms');
+				_log('< '+(getTimer() - start)+'ms');
 				
 				//_log('<<');
 			}
 			return;
+		}
+		
+		public static function uncaughtError(e:* = null):void
+		{
+			indent = 0;
+			startTimes = [];
+			
+			_log('Uncaught error:');
+			_log(ObjectUtil.objectToString(e, 2, 2, 50, 50, '	'));
 		}
 	}
 }

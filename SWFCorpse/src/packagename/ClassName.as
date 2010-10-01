@@ -2,9 +2,9 @@ package packagename
 {
 	public class ClassName
 	{
-		public static function staticMethod():void
+		public static function staticMethod():String
 		{
-			trace('ClassName.staticMethod');
+			return 'ClassName.staticMethod';
 		}
 	}
 }
