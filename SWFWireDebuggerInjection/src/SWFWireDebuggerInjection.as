@@ -10,7 +10,7 @@ package
 		
 		public function SWFWireDebuggerInjection()
 		{
-			Logger.log('yo ho ho!');
+			Logger.log('SWFWireDebuggerInjection loaded.');
 		}
 	}
 }

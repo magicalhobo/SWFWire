@@ -11,8 +11,6 @@
 			private function loaderCompleteHandler(ev:Event):void
 			{
 				dispatchEvent(new Event('loaderComplete'));
-				invalidateDisplayList();
-				validateDisplayList();
 			}
 
 			override protected function updateDisplayList(unscaledWidth:Number, unscaledHeight:Number):void
