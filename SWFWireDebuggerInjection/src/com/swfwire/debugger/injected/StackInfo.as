@@ -1,8 +1,5 @@
 package com.swfwire.debugger.injected
 {
-	import mx.controls.TextArea;
-	import mx.core.Application;
-	
 	public class StackInfo
 	{
 		public var stackTrace:String;

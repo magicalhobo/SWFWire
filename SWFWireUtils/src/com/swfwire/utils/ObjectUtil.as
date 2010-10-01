@@ -76,6 +76,7 @@ package com.swfwire.utils
 								props[node.@name] = variable[node.@name];
 							}
 						}
+						/*
 						for each(name in description.accessor.(@access == 'readwrite' || @access == 'readonly').@name)
 						{
 							try
@@ -87,6 +88,7 @@ package com.swfwire.utils
 								props[name] = '<exception thrown by getter>';
 							}
 						}
+						*/
 					}
 					for(name in variable)
 					{

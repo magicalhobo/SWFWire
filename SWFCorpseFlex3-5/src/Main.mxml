@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute" minWidth="955" minHeight="600">
+	<mx:Script>
+		<![CDATA[
+			import mx.managers.SystemManager;
+			//SystemManager().parentAllowsChild;
+		]]>
+	</mx:Script>
+	<mx:Button label=":)" horizontalCenter="0" verticalCenter="0"/>
+</mx:Application>

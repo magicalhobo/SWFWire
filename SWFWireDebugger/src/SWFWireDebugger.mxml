@@ -10,8 +10,6 @@
 			import air.update.ApplicationUpdaterUI;
 			
 			import com.magicalhobo.air.utils.WindowTracker;
-			import com.swfwire.debugger.injected.Logger;
-			import com.swfwire.debugger.injected.Security;
 			import com.swfwire.debugger.utils.ABCWrapper;
 			import com.swfwire.debugger.utils.InstructionLocation;
 			import com.swfwire.debugger.utils.InstructionTemplate;
@@ -46,16 +44,15 @@
 			
 			import mx.managers.SystemManager;
 			
-			private static var imports:Array = [com.swfwire.debugger.injected.Security];
-			
 			private var windowTracker:WindowTracker;
 			private var appUpdater:ApplicationUpdaterUI;
 			private var urlLoader:URLLoader;
 			
+			private var logger:*;
+			private var injectedAppDomain:ApplicationDomain;
+			
 			private function main():void
 			{
-				Logger.output = logOut;
-				
 				appUpdater = new ApplicationUpdaterUI();
 				appUpdater.configurationFile = new File('app:/updateConfig.xml');
 				appUpdater.initialize();
@@ -69,14 +66,45 @@
 				urlLoader.addEventListener(Event.COMPLETE,			 loadCompleteHandler);
 				urlLoader.dataFormat = URLLoaderDataFormat.BINARY;
 				
+				preview.addEventListener(MouseEvent.CONTEXT_MENU, inspectHandler);
+				
 				Debug.enabled = true;
 				
-				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpseFlex4-1/bin-debug/Main.swf').url);
-				load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpse/bin-debug/SWFCorpse.swf').url);
-				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFWireInspector/bin-debug/SWFWireInspector.swf').url);
-				//load('temp.swf');
+				var context:LoaderContext = new LoaderContext();
+				context.applicationDomain = new ApplicationDomain();
+				context.allowLoadBytesCodeExecution = true;
 				
-				preview.addEventListener(MouseEvent.CONTEXT_MENU, inspectHandler);
+				injectionLoader = new Loader();
+				injectionLoader.contentLoaderInfo.addEventListener(Event.COMPLETE, function(ev:*):void
+				{
+					injectedAppDomain = injectionLoader.contentLoaderInfo.applicationDomain;
+					
+					logger = injectedAppDomain.getDefinition('com.swfwire.debugger.injected.Logger');
+					logger.output = logOut;
+					
+					//injectedAppDomain.getDefinition('com.swfwire.debugger.injected').output = logOut;
+					loadDefault();
+				});
+				injectionLoader.load(new URLRequest(swfwireRel('SWFWireDebuggerInjection/bin-debug/SWFWireDebuggerInjection.swf')), context);
+				//loadDefault();
+			}
+			
+			private function swfwireRel(url:String):String
+			{
+				return new File(File.applicationDirectory.nativePath).parent.parent.resolvePath(url).url;				
+			}
+			
+			private var injectionLoader:Loader;
+			
+			private function loadDefault():void
+			{
+				
+				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpseFlex4-1/bin-debug/Main.swf').url);
+				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpse/bin-debug/SWFCorpse.swf').url);
+				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFWireInspector/bin-debug/SWFWireInspector.swf').url);
+				load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpseFlex3-5/bin-debug/Main.swf').url);
+				//load('temp.swf');
+				//load('GSDesktop.swf');
 			}
 			
 			private function inspectHandler(ev:MouseEvent):void
@@ -118,7 +146,14 @@
 					{
 						var context:LoaderContext = new LoaderContext();
 						context.allowLoadBytesCodeExecution = true;
+						//context.applicationDomain = new ApplicationDomain();
+						context.applicationDomain = new ApplicationDomain(injectedAppDomain);
 						preview.loadBytes(bytes, context);
+						preview.loader.contentLoaderInfo.addEventListener(Event.COMPLETE, function(ev:*):void
+						{
+							var temp:* = preview.loader.contentLoaderInfo.applicationDomain.hasDefinition('com.swfwire.debugger.injected.Logger');
+							Debug.dump({temp: temp});
+						});
 					}
 					else
 					{
@@ -194,11 +229,13 @@
 					{
 						var wrapper:ABCWrapper = new ABCWrapper(abcTag.abcFile, metadata[iTag]);
 						
-						var allowDomainIndex:int = wrapper.getMultinameIndex('flash.system', 'Security');
-						if(allowDomainIndex >= 0)
+						var securityIndex:int = wrapper.getMultinameIndex('flash.system', 'Security');
+						if(securityIndex >= 0)
 						{
-							var allowDomain:MultinameQNameToken = abcTag.abcFile.cpool.multinames[allowDomainIndex].data as MultinameQNameToken;
-							abcTag.abcFile.cpool.namespaces[allowDomain.ns].name = wrapper.addString('com.swfwire.debugger.injected');
+							var security:MultinameQNameToken = abcTag.abcFile.cpool.multinames[securityIndex].data as MultinameQNameToken;
+							var injectedNamespace:uint = wrapper.addNamespaceFromString('com.swfwire.debugger.injected'); 
+							security.ns = injectedNamespace;
+							//abcTag.abcFile.cpool.namespaces[security.ns].name = wrapper.addString('com.swfwire.debugger.injected');
 						}
 						
 						var mainIndex:int = wrapper.getMultinameIndex(mainClassPackage, mainClassName);
@@ -326,7 +363,7 @@
 										{
 											var paramName:ParamInfoToken = abcTag.abcFile.methods[mb.method].paramNames[i10];
 											j9.unshift(new Instruction_getlocal(i10));
-											if(paramName)
+											if(paramName && paramName.value > 0)
 											{
 												j9.unshift(new Instruction_pushstring(paramName.value));
 											}
@@ -406,6 +443,7 @@
 				
 				var context:LoaderContext = new LoaderContext();
 				context.allowLoadBytesCodeExecution = true;
+				context.applicationDomain = new ApplicationDomain(injectedAppDomain);
 				preview.addEventListener('loaderComplete', function(ev:Event):void
 				{
 					var a:* = preview.loader.content;
@@ -424,17 +462,17 @@
 
 			protected function showMethodEntry_clickHandler(event:MouseEvent):void
 			{
-				Logger.showMethodEntry = showMethodEntry.selected;
+				logger.showMethodEntry = showMethodEntry.selected;
 			}
 
 			protected function dumpArguments_clickHandler(event:MouseEvent):void
 			{
-				Logger.dumpArguments = dumpArguments.selected;
+				logger.dumpArguments = dumpArguments.selected;
 			}
 
 			protected function showTrace_clickHandler(event:MouseEvent):void
 			{
-				Logger.showTrace = showTrace.selected;
+				logger.showTrace = showTrace.selected;
 			}
 		]]>
 	</fx:Script>

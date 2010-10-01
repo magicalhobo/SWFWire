@@ -3,15 +3,13 @@ package com.swfwire.debugger.injected
 	import com.swfwire.utils.ObjectUtil;
 	import com.swfwire.utils.StringUtil;
 	
-	import mx.controls.TextArea;
-	
 	public class Logger
 	{
 		public static var showMethodEntry:Boolean = true;
 		public static var dumpArguments:Boolean = true;
 		public static var showTrace:Boolean = true;
 		
-		public static var output:TextArea;
+		public static var output:*;
 		public static var buffer:String;
 		
 		private static var indent:int = 0;
@@ -19,10 +17,10 @@ package com.swfwire.debugger.injected
 		public static function _log(message:*):void
 		{
 			var str:String = StringUtil.indent(message, StringUtil.repeat('	', indent));
-			/*
-			trace(str);
-			return;
-			*/
+			if(showTrace)
+			{
+				trace(str);
+			}
 			if(output)
 			{
 				/*
@@ -59,6 +57,7 @@ package com.swfwire.debugger.injected
 		
 		public static function enterFunction(methodName:String = 'unk', caller:* = null, params:Object = null):void
 		{
+			return;
 			if(showMethodEntry)
 			{
 				var methodName2:String = new StackInfo(1).functionName;
@@ -72,8 +71,13 @@ package com.swfwire.debugger.injected
 			}
 		}
 		
-		public static function exitFunction(methodName:String = 'unk'):void
+		public static function exitFunction(methodName:String = 'unk', returnValue:* = null):void
 		{
+			return;
+			if(returnValue)
+			{
+				_log(ObjectUtil.objectToString(returnValue, 2, 2, 50, 50, '	'));
+			}
 			indent--;
 			indent = Math.max(indent, 0);
 			if(showMethodEntry)
