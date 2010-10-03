@@ -1,4 +1,4 @@
-package com.magicalhobo.air.utils
+package com.swfwire.utils.air
 {
 	import flash.display.NativeWindow;
 	import flash.display.NativeWindowDisplayState;

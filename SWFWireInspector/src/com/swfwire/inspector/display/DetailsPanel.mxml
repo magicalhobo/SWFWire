@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" currentState="swf" xmlns:ns1="*" width="100%" height="100%">
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" currentState="swf" xmlns:ns1="*" width="100%" height="100%" xmlns:display="com.swfwire.inspector.display.*">
 	<mx:states>
 		<mx:State name="swf">
 			<mx:RemoveChild target="{actionScript}"/>
@@ -16,8 +16,8 @@
 			<mx:Button label="ActionScript" click="currentState = 'actionScript'" id="button1"/>
 		</mx:HBox>
 		<mx:Canvas width="100%" height="100%">
-			<ns1:SWFPanel id="swf" width="100%" height="100%"/>
-			<ns1:ActionScriptPanel id="actionScript" width="100%" height="100%"/>
+			<display:SWFPanel id="swf" width="100%" height="100%"/>
+			<display:ActionScriptPanel id="actionScript" width="100%" height="100%"/>
 		</mx:Canvas>
 	</mx:VBox>
 </mx:Canvas>

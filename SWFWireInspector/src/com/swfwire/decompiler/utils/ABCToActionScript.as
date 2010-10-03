@@ -62,6 +62,32 @@ package com.swfwire.decompiler.utils
 			}
 		}
 		
+		public function getMethodBody(name:uint, methodId:uint, r:ReadableTrait):void
+		{
+			r.arguments = new Vector.<ReadableMultiname>();
+			r.declaration = new ReadableMultiname();
+			r.traitType = ReadableTrait.TYPE_METHOD;
+			multinameTraitToString(name, r.declaration);
+
+			var methodInfo:MethodInfoToken = abcFile.methods[methodId];
+			for(var iter:uint = 0; iter < methodInfo.paramCount; iter++)
+			{
+				var paramType:uint = methodInfo.paramTypes[iter];
+				var readableArg:ReadableMultiname = new ReadableMultiname();
+				getReadableMultiname(paramType, readableArg);
+				r.arguments[iter] = readableArg;
+				//args.push('arg'+iter+':'+multinameTypeToString(cpool, paramType));
+			}
+			var bodyId:int = getBodyIdFromMethodId(methodId);
+			if(bodyId >= 0)
+			{
+				r.instructions = abcFile.methodBodies[bodyId].instructions;
+			}
+			
+			r.type = new ReadableMultiname(); 
+			getReadableMultiname(methodInfo.returnType, r.type);
+		}
+		
 		public function getReadableTrait(traitInfo:TraitsInfoToken, r:ReadableTrait):void
 		{
 			r.arguments = new Vector.<ReadableMultiname>();
@@ -179,19 +205,34 @@ package com.swfwire.decompiler.utils
 											  start:uint = 0,
 											  hitmap:Object = null, 
 											  positionLookup:Dictionary = null,
-											  stopOnJump:Boolean = false):String
+											  stopOnJump:Boolean = false,
+											  scope:ScopeStack = null,
+											  locals:LocalRegisters = null,
+											  stack:OperandStack = null):String
 		{
 			var lines:Array = [];
 			
-			var scope:ScopeStack = new ScopeStack(0);
-			var locals:LocalRegisters = new LocalRegisters();
-			var stack:OperandStack = new OperandStack(0);
+			if(!scope)
+			{
+				scope = new ScopeStack(0);
+			}
+			if(!locals)
+			{
+				locals = new LocalRegisters();
+				locals.setName(0, 'this');
+				locals.setName(1, 'arg0');
+				locals.setName(2, 'arg1');
+				locals.setName(3, 'arg2');
+				locals.setName(4, 'arg3');
+				locals.setName(5, 'arg4');
+				locals.setName(6, 'arg5');
+				
+			}
+			if(!stack)
+			{
+				stack = new OperandStack(0);
+			}
 			var localCount:uint = 0;
-			
-			locals.setName(0, 'this');
-			locals.setName(1, 'arg0');
-			locals.setName(2, 'arg1');
-			locals.setName(3, 'arg2');
 			
 			if(!hitmap)
 			{
@@ -213,10 +254,15 @@ package com.swfwire.decompiler.utils
 					trace('already hit');
 					break;
 				}
+				if(op is EndInstruction)
+				{
+					continue;
+				}
 				hitmap[iter] = 1;
 				var op:IInstruction = instructions[iter];
 				var params:Array = [];
 				var line:String = '';
+				var args:Array = [];
 				var tempInt:int;
 				var tempInt2:int;
 				var tempStr:String;
@@ -227,6 +273,7 @@ package com.swfwire.decompiler.utils
 				
 				const showByteCode:Boolean = true;
 				const showActionScript:Boolean = true;
+				const showStack:Boolean = true;
 				const showDebug:Boolean = false;
 				
 				if(showByteCode)
@@ -245,11 +292,6 @@ package com.swfwire.decompiler.utils
 					{
 						continue;
 					}
-					
-					if(op is EndInstruction)
-					{
-						string += '';
-					}
 					else
 					{
 						string += String(description.@name).replace(/.*Instruction_/, '');
@@ -261,21 +303,42 @@ package com.swfwire.decompiler.utils
 						{
 							continue;
 						}
-						var prop:* = op[name];
-						if(prop is IInstruction)
+						//multiname index
+						if(name == 'index' && 
+							(
+								op is Instruction_callproperty ||
+								op is Instruction_coerce ||
+								op is Instruction_findpropstrict ||
+								op is Instruction_getproperty
+							))
 						{
-							prop = '#'+positionLookup[prop];
+							var r:ReadableMultiname = new ReadableMultiname();
+							this.getReadableMultiname(op['index'], r);
+							params.push(this.multinameTypeToString(r));
 						}
-						else if(prop is Vector.<IInstruction>)
+						//string index
+						else if(name == 'index' && (op is Instruction_pushstring))
 						{
-							var props:Array = [];
-							for(tempInt = 0; tempInt < prop.length; tempInt++)
+							params.push('"'+abcFile.cpool.strings[op['index']].utf8+'"');
+						}
+						else
+						{
+							var prop:* = op[name];
+							if(prop is IInstruction)
 							{
-								props.push('#'+positionLookup[prop[tempInt]]);
+								prop = '#'+positionLookup[prop];
 							}
-							prop = props.join(', ');
+							else if(prop is Vector.<IInstruction>)
+							{
+								var props:Array = [];
+								for(tempInt = 0; tempInt < prop.length; tempInt++)
+								{
+									props.push('#'+positionLookup[prop[tempInt]]);
+								}
+								prop = props.join(', ');
+							}
+							params.push(name+': '+prop);
 						}
-						params.push(name+': '+prop);
 						//props[name] = variable[name];
 					}
 					string += '  ' + params.join(', ');
@@ -339,8 +402,8 @@ package com.swfwire.decompiler.utils
 					{
 						trace('strictne jump!');
 						tempInt = positionLookup[Instruction_ifstrictne(op).reference];
-						tempStr = instructionsToString(instructions, tempInt, hitmap, positionLookup, true);
-						tempStr3 = instructionsToString(instructions, iter + 1, hitmap, positionLookup, true);
+						tempStr = instructionsToString(instructions, tempInt, hitmap, positionLookup, true, scope, locals, stack);
+						tempStr3 = instructionsToString(instructions, iter + 1, hitmap, positionLookup, true, scope, locals, stack);
 						trace(tempStr);
 						tempStr = StringUtil.indent(tempStr, '	');
 						tempStr3 = StringUtil.indent(tempStr3, '	');
@@ -353,8 +416,8 @@ package com.swfwire.decompiler.utils
 					{
 						trace('iftrue jump!');
 						tempInt = positionLookup[Instruction_iftrue(op).reference];
-						tempStr = instructionsToString(instructions, tempInt, hitmap, positionLookup, true);
-						tempStr3 = instructionsToString(instructions, iter + 1, hitmap, positionLookup, true);
+						tempStr = instructionsToString(instructions, tempInt, hitmap, positionLookup, true, scope, locals, stack);
+						tempStr3 = instructionsToString(instructions, iter + 1, hitmap, positionLookup, true, scope, locals, stack);
 						trace(tempStr);
 						tempStr = StringUtil.indent(tempStr, '	');
 						tempStr3 = StringUtil.indent(tempStr3, '	');
@@ -374,8 +437,8 @@ package com.swfwire.decompiler.utils
 					{
 						trace('iffalse jump!');
 						tempInt = positionLookup[Instruction_iffalse(op).reference];
-						tempStr = instructionsToString(instructions, tempInt, hitmap, positionLookup, true);
-						tempStr3 = instructionsToString(instructions, iter + 1, hitmap, positionLookup, true);
+						tempStr = instructionsToString(instructions, tempInt, hitmap, positionLookup, true, scope, locals, stack);
+						tempStr3 = instructionsToString(instructions, iter + 1, hitmap, positionLookup, true, scope, locals, stack);
 						trace(tempStr);
 						tempStr = StringUtil.indent(tempStr, '	');
 						tempStr3 = StringUtil.indent(tempStr3, '	');
@@ -424,6 +487,17 @@ package com.swfwire.decompiler.utils
 					{
 						locals.setName(Instruction_setlocal(op).index, stack.pop());
 					}
+					else if(op is Instruction_kill)
+					{
+						locals.setName(Instruction_kill(op).index, 'undefined');
+					}
+					else if(op is Instruction_add)
+					{
+						tempStr = stack.pop();
+						tempStr2 = stack.pop();
+						
+						stack.push(tempStr2+' + '+tempStr);
+					}
 					else if(op is Instruction_findpropstrict)
 					{
 						tempInt = Instruction_findpropstrict(op).index;
@@ -435,7 +509,7 @@ package com.swfwire.decompiler.utils
 								getReadableMultiname(tempInt, rmn);
 								tempStr = this.multinameTypeToString(rmn);
 								stack.push(tempStr);
-								stack.push(tempStr);
+								//stack.push(tempStr);
 								//lines.push('findprop - '+tempStr);
 								break;
 						}
@@ -470,7 +544,7 @@ package com.swfwire.decompiler.utils
 						switch(mn.kind)
 						{
 							case MultinameToken.KIND_QName:
-								var args:Array = [];
+								args = [];
 								for(tempInt2 = Instruction_callproperty(op).argCount - 1; tempInt2 >= 0; tempInt2--)
 								{
 									args.unshift(stack.pop());
@@ -494,6 +568,52 @@ package com.swfwire.decompiler.utils
 								break;
 						}
 					}
+					else if(op is Instruction_constructsuper)
+					{
+						tempInt = Instruction_constructsuper(op).argCount;
+						
+						args = [];
+						for(tempInt2 = 0; tempInt2 < tempInt; tempInt2++)
+						{
+							args.push(stack.pop());
+						}
+						
+						//Not sure why this exists... should always be 'this'
+						stack.pop();
+						
+						lines.push('super('+args.join(', ')+')');
+					}
+					else if(op is Instruction_coerce)
+					{
+						tempStr = stack.pop();
+						
+						if(tempStr == 'null' || tempStr == 'undefined')
+						{
+							stack.push(tempStr);
+						}
+						else
+						{
+							tempInt = Instruction_coerce(op).index;
+							
+							rmn = new ReadableMultiname();
+							getReadableMultiname(tempInt, rmn);
+							tempStr2 = this.multinameTypeToString(rmn);
+
+							stack.push(tempStr2+'('+tempStr+')');
+						}
+					}
+					else if(op is Instruction_coerce_s)
+					{
+						tempStr = stack.pop();
+						if(tempStr == 'null' || tempStr == 'undefined')
+						{
+							stack.push(tempStr);
+						}
+						else
+						{
+							stack.push('String('+tempStr+')');
+						}
+					}
 					else if(op is Instruction_convert_d)
 					{
 						stack.push('Number('+stack.pop()+')');
@@ -505,6 +625,10 @@ package com.swfwire.decompiler.utils
 					else if(op is Instruction_pushscope)
 					{
 						scope.push(stack.pop());
+					}
+					else if(op is Instruction_pushnull)
+					{
+						stack.push('null');
 					}
 					else if(op is Instruction_pushbyte)
 					{
@@ -558,37 +682,12 @@ package com.swfwire.decompiler.utils
 						lines.push('return;');
 						break;
 					}
-					//else
-					if(false)
+					
+					if(showStack)
 					{
-						var description:XML = describeType(op);
-						var string:String = '    '
-						string += '#'+iter+'	';
-						/*
-						if(offsetLookup && offsetLookup[iter])
-						{
-							string += '#'+offsetLookup[iter]+'	';
-						}
-						*/
-						
-						string += String(description.@name).replace(/.*Instruction_/, '');
-						
-						for each(var name:String in description.variable.@name)
-						{
-							var prop:* = op[name];
-							if(prop is IInstruction)
-							{
-								prop = prop+'@'+positionLookup[prop];
-							}
-							params.push(name+': '+prop);
-							//props[name] = variable[name];
-						}
-						string += '  ' + params.join(', ');
-						
-						
-						lines.push(string);
+						lines.push('				stack: ' + stack.values.join(', '));
+						lines.push('				local: ' + locals.names.join(', '));
 					}
-					//lines.push(ObjectUtil.objectToString(instruction, 4, 10, 100, 10, '	'));
 				}
 			}
 			return lines.join('\n');

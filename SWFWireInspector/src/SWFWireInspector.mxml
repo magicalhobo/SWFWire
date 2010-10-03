@@ -4,14 +4,13 @@
 			    width="800" height="800" frameRate="60"
 				layout="absolute"
 				creationPolicy="all"
-				showStatusBar="false" currentState="waiting">
+				showStatusBar="false" currentState="waiting" xmlns:display="com.swfwire.inspector.display.*">
 	<mx:Style source="style.css"/>
 	<mx:Script>
 		<![CDATA[
 			import air.update.ApplicationUpdaterUI;
 			import air.update.events.UpdateEvent;
 			
-			import com.magicalhobo.air.utils.WindowTracker;
 			import com.swfwire.decompiler.*;
 			import com.swfwire.decompiler.abc.instructions.*;
 			import com.swfwire.decompiler.abc.tokens.*;
@@ -26,7 +25,9 @@
 			import com.swfwire.decompiler.data.swf9.tags.DoABCTag;
 			import com.swfwire.decompiler.events.AsyncSWFReaderEvent;
 			import com.swfwire.decompiler.utils.*;
+			import com.swfwire.inspector.Config;
 			import com.swfwire.utils.*;
+			import com.swfwire.utils.air.WindowTracker;
 			
 			import mx.controls.Alert;
 			import mx.events.ListEvent;
@@ -548,6 +549,14 @@
 					var iter2:uint;
 					var trait:TraitsInfoToken;
 					var r:ReadableTrait;
+					/*
+					r = new ReadableTrait();
+					translator.getMethodBody(instance.name, classInfo.cinit, r);
+					rc.traits.push(r);
+					*/
+					r = new ReadableTrait();
+					translator.getMethodBody(instance.name, instance.iinit, r);
+					rc.traits.push(r);
 					
 					for(iter2 = 0; iter2 < classInfo.traitCount; iter2++)
 					{
@@ -597,11 +606,11 @@
 	</mx:states>
 	<mx:VDividedBox left="5" right="5" top="5" bottom="5">
 		<mx:HDividedBox width="100%" height="100%" id="hdividedbox1">
-			<mx:Canvas x="10" y="276" width="100%" height="100%" styleName="dropSpot">
-				<mx:Label text="Drop File Here" horizontalCenter="0" verticalCenter="0" fontSize="32" styleName="bigText lightText"/>
+			<mx:Canvas width="100%" height="100%" styleName="dropSpot">
+				<mx:Label text="Drop File Here" horizontalCenter="0" verticalCenter="0" fontSize="32" styleName="bigText"/>
 			</mx:Canvas>
 		</mx:HDividedBox>
-		<ns1:SWFPanel id="detailsPanel" width="100%" height="100%" currentStateChange="updateBottomPanel()"/>
+		<display:SWFPanel id="detailsPanel" width="100%" height="100%" currentStateChange="updateBottomPanel()"/>
 		<mx:TextArea id="logPanel" editable="false" width="100%" height="100%"/>
 		<mx:ProgressBar id="loadProgress" width="100%" height="20" mode="manual" minimum="0" maximum="1" labelPlacement="center" label="Loading SWF: %3%%"/>
 		<mx:ProgressBar id="parseProgress" width="100%" height="20" mode="manual" minimum="0" maximum="1" labelPlacement="center" label="Parsing SWF: %3%%"/>

@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<s:WindowedApplication xmlns:fx="http://ns.adobe.com/mxml/2009" 
-					   xmlns:s="library://ns.adobe.com/flex/spark" 
-					   xmlns:mx="library://ns.adobe.com/flex/mx"
-					   xmlns:ui="com.swfwire.debugger.flex.ui.*"
-					   showStatusBar="false"
-					   applicationComplete="main()">
-	<fx:Script>
+<mx:WindowedApplication xmlns:mx="http://www.adobe.com/2006/mxml" 
+						xmlns:ui="com.swfwire.debugger.flex.ui.*"
+						showStatusBar="false"
+						applicationComplete="main()"
+						minWidth="400" minHeight="300"
+						paddingLeft="5" paddingTop="5"
+						currentState="waiting" backgroundColor="#222222">
+	<mx:Style source="style.css"/>
+	<mx:Script>
 		<![CDATA[
 			import air.update.ApplicationUpdaterUI;
 			
-			import com.magicalhobo.air.utils.WindowTracker;
 			import com.swfwire.debugger.utils.ABCWrapper;
 			import com.swfwire.debugger.utils.InstructionLocation;
 			import com.swfwire.debugger.utils.InstructionTemplate;
@@ -35,30 +36,40 @@
 			import com.swfwire.decompiler.data.swf.SWFHeader;
 			import com.swfwire.decompiler.data.swf.tags.MetadataTag;
 			import com.swfwire.decompiler.data.swf.tags.SWFTag;
+			import com.swfwire.decompiler.data.swf.tags.SetBackgroundColorTag;
+			import com.swfwire.decompiler.data.swf8.tags.FileAttributesTag;
 			import com.swfwire.decompiler.data.swf9.tags.DoABCTag;
 			import com.swfwire.decompiler.data.swf9.tags.SymbolClassTag;
 			import com.swfwire.decompiler.events.AsyncSWFReaderEvent;
 			import com.swfwire.utils.Debug;
+			import com.swfwire.utils.air.WindowTracker;
 			
 			import flash.utils.flash_proxy;
 			import flash.utils.getTimer;
 			
+			import flashx.textLayout.formats.BackgroundColor;
+			
 			import mx.collections.ListCollectionView;
+			import mx.controls.Alert;
+			import mx.core.IUIComponent;
+			import mx.managers.DragManager;
 			import mx.managers.SystemManager;
 			
 			private var windowTracker:WindowTracker;
 			private var appUpdater:ApplicationUpdaterUI;
 			private var urlLoader:URLLoader;
 			
-			private var cacheEnabled:Boolean = false;
-			
 			private var logger:*;
 			private var injectedAppDomain:ApplicationDomain;
 			private var lastUrl:String;
 			private var isCached:Boolean;
 			
+			private var cacheEnabled:Boolean = false;
+			
 			private function main():void
 			{
+				logOut.text = 'Version '+Config.VERSION+'\n';
+				
 				stage.addEventListener(Event.ENTER_FRAME, function(ev:*):void
 				{
 					if(logger)
@@ -88,8 +99,10 @@
 				urlLoader.addEventListener(Event.COMPLETE,			 loadCompleteHandler);
 				urlLoader.dataFormat = URLLoaderDataFormat.BINARY;
 				
-				preview.addEventListener(MouseEvent.CONTEXT_MENU, inspectHandler);
+				canvas1.addEventListener(NativeDragEvent.NATIVE_DRAG_ENTER,	 dragEnterHandler);
+				canvas1.addEventListener(NativeDragEvent.NATIVE_DRAG_DROP,	 dragDropHandler);
 				
+				preview.addEventListener(MouseEvent.CONTEXT_MENU, inspectHandler);
 				preview.addEventListener('loaderComplete', function(ev:Event):void
 				{
 					var a:* = preview.loader.content;
@@ -102,12 +115,14 @@
 				
 				var context:LoaderContext = new LoaderContext();
 				context.applicationDomain = new ApplicationDomain();
-				context.allowLoadBytesCodeExecution = true;
+				context.allowCodeImport = true;
 				
 				injectionLoader = new Loader();
 				injectionLoader.contentLoaderInfo.addEventListener(Event.COMPLETE, function(ev:*):void
 				{
 					injectedAppDomain = injectionLoader.contentLoaderInfo.applicationDomain;
+					
+					logOut.text += 'Injection loaded\n';
 					
 					logger = injectedAppDomain.getDefinition('com.swfwire.debugger.injected.Logger');
 					logger.output = logOut;
@@ -123,7 +138,10 @@
 					//injectedAppDomain.getDefinition('com.swfwire.debugger.injected').output = logOut;
 					loadDefault();
 				});
-				injectionLoader.load(new URLRequest(swfwireRel('SWFWireDebuggerInjection/bin-debug/SWFWireDebuggerInjection.swf')), context);
+				
+				var librarySwf:String = new File(File.applicationDirectory.nativePath).resolvePath('library.swf').url;
+				
+				injectionLoader.load(new URLRequest(librarySwf), context);
 				//loadDefault();
 			}
 			
@@ -144,6 +162,7 @@
 				//load('temp.swf');
 				//load('SlowMoPlayer.swf');
 				//load('cs5-5_pfflib.swf');
+				//load('frees.swf');
 			}
 			
 			private function inspectHandler(ev:MouseEvent):void
@@ -180,7 +199,7 @@
 				var bytes:ByteArray = urlLoader.data as ByteArray;
 				if(bytes)
 				{
-					if(isCached && cacheEnabled)
+					if(isCached)
 					{
 						readProgress.setProgress(1, 1);
 						writeProgress.setProgress(1, 1);
@@ -205,8 +224,47 @@
 				}
 			}
 			
+			private function dragEnterHandler(ev:NativeDragEvent):void
+			{
+				DragManager.acceptDragDrop(IUIComponent(ev.currentTarget));
+			}
+			
+			private function dragDropHandler(ev:NativeDragEvent):void
+			{
+				var clipboard:Clipboard = ev.clipboard;
+				var url:String = '';
+				if(clipboard.hasFormat(ClipboardFormats.URL_FORMAT))
+				{
+					url = clipboard.getData(ClipboardFormats.URL_FORMAT) as String;
+				}
+				else if(clipboard.hasFormat(ClipboardFormats.TEXT_FORMAT))
+				{
+					url = clipboard.getData(ClipboardFormats.TEXT_FORMAT) as String;
+				}
+				else if(clipboard.hasFormat(ClipboardFormats.FILE_LIST_FORMAT))
+				{
+					var files:Array = clipboard.getData(ClipboardFormats.FILE_LIST_FORMAT) as Array;
+					var file:File = files[0];
+					if(file)
+					{
+						url = file.url;
+					}
+				}
+				if(url)
+				{
+					currentState = 'loading';
+					load(url);
+				}
+				else
+				{
+					Alert.show('Could not parse any valid SWF file from the drop.', 'No data');
+				}
+			}
+			
 			private function parse(bytes:ByteArray):void
 			{
+				currentState = 'reading';
+
 				var swfBytes:SWFByteArray = new SWFByteArray(bytes);
 				var swfReader:AsyncSWFReaderFiltered = new AsyncSWFReaderFiltered();
 				var result:SWFReadResult;
@@ -237,9 +295,16 @@
 				var mainClass:String = '';
 				var iTag:uint;
 				
+				var backgroundColor:uint = 0xFFFFFF;
+				
 				outer:
 				for(iTag = 0; iTag < swf.tags.length; iTag++)
 				{
+					var bgt:SetBackgroundColorTag = swf.tags[iTag] as SetBackgroundColorTag;
+					if(bgt)
+					{
+						backgroundColor = bgt.backgroundColor.red << 16 | bgt.backgroundColor.green << 8 | bgt.backgroundColor.blue;
+					}
 					var sct:SymbolClassTag = swf.tags[iTag] as SymbolClassTag;
 					if(sct)
 					{
@@ -335,7 +400,7 @@
 						
 						//mainInst.iinit--;
 						
-						if(true)
+						if(false)
 						{
 							var loggerClassIndex:int = wrapper.addQName(
 								wrapper.addNamespaceFromString('com.swfwire.debugger.injected'), 
@@ -390,16 +455,15 @@
 								if(mb.initScopeDepth > 1)
 								{
 									var j9:* = abcTag.abcFile.methodBodies[i9].instructions;
-									var j6:int =  wrapper.addString(iTag+'.'+String(i9));
 									
 									var paramCount:uint = abcTag.abcFile.methods[mb.method].paramCount;
 
-									abcTag.abcFile.methodBodies[i9].maxStack += paramCount * 2 + 3;
 									
 									j9.unshift(new Instruction_callpropvoid(enterFunctionIndex, 3));
 									
 									if(paramCount > 0)
 									{
+										abcTag.abcFile.methodBodies[i9].maxStack += paramCount * 2 + 3;
 										j9.unshift(new Instruction_newobject(paramCount));
 	
 										for(var i10:int = paramCount - 1; i10 >= 0; i10--)
@@ -418,12 +482,27 @@
 									}
 									else
 									{
+										abcTag.abcFile.methodBodies[i9].maxStack += 4;
 										j9.unshift(new Instruction_pushnull());
 									}
 									
 									j9.unshift(new Instruction_getlocal0());
+									/*
+									var methodName:uint = abcTag.abcFile.methods[mb.method].name;
+									trace(methodName);
+									if(methodName > 0)
+									{
+										j9.unshift(new Instruction_pushstring(methodName));
+									}
+									else
+									{
+										var methodId:int =  wrapper.addString(iTag+'.'+String(i9));
+										j9.unshift(new Instruction_pushstring(methodId));
+									}
+									*/
+									var methodId:int =  wrapper.addString(iTag+'.'+String(i9));
+									j9.unshift(new Instruction_pushstring(methodId));
 									
-									j9.unshift(new Instruction_pushstring(j6));
 									j9.unshift(new Instruction_getlex(loggerClassIndex));
 								}
 							}
@@ -496,8 +575,10 @@
 				
 				Debug.dump(result, 4);
 				
+				preview.setStyle('backgroundColor', backgroundColor);
+				
 				//var f:File = new File(File.applicationDirectory.nativePath).resolvePath('recompiled.swf');
-				var f:File = new File(File.applicationDirectory.nativePath).resolvePath(lastUrl+'.recompiled.'+result.bytes.length+'.swf');
+				var f:File = new File(File.applicationDirectory.nativePath).resolvePath(lastUrl+'.recompiled.'+lastFileSize+'.swf');
 				trace(f.nativePath);
 				var fs:FileStream = new FileStream();
 				fs.open(f, FileMode.WRITE);
@@ -511,32 +592,43 @@
 			
 			private function run(bytes:ByteArray):void
 			{
+				currentState = 'loaded';
+
 				lastRunBytes = bytes;
 				var context:LoaderContext = new LoaderContext();
-				context.allowLoadBytesCodeExecution = true;
+				context.allowCodeImport = true;
 				context.applicationDomain = new ApplicationDomain(injectedAppDomain);
 				preview.loadBytes(bytes, context);
 			}
+			
+			private var lastFileSize:uint;
 			
 			public function load(url:String):void
 			{
 				var orig:File = File.applicationDirectory.resolvePath(url);
 				
 				lastUrl = url;
-				url = url+'.recompiled.'+orig.size+'.swf';
-				var f:File = File.applicationDirectory.resolvePath(url);
-				if(f.exists)
+				
+				lastFileSize = orig.size;
+				
+				var newUrl:String = url+'.recompiled.'+orig.size+'.swf';
+				var f:File = File.applicationDirectory.resolvePath(newUrl);
+				if(f.exists && cacheEnabled)
 				{
+					url = newUrl;
 					isCached = true;
 				}
 				else
 				{
 					isCached = false;
 				}
+				
+				currentState = 'loading';
+				
 				loadProgress.setProgress(0, 0);
 				readProgress.setProgress(0, 0);
 				writeProgress.setProgress(0, 0);
-				urlLoader.load(new URLRequest(lastUrl));
+				urlLoader.load(new URLRequest(url));
 			}
 
 			protected function showMethodEntry_clickHandler(event:MouseEvent):void
@@ -585,39 +677,69 @@
 			}
 
 		]]>
-	</fx:Script>
-	<s:layout>
-		<s:VerticalLayout paddingLeft="5" paddingTop="5" paddingRight="5" paddingBottom="5"/>
-	</s:layout>
-	<mx:HDividedBox width="100%" height="100%">
-		<s:BorderContainer height="100%">
-			<s:layout>
-				<s:VerticalLayout/>
-			</s:layout>
-			<s:CheckBox id="logToOutput" label="Log to output" click="logToOutput_clickHandler(event)"/>
-			<s:CheckBox id="logToTrace" label="Log to trace" click="logToTrace_clickHandler(event)"/>
-			<s:CheckBox id="showMethodEntry" label="Show method entry" click="showMethodEntry_clickHandler(event)"/>
-			<s:CheckBox id="showMethodExit" label="Show method exit" click="showMethodExit_clickHandler(event)"/>
-			<s:CheckBox id="showTrace" label="Show trace" click="showTrace_clickHandler(event)"/>
-			<s:CheckBox id="dumpArguments" label="Show arguments" click="dumpArguments_clickHandler(event)"/>
-			<s:CheckBox id="showReturn" label="Show return values" click="showReturn_clickHandler(event)"/>
-		</s:BorderContainer>
+	</mx:Script>
+	<mx:states>
+		<mx:State name="waiting">
+			<mx:RemoveChild target="{hdividedbox1}"/>
+			<mx:RemoveChild target="{loadProgress}"/>
+			<mx:RemoveChild target="{readProgress}"/>
+			<mx:RemoveChild target="{writeProgress}"/>
+			<mx:RemoveChild target="{systemLog}"/>
+		</mx:State>
+		<mx:State name="loading">
+			<mx:RemoveChild target="{hdividedbox1}"/>
+			<mx:RemoveChild target="{readProgress}"/>
+			<mx:RemoveChild target="{writeProgress}"/>
+			<mx:RemoveChild target="{canvas1}"/>
+		</mx:State>
+		<mx:State name="reading">
+			<mx:RemoveChild target="{canvas1}"/>
+			<mx:RemoveChild target="{hdividedbox1}"/>
+			<mx:RemoveChild target="{writeProgress}"/>
+		</mx:State>
+		<mx:State name="writing">
+			<mx:RemoveChild target="{canvas1}"/>
+			<mx:RemoveChild target="{hdividedbox1}"/>
+		</mx:State>
+		<mx:State name="loaded">
+			<mx:RemoveChild target="{loadProgress}"/>
+			<mx:RemoveChild target="{readProgress}"/>
+			<mx:RemoveChild target="{writeProgress}"/>
+			<mx:RemoveChild target="{canvas1}"/>
+			<mx:RemoveChild target="{systemLog}"/>
+		</mx:State>
+	</mx:states>
+	<mx:Image source="@Embed('logo.png')"/>
+	<mx:Canvas width="100%" height="100%" id="canvas1">
+		<mx:VBox horizontalCenter="0" verticalCenter="0" horizontalAlign="center">
+			<mx:CheckBox id="useCached" label="Use Cached" styleName="smallText"/>
+			<mx:Label text="Drop File Here" fontSize="32" styleName="bigText"/>
+		</mx:VBox>
+	</mx:Canvas>
+	<mx:TextArea id="systemLog" editable="false" width="100%" height="100%"/>
+	<mx:HDividedBox width="100%" height="100%" id="hdividedbox1">
+		<mx:VBox height="100%">
+			<mx:CheckBox id="logToOutput" label="Log to output" click="logToOutput_clickHandler(event)"/>
+			<mx:CheckBox id="logToTrace" label="Log to trace" click="logToTrace_clickHandler(event)"/>
+			<mx:CheckBox id="showMethodEntry" label="Show method entry" click="showMethodEntry_clickHandler(event)"/>
+			<mx:CheckBox id="showMethodExit" label="Show method exit" click="showMethodExit_clickHandler(event)"/>
+			<mx:CheckBox id="showTrace" label="Show trace" click="showTrace_clickHandler(event)"/>
+			<mx:CheckBox id="dumpArguments" label="Show arguments" click="dumpArguments_clickHandler(event)"/>
+			<mx:CheckBox id="showReturn" label="Show return values" click="showReturn_clickHandler(event)"/>
+		</mx:VBox>
 		<mx:VDividedBox width="100%" height="100%">
 			<mx:HDividedBox width="100%" height="100%">
-				<s:BorderContainer width="100%" height="100%">
-					<s:layout>
-						<s:VerticalLayout/>
-					</s:layout>
+				<mx:VBox width="100%" height="100%">
 					<ui:PreviewPanel id="preview" width="100%" height="100%"/>
-					<s:Button label="Reload" click="button2_clickHandler(event)"/>
-				</s:BorderContainer>
+					<mx:Button label="Reload" click="button2_clickHandler(event)"/>
+				</mx:VBox>
 				<mx:TextArea id="inspectOut" width="100%" height="100%"/>
 			</mx:HDividedBox>
 			<mx:TextArea id="logOut" width="100%" height="100%" editable="false" fontFamily="Courier New" fontSize="11"/>
-			<s:Button label="Clear" click="button1_clickHandler(event)"/>
+			<mx:Button label="Clear" click="button1_clickHandler(event)"/>
 		</mx:VDividedBox>
 	</mx:HDividedBox>
 	<mx:ProgressBar id="loadProgress" width="100%" mode="manual" labelPlacement="center" label="Loading SWF: %3%%"/>
 	<mx:ProgressBar id="readProgress" width="100%" mode="manual" labelPlacement="center" label="Reading SWF: %3%%"/>
 	<mx:ProgressBar id="writeProgress" width="100%" mode="manual" labelPlacement="center" label="Writing SWF: %3%%"/>
-</s:WindowedApplication>
+</mx:WindowedApplication>

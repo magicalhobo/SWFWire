@@ -25,7 +25,7 @@
 	<name>SWFWireDebugger</name>
 
 	<!-- An application version designator (such as "v1", "2.5", or "Alpha 1"). Required. -->
-	<version>v1</version>
+	<version>0.1.6</version>
 
 	<!-- Description, displayed in the AIR application installer.
 	     May have multiple values for each language. See samples or xsd schema file. Optional. -->
@@ -98,12 +98,12 @@
 
 	<!-- The icon the system uses for the application. For at least one resolution,
 		 specify the path to a PNG file included in the AIR package. Optional. -->
-	<!-- <icon>
-		<image16x16></image16x16>
-		<image32x32></image32x32>
-		<image48x48></image48x48>
-		<image128x128></image128x128>
-	</icon> -->
+	<icon>
+		<image16x16>assets/icon_16.png</image16x16>
+		<image32x32>assets/icon_32.png</image32x32>
+		<image48x48>assets/icon_48.png</image48x48>
+		<image128x128>assets/icon.png</image128x128>
+	</icon>
 
 	<!-- Whether the application handles the update when a user double-clicks an update version
 	of the AIR file (true), or the default AIR application installer handles the update (false).

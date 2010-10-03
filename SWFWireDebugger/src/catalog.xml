@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding ="utf-8"?>
+<swc xmlns="http://www.adobe.com/flash/swccatalog/9">
+  <versions>
+    <swc version="1.2" />
+    <flex version="4.1.0" build="16076" minimumSupportedVersion="3.0.0" />
+  </versions>
+  <features>
+    <feature-script-deps />
+    <feature-files />
+  </features>
+  <libraries>
+    <library path="library.swf">
+      <script name="com/swfwire/debugger/injected/Security" mod="1286082345006" signatureChecksum="3078894356" >
+        <def id="com.swfwire.debugger.injected:Security" /> 
+        <dep id="trace" type="e" /> 
+        <dep id="AS3" type="n" /> 
+        <dep id="Object" type="i" /> 
+      </script>
+      <script name="com/swfwire/utils/ObjectUtil" mod="1285901354239" signatureChecksum="166813799" >
+        <def id="com.swfwire.utils:ObjectUtil" /> 
+        <dep id="flash.utils:describeType" type="e" /> 
+        <dep id="com.swfwire.utils:StringUtil" type="e" /> 
+        <dep id="XML" type="s" /> 
+        <dep id="AS3" type="n" /> 
+        <dep id="Object" type="i" /> 
+      </script>
+      <script name="com/swfwire/debugger/injected/StackInfo" mod="1285901354221" signatureChecksum="3128574382" >
+        <def id="com.swfwire.debugger.injected:StackInfo" /> 
+        <dep id="Error" type="e" /> 
+        <dep id="Error" type="s" /> 
+        <dep id="AS3" type="n" /> 
+        <dep id="Object" type="i" /> 
+      </script>
+      <script name="_58aeb1fd7b2979f36f24e8be39cdf9c6cc82bc7446554193a58c35924bd24aff_flash_display_Sprite" mod="1286083715146" signatureChecksum="1438088083" >
+        <def id="_58aeb1fd7b2979f36f24e8be39cdf9c6cc82bc7446554193a58c35924bd24aff_flash_display_Sprite" /> 
+        <dep id="flash.system:Security" type="e" /> 
+        <dep id="AS3" type="n" /> 
+        <dep id="flash.display:Sprite" type="i" /> 
+      </script>
+      <script name="com/swfwire/utils/StringUtil" mod="1285617764000" signatureChecksum="3737310973" >
+        <def id="com.swfwire.utils:StringUtil" /> 
+        <dep id="RegExp" type="e" /> 
+        <dep id="RegExp" type="s" /> 
+        <dep id="AS3" type="n" /> 
+        <dep id="Object" type="i" /> 
+      </script>
+      <script name="com/swfwire/debugger/injected/Logger" mod="1286083656337" signatureChecksum="522846240" >
+        <def id="com.swfwire.debugger.injected:Logger" /> 
+        <dep id="com.swfwire.debugger.injected:StackInfo" type="e" /> 
+        <dep id="trace" type="e" /> 
+        <dep id="com.swfwire.utils:StringUtil" type="e" /> 
+        <dep id="flash.utils:getTimer" type="e" /> 
+        <dep id="com.swfwire.utils:ObjectUtil" type="e" /> 
+        <dep id="AS3" type="n" /> 
+        <dep id="Object" type="i" /> 
+      </script>
+      <digests>
+        <digest type="SHA-256" signed="false" value="d797033d16c675cbdcb9ad099d7ab6303b02d7c5de4253fb03334f554d73b967"   />
+      </digests>
+    </library>
+  </libraries>
+  <files>
+  </files>
+</swc>

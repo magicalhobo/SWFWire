@@ -7,10 +7,10 @@ package com.swfwire.debugger.injected
 	
 	public class Logger
 	{
-		public static var logToTrace:Boolean = false;
-		public static var logToOutput:Boolean = true;
-		public static var showMethodEntry:Boolean = true;
-		public static var showMethodExit:Boolean = true;
+		public static var logToTrace:Boolean = true;
+		public static var logToOutput:Boolean = false;
+		public static var showMethodEntry:Boolean = false;
+		public static var showMethodExit:Boolean = false;
 		public static var showTraceStatements:Boolean = true;
 		public static var showArguments:Boolean = false;
 		public static var showReturn:Boolean = false;
@@ -57,11 +57,11 @@ package com.swfwire.debugger.injected
 		}
 		
 
-		public static function log(message:*):void
+		public static function log(... args):void
 		{
 			if(showTraceStatements)
 			{
-				_log(message);
+				_log(args);
 			}
 		}
 		
@@ -69,8 +69,8 @@ package com.swfwire.debugger.injected
 		{
 			if(showMethodEntry)
 			{
-				var methodName2:String = new StackInfo(1).functionName;
-				_log('> ' + methodName2);
+				//var methodName2:String = new StackInfo(1).functionName;
+				_log('> ' + methodName);
 			}
 			indent++;
 			if(showArguments && params)

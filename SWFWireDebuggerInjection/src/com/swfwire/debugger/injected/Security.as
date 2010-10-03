@@ -6,5 +6,9 @@ package com.swfwire.debugger.injected
 		{
 			trace('Security.allowDomain - nop');
 		}
+		public static function loadPolicyFile(... args):void
+		{
+			trace('Security.loadPolicyFile - nop');
+		}
 	}
 }

@@ -22,8 +22,17 @@ package
 		internal static var internalStaticVar:Boolean;
 		custom static var customStaticVar:Boolean;
 		
-		public static function playground():void
+		public function playground():*
 		{
+			switch(this)
+			{
+				case 'a':
+					return;
+					break;
+				default:
+					return this;
+					break;
+			}
 		}
 		
 		public static function testInfiniteFor():void
@@ -99,11 +108,28 @@ package
 			}
 		}
 		
+		public static function testThrowError():void
+		{
+			throw new Error();
+		}
+		
+		public static function testTryFinally():void
+		{
+			try
+			{
+				testThrowError();
+			}
+			finally
+			{
+				trace('finally!');
+			}
+		}
+		
 		public static function testTryCatchFinally():void
 		{
 			try
 			{
-				throw new Error();
+				testThrowError();
 			}
 			catch(e:Error)
 			{
@@ -114,7 +140,6 @@ package
 				trace('finally!');
 			}
 		}
-		
 		
 		public static function publicStaticMethod(param1:String):Boolean
 		{
@@ -191,10 +216,19 @@ package
 			trace('Starting constructor');
 			trace('stage: '+stage);
 			
+			trace('FlashVars: ');
+			for(var iter:String in loaderInfo.parameters)
+			{
+				trace('	'+iter+': '+loaderInfo.parameters[iter]);
+			}
+			trace('---------');
+			
 			Security.allowDomain('swfwire.com');
 			
 			stage.scaleMode = StageScaleMode.NO_SCALE;
 			stage.align = StageAlign.TOP_LEFT;
+			
+			testTryCatchFinally();
 			
 			custom::customMethod(null);
 			ClassName.staticMethod();

@@ -1,4 +1,4 @@
-package
+package com.swfwire.inspector
 {
 	public class Config
 	{

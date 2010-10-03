@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" currentState="details" xmlns:local="*" width="100%" height="100%">
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" currentState="details" xmlns:local="*" width="100%" height="100%" xmlns:display="com.swfwire.inspector.display.*">
 	<mx:states>
 		<mx:State name="details">
 			<mx:RemoveChild target="{hex}"/>
@@ -81,8 +81,8 @@
 			<mx:HDividedBox width="100%" height="100%">
 				<mx:TextArea id="detail" width="100%" height="100%" editable="false" wordWrap="false" fontFamily="Courier New" fontSize="12"/>
 				<mx:TextArea id="hex" width="100%" height="100%" editable="false" wordWrap="false" fontFamily="Courier New" fontSize="12"/>
-				<local:ActionScriptPanel id="actionScript" width="100%" height="100%"/>
-				<local:PreviewPanel id="preview" width="100%" height="100%"/>
+				<display:ActionScriptPanel id="actionScript" width="100%" height="100%"/>
+				<display:PreviewPanel id="preview" width="100%" height="100%"/>
 			</mx:HDividedBox>
 		</mx:VBox>
 	</mx:HDividedBox>

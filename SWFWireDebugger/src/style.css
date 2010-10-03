@@ -1,0 +1,84 @@
+@namespace mx "library://ns.adobe.com/flex/mx";
+@namespace s "library://ns.adobe.com/flex/spark";
+
+global
+{
+	color: #B7BABC;
+	chrome-color: #222222;
+	accent-color: #000000;
+	text-roll-over-color: #999999;
+	text-selected-color: #AAAAAA;
+	focus-color: #a4da0a;
+}
+
+@font-face
+{
+	src: url('MyriadPro-Light_0.otf');
+	fontFamily: MyriadLightEmbedded;
+	embedAsCFF: false;
+}
+
+@font-face
+{
+	src: url('MyriadPro-BoldCond.otf');
+	fontFamily: MyriadBoldEmbedded;
+	embedAsCFF: false;
+}
+
+mx|WindowedApplication
+{
+	background-color: #1A1307;
+}
+
+/*
+mx|DataGrid, mx|List
+{
+	alternating-item-colors: #383733, #3f3e3a;
+	vertical-grid-line-color: #000000;
+	selection-color: #a4da0a;
+	roll-over-color: #a4da0a;
+	text-roll-over-color: #000000;
+}
+*/
+
+mx|Alert
+{
+	modal-transparency: 0;
+	modal-transparency-duration: 2000;
+	modal-transparency-blur: 10;
+	background-color: #222222;
+}
+
+mx|TextArea
+{
+	content-background-color: #383733;
+}
+
+mx|Button
+{
+	font-size: 12;
+	corner-radius: 0;
+}
+
+/*
+mx|List
+{
+	content-background-color: #383733;
+	roll-over-color: #a4da0a;
+	text-roll-over-color: #000000;
+	selection-color: #a4da0a;
+}
+*/
+
+.smallText
+{
+	font-family: MyriadBoldEmbedded;
+	font-lookup: embeddedCFF;
+	font-size: 16px;
+}
+
+.bigText
+{
+	font-family: MyriadLightEmbedded;
+	font-lookup: embeddedCFF;
+}
