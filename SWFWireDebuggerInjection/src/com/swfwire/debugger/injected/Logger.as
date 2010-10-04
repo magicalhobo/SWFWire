@@ -9,8 +9,8 @@ package com.swfwire.debugger.injected
 	{
 		public static var logToTrace:Boolean = true;
 		public static var logToOutput:Boolean = false;
-		public static var showMethodEntry:Boolean = false;
-		public static var showMethodExit:Boolean = false;
+		public static var showMethodEntry:Boolean = true;
+		public static var showMethodExit:Boolean = true;
 		public static var showTraceStatements:Boolean = true;
 		public static var showArguments:Boolean = false;
 		public static var showReturn:Boolean = false;
@@ -20,6 +20,7 @@ package com.swfwire.debugger.injected
 		
 		private static var indent:int = 0;
 		private static var startTimes:Array = [];
+		private static var stack:Array = [];
 		
 		public static function enterFrame():void
 		{
@@ -70,40 +71,36 @@ package com.swfwire.debugger.injected
 			if(showMethodEntry)
 			{
 				//var methodName2:String = new StackInfo(1).functionName;
+				//methodName = new StackInfo(1).functionName;
 				_log('> ' + methodName);
 			}
-			indent++;
+			stack.push(methodName);
+			indent = stack.length;
 			if(showArguments && params)
 			{
 				_log(ObjectUtil.objectToString(params, 2, 2, 50, 50, '	'));
 			}
 			startTimes.push(getTimer());
-			//_log('>>');
-			return;
-			if(showMethodEntry)
-			{
-				var methodName2:String = new StackInfo(1).functionName;
-				_log('> ' + methodName2);
-			}
-			indent++;
-			return;
-			//log(caller);
-			if(dumpArguments && params)
-			{
-				_log(ObjectUtil.objectToString(params, 2, 2, 50, 50, '	'));
-			}
 		}
 		
 		public static function exitFunction(methodName:String = 'unk', returnValue:* = null):void
 		{
+			while(stack.length > 0)
+			{
+				var start:int = startTimes.pop();
+				if(methodName == stack.pop())
+				{
+					break;
+				}
+			}
+			
+			
 			if(showReturn && returnValue)
 			{
 				_log('return '+ObjectUtil.objectToString(returnValue, 2, 2, 50, 50, '	'));
 			}
-			indent--;
+			indent = stack.length;
 			//indent = Math.max(indent, 0);
-			
-			var start:int = startTimes.pop();
 			
 			if(showMethodEntry && showMethodExit)
 			{
@@ -121,6 +118,7 @@ package com.swfwire.debugger.injected
 		{
 			indent = 0;
 			startTimes = [];
+			stack = [];
 			
 			_log('Uncaught error:');
 			_log(ObjectUtil.objectToString(e, 2, 2, 50, 50, '	'));

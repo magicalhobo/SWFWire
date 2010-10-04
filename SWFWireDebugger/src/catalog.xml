@@ -31,7 +31,7 @@
         <dep id="AS3" type="n" /> 
         <dep id="Object" type="i" /> 
       </script>
-      <script name="_58aeb1fd7b2979f36f24e8be39cdf9c6cc82bc7446554193a58c35924bd24aff_flash_display_Sprite" mod="1286083715146" signatureChecksum="1438088083" >
+      <script name="_58aeb1fd7b2979f36f24e8be39cdf9c6cc82bc7446554193a58c35924bd24aff_flash_display_Sprite" mod="1286148306735" signatureChecksum="1438088083" >
         <def id="_58aeb1fd7b2979f36f24e8be39cdf9c6cc82bc7446554193a58c35924bd24aff_flash_display_Sprite" /> 
         <dep id="flash.system:Security" type="e" /> 
         <dep id="AS3" type="n" /> 
@@ -44,9 +44,8 @@
         <dep id="AS3" type="n" /> 
         <dep id="Object" type="i" /> 
       </script>
-      <script name="com/swfwire/debugger/injected/Logger" mod="1286083656337" signatureChecksum="522846240" >
+      <script name="com/swfwire/debugger/injected/Logger" mod="1286148306144" signatureChecksum="522846240" >
         <def id="com.swfwire.debugger.injected:Logger" /> 
-        <dep id="com.swfwire.debugger.injected:StackInfo" type="e" /> 
         <dep id="trace" type="e" /> 
         <dep id="com.swfwire.utils:StringUtil" type="e" /> 
         <dep id="flash.utils:getTimer" type="e" /> 
@@ -55,7 +54,7 @@
         <dep id="Object" type="i" /> 
       </script>
       <digests>
-        <digest type="SHA-256" signed="false" value="d797033d16c675cbdcb9ad099d7ab6303b02d7c5de4253fb03334f554d73b967"   />
+        <digest type="SHA-256" signed="false" value="f6b629161a4434e220aa85fbedcb66533620c3027cd008f946f79f9f23fc8db0"   />
       </digests>
     </library>
   </libraries>

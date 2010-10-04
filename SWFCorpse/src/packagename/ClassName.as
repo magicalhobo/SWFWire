@@ -4,7 +4,11 @@ package packagename
 	{
 		public static function staticMethod():String
 		{
-			return 'ClassName.staticMethod';
+			return 'ClassName$.staticMethod';
+		}
+		public function method():String
+		{
+			return 'ClassName.method';
 		}
 	}
 }

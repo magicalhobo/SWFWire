@@ -5,10 +5,14 @@ global
 {
 	color: #B7BABC;
 	chrome-color: #222222;
-	accent-color: #000000;
+	accent-color: #FF0000;
 	text-roll-over-color: #999999;
 	text-selected-color: #AAAAAA;
 	focus-color: #a4da0a;
+
+	font-family: MyriadBoldEmbedded;
+	font-lookup: embeddedCFF;
+	font-size: 16px;
 }
 
 @font-face
@@ -22,6 +26,13 @@ global
 {
 	src: url('MyriadPro-BoldCond.otf');
 	fontFamily: MyriadBoldEmbedded;
+	embedAsCFF: false;
+}
+
+@font-face
+{
+	src: url('visitor1.ttf');
+	fontFamily: PixelFont;
 	embedAsCFF: false;
 }
 
@@ -56,8 +67,22 @@ mx|TextArea
 
 mx|Button
 {
-	font-size: 12;
 	corner-radius: 0;
+}
+
+mx|NumericStepper
+{
+	content-background-alpha: 0;
+	font-family: PixelFont;
+	font-lookup: embeddedCFF;
+	font-size: 10px;
+	font-anti-alias-type: normal;
+	font-grid-fit-type: pixel;
+}
+
+mx|ProgressBar
+{
+	font-weight: normal;
 }
 
 /*
@@ -72,13 +97,16 @@ mx|List
 
 .smallText
 {
-	font-family: MyriadBoldEmbedded;
+	font-family: PixelFont;
 	font-lookup: embeddedCFF;
-	font-size: 16px;
+	font-size: 10px;
+	font-anti-alias-type: normal;
+	font-grid-fit-type: pixel;
 }
 
 .bigText
 {
 	font-family: MyriadLightEmbedded;
 	font-lookup: embeddedCFF;
+	font-size: 32px;
 }
