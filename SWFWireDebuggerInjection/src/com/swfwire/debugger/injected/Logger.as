@@ -71,6 +71,7 @@ package com.swfwire.debugger.injected
 			if(showMethodEntry)
 			{
 				//var methodName2:String = new StackInfo(1).functionName;
+				//_log('> ' + methodName + ' | '+methodName2);
 				//methodName = new StackInfo(1).functionName;
 				_log('> ' + methodName);
 			}

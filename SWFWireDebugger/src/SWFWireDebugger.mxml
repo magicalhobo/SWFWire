@@ -117,7 +117,7 @@
 					showReturn.selected = logger.showReturn;
 					
 					//injectedAppDomain.getDefinition('com.swfwire.debugger.injected').output = logOut;
-					//loadDefault();
+					loadDefault();
 				});
 				
 				var librarySwf:String = new File(File.applicationDirectory.nativePath).resolvePath('library.swf?nocache='+Math.random()).url;
@@ -138,6 +138,7 @@
 				
 				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpseFlex4-1/bin-debug/Main.swf').url);
 				load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpse/bin-debug/SWFCorpse.swf').url);
+				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpse/bin-release/SWFCorpse.swf').url);
 				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFWireInspector/bin-debug/SWFWireInspector.swf').url);
 				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpseFlex3-5/bin-debug/Main.swf').url);
 				//load('temp.swf');
@@ -318,13 +319,20 @@
 					{
 						var wrapper:ABCWrapper = new ABCWrapper(abcTag.abcFile, metadata[iTag]);
 						
+						var injectedNamespace:uint = wrapper.addNamespaceFromString('com.swfwire.debugger.injected');
+						
 						var securityIndex:int = wrapper.getMultinameIndex('flash.system', 'Security');
 						if(securityIndex >= 0)
 						{
-							var security:MultinameQNameToken = abcTag.abcFile.cpool.multinames[securityIndex].data as MultinameQNameToken;
-							var injectedNamespace:uint = wrapper.addNamespaceFromString('com.swfwire.debugger.injected'); 
-							security.ns = injectedNamespace;
-							//abcTag.abcFile.cpool.namespaces[security.ns].name = wrapper.addString('com.swfwire.debugger.injected');
+							var securityQName:MultinameQNameToken = abcTag.abcFile.cpool.multinames[securityIndex].data as MultinameQNameToken;
+							securityQName.ns = injectedNamespace;
+						}
+						
+						var externalInterfaceIndex:int = wrapper.getMultinameIndex('flash.external', 'ExternalInterface');
+						if(externalInterfaceIndex >= 0)
+						{
+							var externalInterfaceQName:MultinameQNameToken = abcTag.abcFile.cpool.multinames[externalInterfaceIndex].data as MultinameQNameToken;
+							externalInterfaceQName.ns = injectedNamespace;
 						}
 						
 						var mainIndex:int = wrapper.getMultinameIndex(mainClassPackage, mainClassName);
@@ -365,13 +373,14 @@
 							//mainInst.traits[10].name = fmi;
 							//abcTag.abcFile.methods[mainInst.iinit].
 							
+							var mainMB:MethodBodyInfoToken = wrapper.findMethodBody(mainInst.iinit);
+							
 							var emptyMethod:MethodBodyInfoToken = new MethodBodyInfoToken(
 								mainInst.iinit, 1, 1, 9, 10);
 							emptyMethod.instructions = wrapper.getEmptyConstructorInstructions();
 							
 							abcTag.abcFile.methodBodies.push(emptyMethod);
 							
-							var mainMB:MethodBodyInfoToken = wrapper.findMethodBody(mainInst.iinit);
 							mainMB.method = defcmi;
 							
 							//mainInst.iinit = fci;
@@ -393,11 +402,12 @@
 							var exitFunctionIndex:int = wrapper.addQName(emptyNS, wrapper.addString('exitFunction'));
 							
 							var cp:ConstantPoolToken = abcTag.abcFile.cpool;
+							var l:*;
 							
 							var traceIndex:int = wrapper.getMultinameIndex('', 'trace');
 							if(traceIndex >= 0)
 							{
-								var l:* = wrapper.findInstruction(new InstructionTemplate(Instruction_findpropstrict, {index: traceIndex}));
+								l = wrapper.findInstruction(new InstructionTemplate(Instruction_findpropstrict, {index: traceIndex}));
 								
 								for(var iter:* in l)
 								{
@@ -408,6 +418,7 @@
 								{
 									var b:Vector.<IInstruction> = new Vector.<IInstruction>();
 									b.push(new Instruction_getlex(loggerClassIndex));
+									wrapper.redirectReferences(z.methodBody, a[0], b[0]);
 									return b;
 								});
 							
@@ -418,6 +429,7 @@
 								{
 									var b:Vector.<IInstruction> = new Vector.<IInstruction>();
 									b.push(new Instruction_callpropvoid(methodIndex, Object(a[0]).argCount));
+									wrapper.redirectReferences(z.methodBody, a[0], b[0]);
 									return b;
 								});
 								
@@ -426,6 +438,7 @@
 								{
 									var b:Vector.<IInstruction> = new Vector.<IInstruction>();
 									b.push(new Instruction_callproperty(methodIndex, Object(a[0]).argCount));
+									wrapper.redirectReferences(z.methodBody, a[0], b[0]);
 									return b;
 								});
 							}
@@ -447,7 +460,6 @@
 								}
 								return result;
 							}
-							
 							
 							for(var i11:int = 0; i11 < abcTag.abcFile.instances.length; i11++)
 							{
@@ -486,6 +498,17 @@
 									}
 								}
 							}
+							
+							l = wrapper.findInstruction(new InstructionTemplate(Instruction_newfunction, {}));
+							for(var i15:int = 0; i15 < l.length; i15++)
+							{
+								var mb2:MethodBodyInfoToken = abcTag.abcFile.methodBodies[l[i15].methodBody];
+								var newfinst:Instruction_newfunction = mb2.instructions[l[i15].id] as Instruction_newfunction;
+								nameFromMethodId[newfinst.index] = nameFromMethodId[mb2.method]+'/<anonymous>';
+							}
+							
+							Debug.dump(nameFromMethodId);
+							
 							
 							for(var i9:int = 0; i9 < abcTag.abcFile.methodBodies.length; i9++)
 							{
@@ -527,19 +550,16 @@
 									j9.unshift(new Instruction_getlocal0());
 									
 									var methodId:int =  wrapper.addString(iTag+'.'+String(i9));
-									var methodName:String = nameFromMethodId[mb.method];// abcTag.abcFile.methods[mb.method].name;
+									var methodName:String = nameFromMethodId[mb.method];
 									if(methodName)
 									{
 										methodId =  wrapper.addString(methodName);
 									}
 									j9.unshift(new Instruction_pushstring(methodId));
-									/*
-									var methodId:int =  wrapper.addString(iTag+'.'+String(i9));
-									j9.unshift(new Instruction_pushstring(methodId));
-									*/
 									j9.unshift(new Instruction_getlex(loggerClassIndex));
 								}
 							}
+							
 							
 							l = wrapper.findInstruction(new InstructionTemplate(Instruction_returnvoid, {}));
 							

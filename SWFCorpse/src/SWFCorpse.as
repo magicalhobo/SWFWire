@@ -1,11 +1,13 @@
 package
 {
+	import flash.display.DisplayObject;
 	import flash.display.Shape;
 	import flash.display.Sprite;
 	import flash.display.StageAlign;
 	import flash.display.StageScaleMode;
 	import flash.events.Event;
 	import flash.events.MouseEvent;
+	import flash.external.ExternalInterface;
 	import flash.system.Security;
 	
 	import org.osmf.display.ScaleMode;
@@ -27,7 +29,7 @@ package
 			switch(this)
 			{
 				case 'a':
-					return;
+					return new DisplayObject;
 					break;
 				default:
 					return this;
@@ -42,15 +44,21 @@ package
 				trace('infinity!');
 			}
 		}
-		
-		public static function testInfiniteWhile():void
+		public static function testInfiniteWhile(arg:Boolean):void
 		{
-			while(true)
+			while(arg)
 			{
 				trace('infinity!');
 			}
 		}
 		
+		public static function testIfTrue(arg:Boolean):void
+		{
+			if(arg)
+			{
+				trace('not infinity!');
+			}
+		}
 		public static function testIfElse():void
 		{
 			if(1)
@@ -74,6 +82,11 @@ package
 					trace('2');
 					break;
 			}
+		}
+		
+		public static function testExternalInterface():void
+		{
+			ExternalInterface.call('test');
 		}
 		
 		public static function returnBoolean():Boolean
@@ -177,7 +190,7 @@ package
 			return true;
 		}
 		
-		protected function protectedMethod(param1:Number):Boolean
+		protected function protectedMethod(param1:String):Boolean
 		{
 			return true;
 		}
@@ -211,8 +224,19 @@ package
 			}
 		}
 		
+		private function testAnonymousFunction():void
+		{
+			function myAnonymousFunction():String
+			{
+				return 'called';
+			}
+			myAnonymousFunction();
+		}
+		
 		public function SWFCorpse()
 		{
+			var stack:Number = 'at '.length;
+			
 			trace('Starting constructor');
 			trace('stage: '+stage);
 			
@@ -228,10 +252,20 @@ package
 			stage.scaleMode = StageScaleMode.NO_SCALE;
 			stage.align = StageAlign.TOP_LEFT;
 			
+			trace('Stage is: '+stage.stageWidth+'x'+stage.stageHeight);
+			
+			publicMethod('test');
+			protectedMethod('test');
+			privateMethod('test');
+			
+			testExternalInterface();
+			testAnonymousFunction();
 			testTryCatchFinally();
 			
 			custom::customMethod(null);
 			ClassName.staticMethod();
+			var t:ClassName = new ClassName();
+			t.method();
 			
 			var shape:Sprite = new Sprite();
 			shape.graphics.beginFill(0xFF0000);

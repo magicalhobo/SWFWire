@@ -9,6 +9,7 @@ package com.swfwire.decompiler.utils
 	import com.swfwire.decompiler.abc.tokens.*;
 	import com.swfwire.decompiler.abc.tokens.multinames.*;
 	import com.swfwire.decompiler.abc.tokens.traits.*;
+	import com.swfwire.utils.Debug;
 	import com.swfwire.utils.ObjectUtil;
 	import com.swfwire.utils.StringUtil;
 	
@@ -208,7 +209,8 @@ package com.swfwire.decompiler.utils
 											  stopOnJump:Boolean = false,
 											  scope:ScopeStack = null,
 											  locals:LocalRegisters = null,
-											  stack:OperandStack = null):String
+											  stack:OperandStack = null,
+											  target:int = -1):Object
 		{
 			var lines:Array = [];
 			
@@ -247,6 +249,8 @@ package com.swfwire.decompiler.utils
 				}
 			}
 			
+			var flow:Array = [];
+			
 			for(var iter:uint = start; iter < instructions.length; iter++)
 			{
 				if(hitmap[iter])
@@ -254,11 +258,17 @@ package com.swfwire.decompiler.utils
 					trace('already hit');
 					break;
 				}
+				if(iter == target)
+				{
+					trace('target hit');
+					break;
+				}
 				if(op is EndInstruction)
 				{
 					continue;
 				}
 				hitmap[iter] = 1;
+				flow.push(iter);
 				var op:IInstruction = instructions[iter];
 				var params:Array = [];
 				var line:String = '';
@@ -271,10 +281,10 @@ package com.swfwire.decompiler.utils
 				var mn:MultinameToken;
 				var rmn:ReadableMultiname;
 				
-				const showByteCode:Boolean = true;
+				const showByteCode:Boolean = false;
 				const showActionScript:Boolean = true;
-				const showStack:Boolean = true;
-				const showDebug:Boolean = false;
+				const showStack:Boolean = false;
+				const showDebug:Boolean = true;
 				
 				if(showByteCode)
 				{
@@ -402,9 +412,21 @@ package com.swfwire.decompiler.utils
 					{
 						trace('strictne jump!');
 						tempInt = positionLookup[Instruction_ifstrictne(op).reference];
-						tempStr = instructionsToString(instructions, tempInt, hitmap, positionLookup, true, scope, locals, stack);
-						tempStr3 = instructionsToString(instructions, iter + 1, hitmap, positionLookup, true, scope, locals, stack);
+						var hitmapCopy:Object = {};
+						for(var iter3:String in hitmap)
+						{
+							hitmapCopy[iter] = hitmap[iter];
+						}
+						tempStr = instructionsToString(instructions, tempInt, hitmap, positionLookup, true, scope, locals, stack).result;
+						tempStr3 = instructionsToString(instructions, iter + 1, hitmapCopy, positionLookup, true, scope, locals, stack).result;
 						trace(tempStr);
+						
+						for(var iter3:String in hitmapCopy)
+						{
+							hitmap[iter] = hitmapCopy[iter];
+						}
+						
+						
 						tempStr = StringUtil.indent(tempStr, '	');
 						tempStr3 = StringUtil.indent(tempStr3, '	');
 						
@@ -416,8 +438,8 @@ package com.swfwire.decompiler.utils
 					{
 						trace('iftrue jump!');
 						tempInt = positionLookup[Instruction_iftrue(op).reference];
-						tempStr = instructionsToString(instructions, tempInt, hitmap, positionLookup, true, scope, locals, stack);
-						tempStr3 = instructionsToString(instructions, iter + 1, hitmap, positionLookup, true, scope, locals, stack);
+						tempStr = instructionsToString(instructions, tempInt, hitmap, positionLookup, true, scope, locals, stack).result;
+						tempStr3 = instructionsToString(instructions, iter + 1, hitmap, positionLookup, true, scope, locals, stack).result;
 						trace(tempStr);
 						tempStr = StringUtil.indent(tempStr, '	');
 						tempStr3 = StringUtil.indent(tempStr3, '	');
@@ -435,17 +457,85 @@ package com.swfwire.decompiler.utils
 					}
 					else if(op is Instruction_iffalse)
 					{
+						var hitmapCopy1:Object = {};
+						var hitmapCopy2:Object = {};
+						for(var iterHit1:String in hitmap)
+						{
+							hitmapCopy1[iterHit1] = hitmap[iterHit1];
+							hitmapCopy2[iterHit1] = hitmap[iterHit1];
+						}
 						trace('iffalse jump!');
 						tempInt = positionLookup[Instruction_iffalse(op).reference];
-						tempStr = instructionsToString(instructions, tempInt, hitmap, positionLookup, true, scope, locals, stack);
-						tempStr3 = instructionsToString(instructions, iter + 1, hitmap, positionLookup, true, scope, locals, stack);
+						var r1:Object = instructionsToString(instructions, tempInt, hitmapCopy1, positionLookup, true, scope, locals, stack);
+						tempStr = r1.result;
+						var r2:Object = instructionsToString(instructions, iter + 1, hitmapCopy2, positionLookup, true, scope, locals, stack);
+						tempStr3 = r2.result;
+						
+						var a1:int = -1;
+						outer:
+						for(var iter4:int = 0; iter4 < r1.flow.length; iter4++)
+						{
+							for(var iter5:int = 0; iter5 < r2.flow.length; iter5++)
+							{
+								if(r1.flow[iter4] == r2.flow[iter5])
+								{
+									a1 = r1.flow[iter4];
+									r1.flow.splice(iter4);
+									r2.flow.splice(iter5);
+									break outer;
+								}
+							}
+						}
+						
+						Debug.dump(r1.flow);
+						Debug.dump(r2.flow);
+						
+						for(var iterHit2:uint = 0; iterHit2 < r1.flow.length; iterHit2++)
+						{
+							hitmap[r1.flow[iterHit2]] = 1;
+						}
+						
+						for(var iterHit3:uint = 0; iterHit3 < r2.flow.length; iterHit3++)
+						{
+							hitmap[r2.flow[iterHit3]] = 1;
+						}
+						
 						trace(tempStr);
 						tempStr = StringUtil.indent(tempStr, '	');
 						tempStr3 = StringUtil.indent(tempStr3, '	');
 						
-						tempStr2 = 'if('+stack.pop() + ' == false)\n{\n'+tempStr+'\n}\nelse\n{\n'+tempStr3+'\n}';
+						if(r1.flow.length > 0)
+						{
+							if(r2.flow.length > 0)
+							{
+								tempStr2 = 'if('+stack.pop() + ')\n{\n'+tempStr3+'\n}\nelse\n{\n'+tempStr+'\n}';
+							}
+							else
+							{
+								tempStr2 = 'if(!'+stack.pop() + ')\n{\n'+tempStr+'\n}';
+							}
+						}
+						else
+						{
+							if(r2.flow.length > 0)
+							{
+								tempStr2 = 'if('+stack.pop() + ')\n{\n'+tempStr3+'\n}';
+							}
+							else
+							{
+								tempStr2 = '';
+							}
+						}
 						
-						lines.push(tempStr2);
+						if(tempStr2)
+						{
+							lines.push(tempStr2);
+						}
+
+						if(a1 > 0)
+						{
+							iter = a1 - 1;
+						}
 					}
 					else if(op is Instruction_getlocal0)
 					{
@@ -491,6 +581,16 @@ package com.swfwire.decompiler.utils
 					{
 						locals.setName(Instruction_kill(op).index, 'undefined');
 					}
+					else if(op is Instruction_throw)
+					{
+						lines.push('throw '+stack.pop()+';');
+					}
+					/*
+					else if(op is Instruction_newclass)
+					{
+						lines.push('throw '+stack.pop()+';');
+					}
+					*/
 					else if(op is Instruction_add)
 					{
 						tempStr = stack.pop();
@@ -568,6 +668,37 @@ package com.swfwire.decompiler.utils
 								break;
 						}
 					}
+					else if(op is Instruction_constructprop)
+					{
+						tempInt = Instruction_constructprop(op).index;
+						mn = abcFile.cpool.multinames[tempInt];
+						switch(mn.kind)
+						{
+							case MultinameToken.KIND_QName:
+								args = [];
+								for(tempInt2 = Instruction_constructprop(op).argCount - 1; tempInt2 >= 0; tempInt2--)
+								{
+									args.unshift(stack.pop());
+								}
+								
+								tempStr2 = stack.pop();
+								
+								rmn = new ReadableMultiname();
+								getReadableMultiname(tempInt, rmn);
+								tempStr = this.multinameTypeToString(rmn);
+								
+								if(tempStr2 != tempStr)
+								{
+									tempStr = tempStr2+'.'+tempStr;
+								}
+								
+								tempStr = tempStr+'('+args.join(', ')+')';
+								localCount++;
+								stack.push('local_'+localCount);
+								lines.push('var local_'+localCount+':* = new '+tempStr+';');
+								break;
+						}
+					}
 					else if(op is Instruction_constructsuper)
 					{
 						tempInt = Instruction_constructsuper(op).argCount;
@@ -581,7 +712,7 @@ package com.swfwire.decompiler.utils
 						//Not sure why this exists... should always be 'this'
 						stack.pop();
 						
-						lines.push('super('+args.join(', ')+')');
+						lines.push('super('+args.join(', ')+');');
 					}
 					else if(op is Instruction_coerce)
 					{
@@ -690,7 +821,7 @@ package com.swfwire.decompiler.utils
 					}
 				}
 			}
-			return lines.join('\n');
+			return {result: lines.join('\n'), flow: flow};
 		}
 		
 		public function traitToString(r:ReadableTrait):String
@@ -753,7 +884,7 @@ package com.swfwire.decompiler.utils
 				
 				if(r.instructions && r.instructions.length > 0)
 				{
-					pieces.push('\n		{\n'+StringUtil.indent(instructionsToString(r.instructions), '			')+'\n		}');
+					pieces.push('\n		{\n'+StringUtil.indent(instructionsToString(r.instructions).result, '			')+'\n		}');
 				}
 				else
 				{

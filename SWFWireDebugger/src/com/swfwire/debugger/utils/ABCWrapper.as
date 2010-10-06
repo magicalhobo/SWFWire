@@ -4,6 +4,7 @@ package com.swfwire.debugger.utils
 	import com.swfwire.decompiler.abc.ABCReaderMetadata;
 	import com.swfwire.decompiler.abc.instructions.*;
 	import com.swfwire.decompiler.abc.tokens.ConstantPoolToken;
+	import com.swfwire.decompiler.abc.tokens.ExceptionInfoToken;
 	import com.swfwire.decompiler.abc.tokens.InstanceToken;
 	import com.swfwire.decompiler.abc.tokens.MethodBodyInfoToken;
 	import com.swfwire.decompiler.abc.tokens.MethodInfoToken;
@@ -286,7 +287,10 @@ package com.swfwire.debugger.utils
 		public function redirectReferences(methodBody:int, from:IInstruction, to:IInstruction):void
 		{
 			var instructions:Vector.<IInstruction> = abcFile.methodBodies[methodBody].instructions;
-			for(var i:int = 0; i < instructions.length; i++)
+			
+			var i:int;
+			
+			for(i = 0; i < instructions.length; i++)
 			{
 				var op:IInstruction = instructions[i];
 				switch(Object(op).constructor)
@@ -410,6 +414,24 @@ package com.swfwire.debugger.utils
 							}
 						}
 						break;
+				}
+			}
+			
+			var exceptions:Vector.<ExceptionInfoToken> = abcFile.methodBodies[methodBody].exceptions;
+
+			for(i = 0; i < exceptions.length; i++)
+			{
+				if(exceptions[i].fromRef == from)
+				{
+					exceptions[i].fromRef = to;
+				}
+				if(exceptions[i].toRef == from)
+				{
+					exceptions[i].toRef = to;
+				}
+				if(exceptions[i].targetRef == from)
+				{
+					exceptions[i].targetRef = to;
 				}
 			}
 		}
