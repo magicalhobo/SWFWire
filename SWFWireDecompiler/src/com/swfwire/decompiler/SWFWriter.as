@@ -89,8 +89,10 @@ package com.swfwire.decompiler
 			switch(Object(tag).constructor)
 			{
 				case EndTag:
-					break;
 				case ShowFrameTag:
+					break;
+				case SetBackgroundColorTag:
+					writeSetBackgroundColorTag(context, SetBackgroundColorTag(tag));
 					break;
 				case FileAttributesTag:
 					writeFileAttributesTag(context, FileAttributesTag(tag));
@@ -98,8 +100,11 @@ package com.swfwire.decompiler
 				case PlaceObject2Tag:
 					writePlaceObject2Tag(context, PlaceObject2Tag(tag));
 					break;
-				default:
+				case UnknownTag:
 					writeUnknownTag(context, UnknownTag(tag));
+					break;
+				default:
+					throw new Error('Unsupported tag encountered.');
 					break;
 			}
 		}
@@ -124,6 +129,11 @@ package com.swfwire.decompiler
 		protected function writeUnknownTag(context:SWFWriterContext, tag:UnknownTag):void
 		{
 			context.bytes.writeBytes(tag.content);
+		}
+		
+		protected function writeSetBackgroundColorTag(context:SWFWriterContext, tag:SetBackgroundColorTag):void
+		{
+			writeRGBRecord(context, tag.backgroundColor);
 		}
 		
 		protected function writeFileAttributesTag(context:SWFWriterContext, tag:FileAttributesTag):void
@@ -186,6 +196,13 @@ package com.swfwire.decompiler
 			{
 				//tag.clipActions = readClipActionsRecord(context);
 			}
+		}
+		
+		protected function writeRGBRecord(context:SWFWriterContext, record:RGBRecord):void
+		{
+			context.bytes.writeUI8(record.red);
+			context.bytes.writeUI8(record.green);
+			context.bytes.writeUI8(record.blue);
 		}
 		
 		protected function writeRectangleRecord(context:SWFWriterContext, record:RectangleRecord):void

@@ -1,5 +1,6 @@
 package com.swfwire.utils
 {
+	import flash.display.DisplayObject;
 	import flash.geom.Rectangle;
 
 	public class DisplayUtil
@@ -49,6 +50,21 @@ package com.swfwire.utils
 				}
 			}
 			return new Rectangle(newX, newY, newW, newH);
+		}
+		
+		public static function getDisplayObjectPath(target:DisplayObject, relativeTo:DisplayObject = null):String
+		{
+			var path:Array = [];
+			while(target && target.parent)
+			{
+				if(target == relativeTo)
+				{
+					break;
+				}
+				path.push(target.name);
+				target = target.parent;
+			}
+			return path.reverse().join('.');
 		}
 	}
 }

@@ -14,6 +14,7 @@
 			
 			import com.swfwire.debugger.utils.*;
 			import com.swfwire.decompiler.*;
+			import com.swfwire.decompiler.abc.ABCInstructions;
 			import com.swfwire.decompiler.abc.ABCReaderMetadata;
 			import com.swfwire.decompiler.abc.instructions.*;
 			import com.swfwire.decompiler.abc.tokens.*;
@@ -26,10 +27,15 @@
 			import com.swfwire.decompiler.data.swf9.tags.SymbolClassTag;
 			import com.swfwire.decompiler.events.AsyncSWFReaderEvent;
 			import com.swfwire.utils.Debug;
+			import com.swfwire.utils.DisplayUtil;
+			import com.swfwire.utils.ObjectUtil;
 			import com.swfwire.utils.air.WindowTracker;
+			
+			import flash.utils.getTimer;
 			
 			import mx.controls.Alert;
 			import mx.core.IUIComponent;
+			import mx.core.UIComponent;
 			import mx.managers.DragManager;
 			
 			private var windowTracker:WindowTracker;
@@ -40,6 +46,7 @@
 			private var injectedAppDomain:ApplicationDomain;
 			private var lastUrl:String;
 			private var isCached:Boolean;
+			private var foundMainClass:Boolean;
 			
 			private var sanityCheck:Boolean = false;
 			private var cacheEnabled:Boolean = false;
@@ -80,13 +87,20 @@
 				header.addEventListener(NativeDragEvent.NATIVE_DRAG_ENTER,	 dragEnterHandler);
 				header.addEventListener(NativeDragEvent.NATIVE_DRAG_DROP,	 dragDropHandler);
 				
-				preview.addEventListener(MouseEvent.CONTEXT_MENU, inspectHandler);
+				preview.addEventListener(MouseEvent.MIDDLE_MOUSE_DOWN, previewMiddleDownHandler);
+				preview.addEventListener(MouseEvent.MOUSE_WHEEL, previewMiddleScrollHandler);
+				
+				//preview.addEventListener(MouseEvent.CONTEXT_MENU, inspectHandler);
+				//preview.addEventListener(MouseEvent.MOUSE_MOVE, inspectHandler);
 				preview.addEventListener('loaderComplete', function(ev:Event):void
 				{
 					if(!sanityCheck)
 					{
 						var a:* = preview.loader.content;
-						a.deferredConstructor();
+						if(foundMainClass)
+						{
+							a.deferredConstructor();
+						}
 						preview.invalidateDisplayList();
 						preview.validateDisplayList();
 					}
@@ -120,10 +134,50 @@
 					loadDefault();
 				});
 				
-				var librarySwf:String = new File(File.applicationDirectory.nativePath).resolvePath('library.swf?nocache='+Math.random()).url;
+				var librarySwf:String = 'app:/library.swf';
+				//var librarySwf:String = new File(File.applicationDirectory.nativePath).resolvePath('library.swf?nocache='+Math.random()).url;
 				
 				injectionLoader.load(new URLRequest(librarySwf), context);
 				//loadDefault();
+			}
+			
+			private var previewStartDown:Point;
+			
+			private function previewMiddleDownHandler(ev:MouseEvent):void
+			{
+				stopInspection();
+				stage.addEventListener(MouseEvent.MIDDLE_MOUSE_UP, previewMiddleUpHandler);
+				stage.addEventListener(MouseEvent.MOUSE_MOVE, previewMoveHandler);
+				previewStartDown = new Point(stage.mouseX - preview.loader.x, stage.mouseY - preview.loader.y);
+			}
+			
+			private function previewMoveHandler(ev:MouseEvent):void
+			{
+				if(previewStartDown)
+				{
+					preview.loader.x = stage.mouseX - previewStartDown.x; 
+					preview.loader.y = stage.mouseY - previewStartDown.y; 
+				}
+			}
+			
+			private function previewMiddleUpHandler(ev:MouseEvent):void
+			{
+				stage.removeEventListener(MouseEvent.MIDDLE_MOUSE_UP, previewMiddleUpHandler);
+				stage.removeEventListener(MouseEvent.MOUSE_MOVE, previewMoveHandler);
+			}
+			
+			private function previewMiddleScrollHandler(ev:MouseEvent):void
+			{
+				if(ev.delta > 0)
+				{
+					preview.loader.scaleY *= 1 + 0.1 * ev.delta;
+					preview.loader.scaleX *= 1 + 0.1 * ev.delta;
+				}
+				else
+				{
+					preview.loader.scaleY *= 1/(1 - 0.1 * ev.delta);
+					preview.loader.scaleX *= 1/(1 - 0.1 * ev.delta);
+				}
 			}
 			
 			private function swfwireRel(url:String):String
@@ -137,7 +191,7 @@
 			{
 				
 				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpseFlex4-1/bin-debug/Main.swf').url);
-				load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpse/bin-debug/SWFCorpse.swf').url);
+				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpse/bin-debug/SWFCorpse.swf').url);
 				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpse/bin-release/SWFCorpse.swf').url);
 				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFWireInspector/bin-debug/SWFWireInspector.swf').url);
 				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpseFlex3-5/bin-debug/Main.swf').url);
@@ -145,30 +199,46 @@
 				//load('SlowMoPlayer.swf');
 				//load('cs5-5_pfflib.swf');
 				//load('frees.swf');
+				load('cs5-5_corpse.swf');
 			}
+			
+			private var lastTarget:DisplayObject;
 			
 			private function inspectHandler(ev:MouseEvent):void
 			{
-				var point:Point = preview.localToGlobal(new Point(preview.mouseX, preview.mouseY));
+				var previewOverlay:UIComponent = preview.overlay;
 				
-				var objects:Array = preview.getObjectsUnderPoint(point);
-				//objects.shift();
+				var point:Point = new Point(stage.mouseX, stage.mouseY);
+				var hits:Array = stage.getObjectsUnderPoint(point);
 				
-				var target:DisplayObject = objects[0];
-				
-				var path:Array = [];
-				var currentTarget:DisplayObject = target;
-				
-				while(currentTarget && currentTarget.parent)
+				var target:DisplayObject = hits.pop();
+				if(target == previewOverlay)
 				{
-					path.push(currentTarget.name);
-					currentTarget = currentTarget.parent;
+					target = hits.pop();
 				}
-				
-				inspectOut.text += path.reverse().join('.')+'\n';
-				
-				Debug.dump(objects, 2);
-				//trace(objects.join('\n'));
+				if(!preview.loader.contains(target))
+				{
+					target = null;
+				}
+
+				if(target != lastTarget)
+				{
+					var overlayGraphics:Graphics = previewOverlay.graphics;
+					overlayGraphics.clear();
+					var path:String = '';
+					if(target)
+					{
+						var rect:Rectangle = target.getRect(previewOverlay);
+						overlayGraphics.lineStyle(4, 0x00FF00, 0.5);
+						overlayGraphics.drawRect(rect.x, rect.y, rect.width, rect.height);
+						path = DisplayUtil.getDisplayObjectPath(target, preview.loader.content);
+					}
+					inspectOut.text = path;
+					
+					//inspectOut.text += ObjectUtil.objectToString(lowT, 2, 3, 50, 50, '  ');
+					
+					lastTarget = target;
+				}
 			}
 			
 			private function loadProgressHandler(ev:ProgressEvent):void
@@ -252,6 +322,7 @@
 				var result:SWFReadResult;
 				
 				swfReader.includedTags[0] = true;
+				swfReader.includedTags[9] = true;
 				swfReader.includedTags[76] = true;
 				swfReader.includedTags[82] = true;
 				swfReader.addEventListener(AsyncSWFReaderEvent.TAG_READ, function(ev:Event):void
@@ -279,7 +350,6 @@
 				
 				var backgroundColor:uint = 0xFFFFFF;
 				
-				outer:
 				for(iTag = 0; iTag < swf.tags.length; iTag++)
 				{
 					var bgt:SetBackgroundColorTag = swf.tags[iTag] as SetBackgroundColorTag;
@@ -295,13 +365,18 @@
 							if(sct.symbols[isym].characterId == 0)
 							{
 								mainClass = sct.symbols[isym].className;
-								break outer;
 							}
 						}
 					}
 				}
 				
 				trace('main class: '+mainClass);
+				
+				foundMainClass = false;
+				if(mainClass != '')
+				{
+					foundMainClass = true;
+				}
 				
 				var mainClassPackage:String = '';
 				var mainClassName:String = mainClass;
@@ -507,8 +582,7 @@
 								nameFromMethodId[newfinst.index] = nameFromMethodId[mb2.method]+'/<anonymous>';
 							}
 							
-							Debug.dump(nameFromMethodId);
-							
+							//Debug.dump(nameFromMethodId);
 							
 							for(var i9:int = 0; i9 < abcTag.abcFile.methodBodies.length; i9++)
 							{
@@ -583,8 +657,6 @@
 									}
 									a.unshift(new Instruction_pushstring(methodId));
 
-									//var j7:int =  wrapper.addString(iTag+'.'+String(z.methodBody));
-									//a.unshift(new Instruction_pushstring(j7));
 									a.unshift(new Instruction_getlex(loggerClassIndex));
 								}
 								wrapper.redirectReferences(z.methodBody, a[a.length - 1], a[0]);
@@ -614,8 +686,6 @@
 									}
 									a.unshift(new Instruction_pushstring(methodId));
 
-									//var j8:int =  wrapper.addString(iTag+'.'+String(z.methodBody));
-									//a.unshift(new Instruction_pushstring(j8));
 									a.unshift(new Instruction_swap());
 									a.unshift(new Instruction_getlex(loggerClassIndex));
 									a.unshift(new Instruction_dup());
@@ -647,7 +717,8 @@
 				
 				Debug.dump(result, 4);
 				
-				preview.setStyle('backgroundColor', backgroundColor);
+				preview.setSWFBackground(backgroundColor);
+				preview.setSWFSize((swf.header.frameSize.xMax - swf.header.frameSize.xMin)/20, (swf.header.frameSize.yMax - swf.header.frameSize.yMin)/20);
 				
 				//var f:File = new File(File.applicationDirectory.nativePath).resolvePath('recompiled.swf');
 				var f:File = new File(File.applicationDirectory.nativePath).resolvePath(lastUrl+'.recompiled.'+lastFileSize+'.swf');
@@ -742,6 +813,31 @@
 			{
 				run(lastRunBytes);
 			}
+			
+			protected function startInspection():void
+			{
+				inspectButton.selected = true;
+				preview.loader.mouseEnabled = false;
+				preview.loader.mouseChildren = false;
+				preview.addEventListener(MouseEvent.MOUSE_MOVE, inspectHandler);
+				preview.addEventListener(MouseEvent.MOUSE_UP, inspect_mouseUpHandler);
+				preview.clearOverlay();
+			}
+			
+			protected function stopInspection():void
+			{
+				inspectButton.selected = false;
+				preview.removeEventListener(MouseEvent.MOUSE_UP, inspect_mouseUpHandler);
+				preview.removeEventListener(MouseEvent.MOUSE_MOVE, inspectHandler);
+				preview.loader.mouseChildren = true;
+				preview.loader.mouseEnabled = true;
+				preview.clearOverlay();
+			}
+			
+			protected function inspect_mouseUpHandler(ev:MouseEvent):void
+			{
+				stopInspection();
+			}
 
 			protected function logToTrace_clickHandler(event:MouseEvent):void
 			{
@@ -786,7 +882,6 @@
 		</mx:State>
 	</mx:states>
 	<mx:HBox id="header" width="100%">
-		<mx:Button label="Reload" click="button2_clickHandler(event)" height="100%"/>
 		<mx:Spacer width="100%"/>
 		<mx:Image source="@Embed('logo.png')"/>
 	</mx:HBox>
@@ -800,29 +895,34 @@
 	<mx:HDividedBox width="100%" height="100%" id="hdividedbox1">
 		<mx:VDividedBox width="100%" height="100%">
 			<mx:HDividedBox width="100%" height="100%">
-				<mx:VBox width="100%" height="100%">
-					<ui:PreviewPanel id="preview" width="100%" height="100%"/>
-				</mx:VBox>
-				<mx:TextArea id="inspectOut" width="300" height="100%"/>
+				<ui:PreviewPanel id="preview" width="100%" height="100%"/>
+				<mx:TextArea id="inspectOut" width="30%" height="100%"/>
 			</mx:HDividedBox>
-			<mx:HDividedBox width="100%">
-				<mx:VBox height="100%">
-					<mx:CheckBox id="logToOutput" label="Log to output" click="logToOutput_clickHandler(event)" styleName="smallText"/>
-					<mx:CheckBox id="logToTrace" label="Log to trace" click="logToTrace_clickHandler(event)" styleName="smallText"/>
-					<mx:CheckBox id="showMethodEntry" label="Show method entry" click="showMethodEntry_clickHandler(event)" styleName="smallText"/>
-					<mx:CheckBox id="showMethodExit" label="Show method exit" click="showMethodExit_clickHandler(event)" styleName="smallText"/>
-					<mx:CheckBox id="showTrace" label="Show trace" click="showTrace_clickHandler(event)" styleName="smallText"/>
-					<mx:CheckBox id="dumpArguments" label="Show arguments" click="dumpArguments_clickHandler(event)" styleName="smallText"/>
-					<mx:CheckBox id="showReturn" label="Show return values" click="showReturn_clickHandler(event)" styleName="smallText"/>
-					<mx:HBox id="hbox1">
-						<mx:Label text="Max Stack Depth:" styleName="smallText"/>
-						<mx:NumericStepper id="maxStackDepth" value="10"/>
-					</mx:HBox>
-					<mx:Spacer height="100%"/>
-					<mx:Button label="Clear" click="button1_clickHandler(event)"/>
-				</mx:VBox>
-				<mx:TextArea id="logOut" width="100%" height="100%" editable="false" fontFamily="Courier New" fontSize="11"/>
-			</mx:HDividedBox>
+			<mx:VBox width="100%" height="100%">
+				<mx:HBox>
+					<mx:Button id="reloadButton" label="Reload" click="button2_clickHandler(event)" height="50"/>
+					<mx:Button id="resetButton" label="Reset Position" click="preview.resetSWFPosition()" height="50"/>
+					<mx:Button id="inspectButton" label="Inspect" click="startInspection()" height="50"/>
+				</mx:HBox>
+				<mx:HDividedBox width="100%" height="100%">
+					<mx:VBox height="100%">
+						<mx:CheckBox id="logToOutput" label="Log to output" click="logToOutput_clickHandler(event)" styleName="smallText"/>
+						<mx:CheckBox id="logToTrace" label="Log to trace" click="logToTrace_clickHandler(event)" styleName="smallText"/>
+						<mx:CheckBox id="showMethodEntry" label="Show method entry" click="showMethodEntry_clickHandler(event)" styleName="smallText"/>
+						<mx:CheckBox id="showMethodExit" label="Show method exit" click="showMethodExit_clickHandler(event)" styleName="smallText"/>
+						<mx:CheckBox id="showTrace" label="Show trace" click="showTrace_clickHandler(event)" styleName="smallText"/>
+						<mx:CheckBox id="dumpArguments" label="Show arguments" click="dumpArguments_clickHandler(event)" styleName="smallText"/>
+						<mx:CheckBox id="showReturn" label="Show return values" click="showReturn_clickHandler(event)" styleName="smallText"/>
+						<mx:HBox id="hbox1">
+							<mx:Label text="Max Stack Depth:" styleName="smallText"/>
+							<mx:NumericStepper id="maxStackDepth" value="10"/>
+						</mx:HBox>
+						<mx:Spacer height="100%"/>
+						<mx:Button label="Clear" click="button1_clickHandler(event)"/>
+					</mx:VBox>
+					<mx:TextArea id="logOut" width="100%" height="100%" editable="false" fontFamily="Courier New" fontSize="11"/>
+				</mx:HDividedBox>
+			</mx:VBox>
 		</mx:VDividedBox>
 	</mx:HDividedBox>
 	<mx:ProgressBar id="loadProgress" width="100%" mode="manual" label="Loading SWF: %3%%" styleName="bigText"/>

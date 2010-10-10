@@ -96,6 +96,7 @@ package com.swfwire.debugger.injected
 			}
 			
 			
+			
 			if(showReturn && returnValue)
 			{
 				_log('return '+ObjectUtil.objectToString(returnValue, 2, 2, 50, 50, '	'));
@@ -107,8 +108,16 @@ package com.swfwire.debugger.injected
 			{
 				//var methodName2:String = new StackInfo(1).functionName;
 				//_log('<< ' + methodName2);
-
-				_log('< '+(getTimer() - start)+'ms');
+				
+				var diff:int = getTimer() - start;
+				
+				_log('< '+diff+'ms');
+				
+				if(diff > 1000)
+				{
+					showMethodEntry = false;
+					trace('Show method entry disabled for performance');
+				}
 				
 				//_log('<<');
 			}

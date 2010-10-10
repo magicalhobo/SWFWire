@@ -9,13 +9,19 @@
 			
 			public var loader:Loader;
 			
+			private var swfWidth:Number;
+			private var swfHeight:Number;
+			
 			private function loaderCompleteHandler(ev:Event):void
 			{
+				resetSWFPosition();
 				dispatchEvent(new Event('loaderComplete'));
 			}
 
 			override protected function updateDisplayList(unscaledWidth:Number, unscaledHeight:Number):void
 			{
+				super.updateDisplayList(unscaledWidth, unscaledHeight);
+				return;
 				if(loader)
 				{
 					loader.scaleX = 1;
@@ -50,7 +56,41 @@
 				}
 				loader.loadBytes(bytes, context);
 			}
+			
+			public function setSWFBackground(color:uint):void
+			{
+				setStyle('backgroundColor', color);
+			}
+			
+			public function setSWFSize(width:Number, height:Number):void
+			{
+				swfWidth = width;
+				swfHeight = height;
+			}
+			
+			public function resetSWFPosition():void
+			{
+				loader.scaleX = 1;
+				loader.scaleY = 1;
+				
+				var ratioX:Number = loader.width/swfWidth;
+				var ratioY:Number = loader.height/swfHeight;
+				
+				var scaledBounds:Rectangle = DisplayUtil.scaleToFit(swfWidth, swfHeight, unscaledWidth, unscaledHeight);
+				loader.x = scaledBounds.x;
+				loader.y = scaledBounds.y;
+				loader.width = scaledBounds.width * ratioX;
+				loader.height = scaledBounds.height * ratioY;
+			}
+			
+			public function clearOverlay():void
+			{
+				overlay.graphics.clear();
+			}
 		]]>
 	</fx:Script>
-	<mx:UIComponent id="content"/>
+	<mx:UIComponent id="content" mask="{contentMask}"/>
+	<mx:UIComponent id="overlay" width="100%" height="100%" mouseEnabled="false" mouseChildren="false" mask="{overlayMask}"/>
+	<mx:Canvas id="contentMask" width="100%" height="100%" backgroundColor="#000000"/>
+	<mx:Canvas id="overlayMask" width="100%" height="100%" backgroundColor="#000000"/>
 </mx:Canvas>
