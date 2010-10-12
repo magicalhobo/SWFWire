@@ -41,16 +41,15 @@ mx|WindowedApplication
 	background-color: #1A1307;
 }
 
-/*
-mx|DataGrid, mx|List
+mx|DataGrid
 {
 	alternating-item-colors: #383733, #3f3e3a;
 	vertical-grid-line-color: #000000;
 	selection-color: #a4da0a;
+	text-selected-color: #000000;
 	roll-over-color: #a4da0a;
 	text-roll-over-color: #000000;
 }
-*/
 
 mx|Alert
 {

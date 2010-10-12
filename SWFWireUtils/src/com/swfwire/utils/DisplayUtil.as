@@ -52,7 +52,7 @@ package com.swfwire.utils
 			return new Rectangle(newX, newY, newW, newH);
 		}
 		
-		public static function getDisplayObjectPath(target:DisplayObject, relativeTo:DisplayObject = null):String
+		public static function getDisplayObjectPath(target:DisplayObject, relativeTo:DisplayObject = null):Array
 		{
 			var path:Array = [];
 			while(target && target.parent)
@@ -64,7 +64,7 @@ package com.swfwire.utils
 				path.push(target.name);
 				target = target.parent;
 			}
-			return path.reverse().join('.');
+			return path.reverse();
 		}
 	}
 }

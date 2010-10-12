@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:HBox xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx">
+	<fx:Script>
+		<![CDATA[
+			import mx.events.DynamicEvent;
+			[Bindable]
+			public var history:Array;
+
+			protected function button1_clickHandler(event:MouseEvent):void
+			{
+				var ev:DynamicEvent = new DynamicEvent('breadCrumbClick');
+				ev.index = Button(event.currentTarget).repeaterIndex;
+				dispatchEvent(ev);
+			}
+
+		]]>
+	</fx:Script>
+	<mx:Repeater id="buttonRepeater" dataProvider="{history}">
+		<mx:Button label="{buttonRepeater.currentItem}" minWidth="0" height="100%" click="button1_clickHandler(event)"/>
+	</mx:Repeater>
+</mx:HBox>

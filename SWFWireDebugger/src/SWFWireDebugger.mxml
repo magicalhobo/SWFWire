@@ -31,11 +31,17 @@
 			import com.swfwire.utils.ObjectUtil;
 			import com.swfwire.utils.air.WindowTracker;
 			
+			import flash.utils.describeType;
 			import flash.utils.getTimer;
 			
+			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
+			import mx.controls.TextInput;
 			import mx.core.IUIComponent;
 			import mx.core.UIComponent;
+			import mx.events.DataGridEvent;
+			import mx.events.DataGridEventReason;
+			import mx.events.DynamicEvent;
 			import mx.managers.DragManager;
 			
 			private var windowTracker:WindowTracker;
@@ -63,14 +69,6 @@
 					}
 				});
 				
-				loaderInfo.uncaughtErrorEvents.addEventListener(UncaughtErrorEvent.UNCAUGHT_ERROR, function(ev:UncaughtErrorEvent):void
-				{
-					ev.preventDefault();
-					ev.stopPropagation();
-					ev.stopImmediatePropagation();
-					logger.uncaughtError(ev.error);
-				}, true);
-				
 				appUpdater = new ApplicationUpdaterUI();
 				appUpdater.configurationFile = new File('app:/updateConfig.xml');
 				appUpdater.initialize();
@@ -90,10 +88,26 @@
 				preview.addEventListener(MouseEvent.MIDDLE_MOUSE_DOWN, previewMiddleDownHandler);
 				preview.addEventListener(MouseEvent.MOUSE_WHEEL, previewMiddleScrollHandler);
 				
+				loaderInfo.uncaughtErrorEvents.addEventListener(UncaughtErrorEvent.UNCAUGHT_ERROR, function(ev:UncaughtErrorEvent):void
+				{
+					ev.preventDefault();
+					ev.stopPropagation();
+					ev.stopImmediatePropagation();
+					logger.uncaughtError(ev.error);
+				});
+				
 				//preview.addEventListener(MouseEvent.CONTEXT_MENU, inspectHandler);
 				//preview.addEventListener(MouseEvent.MOUSE_MOVE, inspectHandler);
 				preview.addEventListener('loaderComplete', function(ev:Event):void
 				{
+					preview.loader.contentLoaderInfo.uncaughtErrorEvents.addEventListener(UncaughtErrorEvent.UNCAUGHT_ERROR, function(ev:UncaughtErrorEvent):void
+					{
+						ev.preventDefault();
+						ev.stopPropagation();
+						ev.stopImmediatePropagation();
+						logger.uncaughtError(ev.error);
+					});
+					
 					if(!sanityCheck)
 					{
 						var a:* = preview.loader.content;
@@ -137,6 +151,13 @@
 				var librarySwf:String = 'app:/library.swf';
 				//var librarySwf:String = new File(File.applicationDirectory.nativePath).resolvePath('library.swf?nocache='+Math.random()).url;
 				
+				inspectGrid.dataProvider = inspectGridDP;
+				
+				breadCrumb.addEventListener('breadCrumbClick', function(ev:DynamicEvent):void
+				{
+					inspect(pathRefs[ev.index]);
+				});
+				
 				injectionLoader.load(new URLRequest(librarySwf), context);
 				//loadDefault();
 			}
@@ -146,6 +167,8 @@
 			private function previewMiddleDownHandler(ev:MouseEvent):void
 			{
 				stopInspection();
+				preview.loader.mouseEnabled = false;
+				preview.loader.mouseChildren = false;
 				stage.addEventListener(MouseEvent.MIDDLE_MOUSE_UP, previewMiddleUpHandler);
 				stage.addEventListener(MouseEvent.MOUSE_MOVE, previewMoveHandler);
 				previewStartDown = new Point(stage.mouseX - preview.loader.x, stage.mouseY - preview.loader.y);
@@ -162,22 +185,26 @@
 			
 			private function previewMiddleUpHandler(ev:MouseEvent):void
 			{
-				stage.removeEventListener(MouseEvent.MIDDLE_MOUSE_UP, previewMiddleUpHandler);
 				stage.removeEventListener(MouseEvent.MOUSE_MOVE, previewMoveHandler);
+				stage.removeEventListener(MouseEvent.MIDDLE_MOUSE_UP, previewMiddleUpHandler);
+				preview.loader.mouseChildren = true;
+				preview.loader.mouseEnabled = true;
 			}
 			
 			private function previewMiddleScrollHandler(ev:MouseEvent):void
 			{
-				if(ev.delta > 0)
-				{
-					preview.loader.scaleY *= 1 + 0.1 * ev.delta;
-					preview.loader.scaleX *= 1 + 0.1 * ev.delta;
-				}
-				else
-				{
-					preview.loader.scaleY *= 1/(1 - 0.1 * ev.delta);
-					preview.loader.scaleX *= 1/(1 - 0.1 * ev.delta);
-				}
+				var scaleFactor:Number = Math.pow(1.05, ev.delta);
+				
+				var mouseNow:Point = new Point(preview.loader.mouseX, preview.loader.mouseY);
+				var previousMousePosition:Point = preview.loader.localToGlobal(mouseNow);
+				
+				preview.loader.scaleX *= scaleFactor;
+				preview.loader.scaleY *= scaleFactor;
+				
+				var newMousePosition:Point = preview.loader.localToGlobal(mouseNow);
+				
+				preview.loader.x -= newMousePosition.x - previousMousePosition.x;
+				preview.loader.y -= newMousePosition.y - previousMousePosition.y;
 			}
 			
 			private function swfwireRel(url:String):String
@@ -203,6 +230,8 @@
 			}
 			
 			private var lastTarget:DisplayObject;
+			private var inspectGridDP:ArrayCollection = new ArrayCollection();
+			private var pathRefs:Array;
 			
 			private function inspectHandler(ev:MouseEvent):void
 			{
@@ -225,19 +254,94 @@
 				{
 					var overlayGraphics:Graphics = previewOverlay.graphics;
 					overlayGraphics.clear();
-					var path:String = '';
+					var path:Array = [];
+					pathRefs = [];
 					if(target)
 					{
 						var rect:Rectangle = target.getRect(previewOverlay);
 						overlayGraphics.lineStyle(4, 0x00FF00, 0.5);
 						overlayGraphics.drawRect(rect.x, rect.y, rect.width, rect.height);
-						path = DisplayUtil.getDisplayObjectPath(target, preview.loader.content);
+						
+						while(target && target.parent)
+						{
+							if(target == preview.loader.content)
+							{
+								break;
+							}
+							path.push(target.name);
+							pathRefs.push(target);
+							target = target.parent;
+						}
+						path.reverse();
+						pathRefs.reverse();
+						//path = DisplayUtil.getDisplayObjectPath(target, preview.loader.content);
+						inspect(target);
 					}
-					inspectOut.text = path;
-					
+					breadCrumb.history = path;
 					//inspectOut.text += ObjectUtil.objectToString(lowT, 2, 3, 50, 50, '  ');
 					
 					lastTarget = target;
+				}
+			}
+			
+			protected function inspect(target:DisplayObject):void
+			{
+				inspectGridDP.removeAll();
+				
+				var description:XML = describeType(target);
+				var node:XML;
+				var name:String;
+				var props:Array = [];
+				
+				for each(node in description.variable)
+				{
+					props.push(node.@name);
+					inspectGridDP.addItem({name: node.@name, value: target[node.@name]});
+				}
+				
+				inspectType.text = description.@name;
+				
+				for each(name in description.accessor.(@access == 'readwrite' || @access == 'readonly').@name)
+				{
+					props.push(name);
+				}
+				
+				for(name in target)
+				{
+					props.push(name);
+				}
+				
+				props.sort();
+				
+				for(var iter:uint = 0; iter < props.length; iter++)
+				{
+					try
+					{
+						inspectGridDP.addItem({name: props[iter], value: target[props[iter]]});
+					}
+					catch(e:Error)
+					{
+						inspectGridDP.addItem({name: props[iter], value: '<exception thrown by getter>'});
+					}
+				}
+			}
+			
+			protected function inspectGrid_itemEditEndHandler(event:DataGridEvent):void
+			{
+				if(event.reason != DataGridEventReason.CANCELLED)
+				{
+					if(lastTarget)
+					{
+						var info:Object = inspectGridDP.getItemAt(event.rowIndex);
+						try
+						{
+							lastTarget[info.name] = TextInput(event.currentTarget.itemEditorInstance).text;
+						}
+						catch(e:*)
+						{
+							logOut.text += 'Error setting property.\n';
+						}
+					}
 				}
 			}
 			
@@ -844,6 +948,11 @@
 				logger.logToTrace = logToTrace.selected;
 			}
 
+			protected function inspectGrid_keyDownHandler(event:KeyboardEvent):void
+			{
+				trace('key: '+event.keyCode);
+			}
+
 		]]>
 	</mx:Script>
 	<mx:states>
@@ -885,10 +994,11 @@
 		<mx:Spacer width="100%"/>
 		<mx:Image source="@Embed('logo.png')"/>
 	</mx:HBox>
+	<ui:BreadCrumb id="breadCrumb" width="100%" height="26"/>
 	<mx:Canvas width="100%" height="100%" id="canvas1">
 		<mx:VBox horizontalCenter="0" verticalCenter="0" horizontalAlign="center">
-			<mx:Label text="Drop File Here" styleName="bigText"/>
-			<mx:CheckBox id="useCached" label="Use Cached"/>
+			<mx:Label text="Drop File on Logo" styleName="bigText"/>
+			<!--<mx:CheckBox id="useCached" label="Use Cached"/>-->
 		</mx:VBox>
 	</mx:Canvas>
 	<mx:TextArea id="systemLog" editable="false" width="100%" height="100%" text="Debug info goes here."/>
@@ -896,13 +1006,24 @@
 		<mx:VDividedBox width="100%" height="100%">
 			<mx:HDividedBox width="100%" height="100%">
 				<ui:PreviewPanel id="preview" width="100%" height="100%"/>
-				<mx:TextArea id="inspectOut" width="30%" height="100%"/>
+				<mx:VBox width="400" height="100%" verticalGap="0">
+					<mx:Label id="inspectType" width="100%"/>
+					<mx:DataGrid id="inspectGrid" width="100%" height="100%" editable="true"
+								 itemEditEnd="inspectGrid_itemEditEndHandler(event)"
+								 keyDown="inspectGrid_keyDownHandler(event)">
+						<mx:columns>
+							<mx:DataGridColumn headerText="Name" dataField="name" editable="false" width="180"/>
+							<mx:DataGridColumn headerText="Value" dataField="value" editable="true"/>
+						</mx:columns>
+					</mx:DataGrid>
+				</mx:VBox>
 			</mx:HDividedBox>
 			<mx:VBox width="100%" height="100%">
-				<mx:HBox>
-					<mx:Button id="reloadButton" label="Reload" click="button2_clickHandler(event)" height="50"/>
-					<mx:Button id="resetButton" label="Reset Position" click="preview.resetSWFPosition()" height="50"/>
-					<mx:Button id="inspectButton" label="Inspect" click="startInspection()" height="50"/>
+				<mx:HBox height="40">
+					<mx:Button id="reloadButton" label="Reload" click="button2_clickHandler(event)" height="100%"/>
+					<mx:Button id="resetButton" label="Reset Position" click="preview.resetSWFPosition()" height="100%"/>
+					<mx:Button id="inspectButton" label="Inspect" click="startInspection()" height="100%"/>
+					<mx:Button label="Clear Console" click="button1_clickHandler(event)" height="100%"/>
 				</mx:HBox>
 				<mx:HDividedBox width="100%" height="100%">
 					<mx:VBox height="100%">
@@ -917,8 +1038,6 @@
 							<mx:Label text="Max Stack Depth:" styleName="smallText"/>
 							<mx:NumericStepper id="maxStackDepth" value="10"/>
 						</mx:HBox>
-						<mx:Spacer height="100%"/>
-						<mx:Button label="Clear" click="button1_clickHandler(event)"/>
 					</mx:VBox>
 					<mx:TextArea id="logOut" width="100%" height="100%" editable="false" fontFamily="Courier New" fontSize="11"/>
 				</mx:HDividedBox>
