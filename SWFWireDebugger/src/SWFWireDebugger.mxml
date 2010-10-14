@@ -26,6 +26,7 @@
 			import com.swfwire.decompiler.data.swf9.tags.DoABCTag;
 			import com.swfwire.decompiler.data.swf9.tags.SymbolClassTag;
 			import com.swfwire.decompiler.events.AsyncSWFReaderEvent;
+			import com.swfwire.decompiler.events.AsyncSWFWriterEvent;
 			import com.swfwire.utils.Debug;
 			import com.swfwire.utils.DisplayUtil;
 			import com.swfwire.utils.ObjectUtil;
@@ -226,7 +227,8 @@
 				//load('SlowMoPlayer.swf');
 				//load('cs5-5_pfflib.swf');
 				//load('frees.swf');
-				load('cs5-5_corpse.swf');
+				//load('cs5-5_corpse.swf');
+				load('watch_as3.swf');
 			}
 			
 			private var lastTarget:DisplayObject;
@@ -252,6 +254,8 @@
 
 				if(target != lastTarget)
 				{
+					lastTarget = target;
+					
 					var overlayGraphics:Graphics = previewOverlay.graphics;
 					overlayGraphics.clear();
 					var path:Array = [];
@@ -264,7 +268,7 @@
 						
 						while(target && target.parent)
 						{
-							if(target == preview.loader.content)
+							if(target == preview.loader)
 							{
 								break;
 							}
@@ -275,12 +279,10 @@
 						path.reverse();
 						pathRefs.reverse();
 						//path = DisplayUtil.getDisplayObjectPath(target, preview.loader.content);
-						inspect(target);
+						inspect(lastTarget);
 					}
 					breadCrumb.history = path;
 					//inspectOut.text += ObjectUtil.objectToString(lowT, 2, 3, 50, 50, '  ');
-					
-					lastTarget = target;
 				}
 			}
 			
@@ -490,7 +492,6 @@
 					mainClassName = mainClass.substr(mainClass.lastIndexOf('.') + 1);
 					mainClassPackage = mainClass.substr(0, mainClass.lastIndexOf('.'));
 				}
-				
 				for(iTag = 0; iTag < swf.tags.length; iTag++)
 				{
 					var abcTag:DoABCTag = swf.tags[iTag] as DoABCTag;
@@ -506,7 +507,6 @@
 							var securityQName:MultinameQNameToken = abcTag.abcFile.cpool.multinames[securityIndex].data as MultinameQNameToken;
 							securityQName.ns = injectedNamespace;
 						}
-						
 						var externalInterfaceIndex:int = wrapper.getMultinameIndex('flash.external', 'ExternalInterface');
 						if(externalInterfaceIndex >= 0)
 						{
@@ -529,14 +529,12 @@
 								}
 							}
 						}
-						
+
 						if(mainInst)
 						{
-							var defcm:MethodInfoToken = new MethodInfoToken();
-							defcm.name = wrapper.addString(mainClass+'/deferredConstructor');
+							var mainMB:MethodBodyInfoToken = wrapper.findMethodBody(mainInst.iinit);
 							
-							var defcmi:uint = abcTag.abcFile.methods.push(defcm) - 1;
-							
+							//Create method deferredConstructor on main class
 							var defcmni:int = wrapper.addQName(
 								wrapper.addNamespaceFromString(''), 
 								wrapper.addString('deferredConstructor'));
@@ -544,33 +542,42 @@
 							var mainTrait:TraitsInfoToken = new TraitsInfoToken(defcmni,
 								TraitsInfoToken.KIND_TRAIT_METHOD,
 								0,
-								new TraitMethodToken(0, defcmi));
-							
-							//Debug.log('test', 'before', mainInst.traits);
+								new TraitMethodToken(0, mainInst.iinit));
 							
 							mainInst.traits.push(mainTrait);
-							//mainInst.traits[10].name = fmi;
-							//abcTag.abcFile.methods[mainInst.iinit].
 							
-							var mainMB:MethodBodyInfoToken = wrapper.findMethodBody(mainInst.iinit);
+							//Update the readable name for the method
+							/*
+							var origcm:MethodInfoToken = abcTag.abcFile.methods[mainInst.iinit];
+							origcm.name = wrapper.addString(mainClass+'/deferredConstructor');
+							*/
+							
+							//Create the new constructor
+							var defcmi:uint = abcTag.abcFile.methods.push(new MethodInfoToken()) - 1;
 							
 							var emptyMethod:MethodBodyInfoToken = new MethodBodyInfoToken(
-								mainInst.iinit, 1, 1, 9, 10);
+								defcmi, 1, 1, mainMB.initScopeDepth, mainMB.initScopeDepth + 1);
 							emptyMethod.instructions = wrapper.getEmptyConstructorInstructions();
 							
 							abcTag.abcFile.methodBodies.push(emptyMethod);
 							
-							mainMB.method = defcmi;
+							//mainMB.method = defcmi;
+							
+							mainInst.iinit = defcmi;
 							
 							//mainInst.iinit = fci;
 						}
-						
+
 						//Debug.log('test', 'after', mainInst.traits);
 						
 						//mainInst.iinit--;
 						
 						if(true)
 						{
+							var cp:ConstantPoolToken = abcTag.abcFile.cpool;
+							var l:*;
+							const minScopeDepth:uint = 3;
+							
 							var loggerClassIndex:int = wrapper.addQName(
 								wrapper.addNamespaceFromString('com.swfwire.debugger.injected'), 
 								wrapper.addString('Logger'));
@@ -579,9 +586,6 @@
 							
 							var enterFunctionIndex:int = wrapper.addQName(emptyNS, wrapper.addString('enterFunction'));
 							var exitFunctionIndex:int = wrapper.addQName(emptyNS, wrapper.addString('exitFunction'));
-							
-							var cp:ConstantPoolToken = abcTag.abcFile.cpool;
-							var l:*;
 							
 							var traceIndex:int = wrapper.getMultinameIndex('', 'trace');
 							if(traceIndex >= 0)
@@ -621,7 +625,7 @@
 									return b;
 								});
 							}
-							
+
 							var nameFromMethodId:Object = {};
 							
 							function qnameToString(index:uint):String
@@ -651,6 +655,15 @@
 								{
 									var name:String = qnameToString(inst2.traits[i12].name);
 									var tmt:TraitMethodToken = inst2.traits[i12].data as TraitMethodToken;
+									switch(inst2.traits[i12].kind)
+									{
+										case TraitsInfoToken.KIND_TRAIT_GETTER:
+											name = 'get '+name;
+											break;
+										case TraitsInfoToken.KIND_TRAIT_SETTER:
+											name = 'set '+name;
+											break;
+									}
 									if(tmt)
 									{
 										nameFromMethodId[tmt.methodId] = instName+'/'+name;
@@ -671,6 +684,15 @@
 								{
 									var name2:String = qnameToString(classInfo.traits[i14].name);
 									var tmt2:TraitMethodToken = classInfo.traits[i14].data as TraitMethodToken;
+									switch(classInfo.traits[i14].kind)
+									{
+										case TraitsInfoToken.KIND_TRAIT_GETTER:
+											name = 'get '+name;
+											break;
+										case TraitsInfoToken.KIND_TRAIT_SETTER:
+											name = 'set '+name;
+											break;
+									}
 									if(tmt2)
 									{
 										nameFromMethodId[tmt2.methodId] = className+'$/'+name2;
@@ -685,13 +707,19 @@
 								var newfinst:Instruction_newfunction = mb2.instructions[l[i15].id] as Instruction_newfunction;
 								nameFromMethodId[newfinst.index] = nameFromMethodId[mb2.method]+'/<anonymous>';
 							}
-							
-							//Debug.dump(nameFromMethodId);
-							
+
+							//Debug.dump(nameFromMethodId, 20);
+
 							for(var i9:int = 0; i9 < abcTag.abcFile.methodBodies.length; i9++)
 							{
 								var mb:MethodBodyInfoToken = abcTag.abcFile.methodBodies[i9];
-								if(mb.initScopeDepth > 1)
+								
+								if(!nameFromMethodId[mb.method])
+								{
+									//trace('Couldn\'t find a method name for '+mb.method);
+								}
+								
+								if(mb.initScopeDepth >= minScopeDepth)
 								{
 									var j9:* = abcTag.abcFile.methodBodies[i9].instructions;
 									
@@ -749,7 +777,7 @@
 							wrapper.replaceInstruction2(l, function(z:InstructionLocation, a:Vector.<IInstruction>):Vector.<IInstruction>
 							{
 								var mb:MethodBodyInfoToken = abcTag.abcFile.methodBodies[z.methodBody];
-								if(mb.initScopeDepth > 1)
+								if(mb.initScopeDepth >= minScopeDepth)
 								{
 									a.unshift(new Instruction_callpropvoid(exitFunctionIndex, 1));
 									
@@ -777,7 +805,7 @@
 							wrapper.replaceInstruction2(l, function(z:InstructionLocation, a:Vector.<IInstruction>):Vector.<IInstruction>
 							{
 								var mb:MethodBodyInfoToken = abcTag.abcFile.methodBodies[z.methodBody];
-								if(mb.initScopeDepth > 1)
+								if(mb.initScopeDepth >= minScopeDepth)
 								{
 									a.unshift(new Instruction_callpropvoid(exitFunctionIndex, 2));
 									a.unshift(new Instruction_swap());
@@ -808,33 +836,45 @@
 				
 				start = getTimer();
 
+				/*
 				var swfWriter:SWF10Writer = new SWF10Writer();
-				
 				var result:SWFWriteResult = swfWriter.write(swf);
+				*/
 				
-				writeProgress.setProgress(1, 1);
+				var swfWriter:AsyncSWFWriter = new AsyncSWFWriter();
+				swfWriter.addEventListener(AsyncSWFWriterEvent.TAG_WRITTEN, function(ev:AsyncSWFWriterEvent):void
+				{
+					trace('Tag written');
+				});
 				
-				diff = getTimer() - start;
-				
-				trace('Writing swf took: '+diff+'ms');
-				logOut.text += 'Writing swf took: '+diff+'ms\n';
-				
-				Debug.dump(result, 4);
-				
-				preview.setSWFBackground(backgroundColor);
-				preview.setSWFSize((swf.header.frameSize.xMax - swf.header.frameSize.xMin)/20, (swf.header.frameSize.yMax - swf.header.frameSize.yMin)/20);
-				
-				//var f:File = new File(File.applicationDirectory.nativePath).resolvePath('recompiled.swf');
-				var f:File = new File(File.applicationDirectory.nativePath).resolvePath(lastUrl+'.recompiled.'+lastFileSize+'.swf');
-				trace(f.nativePath);
-				var fs:FileStream = new FileStream();
-				fs.open(f, FileMode.WRITE);
-				fs.writeBytes(result.bytes);
-				fs.close();
-				
-				run(result.bytes);
+				swfWriter.addEventListener(AsyncSWFWriterEvent.WRITE_COMPLETE, function(ev:AsyncSWFWriterEvent):void
+				{
+					diff = getTimer() - start;
+					
+					trace('Writing swf took: '+diff+'ms');
+					logOut.text += 'Writing swf took: '+diff+'ms\n';
+					
+					var result:SWFWriteResult = ev.result;
+					
+					Debug.dump(result, 4);
+					
+					preview.setSWFBackground(backgroundColor);
+					preview.setSWFSize((swf.header.frameSize.xMax - swf.header.frameSize.xMin)/20, (swf.header.frameSize.yMax - swf.header.frameSize.yMin)/20);
+					
+					//var f:File = new File(File.applicationDirectory.nativePath).resolvePath('recompiled.swf');
+					var f:File = new File(File.applicationDirectory.nativePath).resolvePath(lastUrl+'.recompiled.'+lastFileSize+'.swf');
+					trace(f.nativePath);
+					var fs:FileStream = new FileStream();
+					fs.open(f, FileMode.WRITE);
+					fs.writeBytes(result.bytes);
+					fs.close();
+					
+					run(result.bytes);
+				});
+
+				swfWriter.write(swf);
 			}
-			
+				
 			private var lastRunBytes:ByteArray;
 			
 			private function run(bytes:ByteArray):void
@@ -1025,7 +1065,7 @@
 					<mx:Button id="inspectButton" label="Inspect" click="startInspection()" height="100%"/>
 					<mx:Button label="Clear Console" click="button1_clickHandler(event)" height="100%"/>
 				</mx:HBox>
-				<mx:HDividedBox width="100%" height="100%">
+				<mx:HBox width="100%" height="100%">
 					<mx:VBox height="100%">
 						<mx:CheckBox id="logToOutput" label="Log to output" click="logToOutput_clickHandler(event)" styleName="smallText"/>
 						<mx:CheckBox id="logToTrace" label="Log to trace" click="logToTrace_clickHandler(event)" styleName="smallText"/>
@@ -1040,7 +1080,7 @@
 						</mx:HBox>
 					</mx:VBox>
 					<mx:TextArea id="logOut" width="100%" height="100%" editable="false" fontFamily="Courier New" fontSize="11"/>
-				</mx:HDividedBox>
+				</mx:HBox>
 			</mx:VBox>
 		</mx:VDividedBox>
 	</mx:HDividedBox>

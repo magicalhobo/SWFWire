@@ -152,6 +152,7 @@ package com.swfwire.decompiler.abc
 				else
 				{
 					trace('Encountered an invalid branch.');
+					return instructions[0];
 					return null;
 				}
 			}

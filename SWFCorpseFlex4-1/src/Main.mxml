@@ -21,5 +21,14 @@
 			}
 		]]>
 	</fx:Script>
-	<s:Button label="Click Me" horizontalCenter="0" verticalCenter="0" click="button1_clickHandler(event)"/>
+	<s:VGroup x="377" y="637" width="200" height="200" horizontalCenter="0" verticalCenter="0">
+		<s:Button label="Click Me" click="button1_clickHandler(event)"/>
+		<mx:AdvancedDataGrid id="adg1" designViewDataType="tree">
+			<mx:columns>
+				<mx:AdvancedDataGridColumn headerText="Column 1" dataField="col1"/>
+				<mx:AdvancedDataGridColumn headerText="Column 2" dataField="col2"/>
+				<mx:AdvancedDataGridColumn headerText="Column 3" dataField="col3"/>
+			</mx:columns>
+		</mx:AdvancedDataGrid>
+	</s:VGroup>
 </s:Application>

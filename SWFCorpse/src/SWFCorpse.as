@@ -233,7 +233,7 @@ package
 			myAnonymousFunction();
 		}
 		
-		public function SWFCorpse()
+		public function SWFCorpse(param1:Object = null)
 		{
 			var stack:Number = 'at '.length;
 			

@@ -11,9 +11,11 @@ package com.swfwire.decompiler
 
 	public class SWF9Writer extends SWFWriter
 	{
+		private static var FILE_VERSION:uint = 9;
+		
 		public function SWF9Writer()
 		{
-			
+			version = FILE_VERSION;
 		}
 		
 		override protected function writeTag(context:SWFWriterContext, tag:SWFTag):void

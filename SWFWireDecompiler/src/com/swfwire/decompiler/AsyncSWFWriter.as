@@ -3,107 +3,81 @@ package com.swfwire.decompiler
 	import com.swfwire.decompiler.data.swf.*;
 	import com.swfwire.decompiler.data.swf.records.*;
 	import com.swfwire.decompiler.data.swf.tags.*;
+	import com.swfwire.decompiler.events.AsyncSWFWriterEvent;
 	
 	import flash.events.Event;
-	import flash.events.EventDispatcher;
-	import flash.events.IEventDispatcher;
 	import flash.events.TimerEvent;
 	import flash.utils.ByteArray;
 	import flash.utils.Timer;
-	import flash.utils.getQualifiedClassName;
 	import flash.utils.getTimer;
+	
+	[Event(type="com.swfwire.decompiler.events.AsyncSWFWriterEvent", name="tagWritten")]
+	[Event(type="com.swfwire.decompiler.events.AsyncSWFWriterEvent", name="writeComplete")]
 	
 	public class AsyncSWFWriter extends SWF10Writer
 	{
-		public var eventDispatcher:EventDispatcher;
+		public function get active():Boolean
+		{
+			return _active;
+		}
+		public function get currentContext():SWFWriterContext
+		{
+			return _currentContext;
+		}
+		public function get currentWriteResult():SWFWriteResult
+		{
+			return _currentWriteResult;
+		}
 		
-		protected var currentContext:SWFWriterContext;
-		protected var currentWriteResult:SWFWriteResult;
+		protected var _currentContext:SWFWriterContext;
+		protected var _currentWriteResult:SWFWriteResult;
 		
 		protected var writeTimer:Timer;
 		
-		private var active:Boolean;
-		private var lastRead:uint;
+		private var _active:Boolean;
+		private var lastWrite:uint;
 		
 		public function AsyncSWFWriter()
 		{
-			throw new Error('Not implemented');
-			eventDispatcher = new EventDispatcher();
 			writeTimer = new Timer(1, 1);
 			writeTimer.addEventListener(TimerEvent.TIMER, writeTimerHandler);
 		}
 		
 		override public function write(swf:SWF):SWFWriteResult 
 		{
-			currentWriteResult = new SWFWriteResult();
+			if(_active)
+			{
+				return null;
+			}
 			
-			currentContext = new SWFWriterContext(new SWFByteArray(new ByteArray()), null, swf.header.fileVersion);
+			_currentWriteResult = new SWFWriteResult();
+			
+			_currentContext = new SWFWriterContext(new SWFByteArray(new ByteArray()), swf.header.fileVersion, _currentWriteResult);
 			
 			if(swf.header.fileVersion > version)
 			{
-				currentWriteResult.warnings.push('Invalid file version ('+swf.header.fileVersion+') in header.');
+				_currentWriteResult.warnings.push('Invalid file version ('+swf.header.fileVersion+') in header.');
 			}
 			
 			var tagCount:uint = swf.tags.length;
 			var tagBytes:Vector.<ByteArray> = new Vector.<ByteArray>();
-
-			var iter:uint;
-			/*
 			
-			for(iter = 0; iter < tagCount; iter++)
-			{
-				var tag:SWFTag = swf.tags[iter];
-				tagBytes[iter] = new ByteArray();
-				try
-				{
-					currentContext.tagId = iter;
-					currentContext.bytes = new SWFByteArray(tagBytes[iter]);
-					writeTag(currentContext, tag);
-					tag.header.length = tagBytes[iter].length;
-				}
-				catch(e:Error)
-				{
-					currentWriteResult.errors.push('Could not write Tag #'+iter+': '+e);
-				}
-			}
-			*/
-			var bytes1:ByteArray = new ByteArray();
-			var bytes:SWFByteArray = new SWFByteArray(bytes1);
-			currentContext.bytes = bytes;
-			
-			writeSWFHeader(currentContext, swf.header);
-			
-			for(iter = 0; iter < tagCount; iter++)
-			{
-				bytes.alignBytes();
-				var header:TagHeaderRecord = swf.tags[iter].header;
-				writeTagHeaderRecord(currentContext, header);
-				bytes.writeBytes(tagBytes[iter]);
-			}
-			
-			bytes.setBytePosition(4);
-			var tl:uint = bytes.getLength();
-			bytes.writeUI32(tl);
-			
-			bytes.setBytePosition(0);
-			currentWriteResult.bytes = bytes1;
-			
-			active = true;
+			_active = true;
 			
 			writeTimer.start();
 			
-			return currentWriteResult;
+			return _currentWriteResult;
 		}
 		
 		protected function writeTimerHandler(ev:Event):void
 		{
-			lastRead = getTimer();
+			lastWrite = getTimer();
 			do
 			{
 				writeTagAsync();
 			}
-			while((getTimer() - lastRead < 200) && active)
-			if(active)
+			while((getTimer() - lastWrite < 200) && _active)
+			if(_active)
 			{
 				writeTimer.reset();
 				writeTimer.start();
@@ -113,6 +87,16 @@ package com.swfwire.decompiler
 		protected function writeTagAsync():void
 		{
 			/*
+			var iter:uint;
+			for(iter = 0; iter < tagCount; iter++)
+			{
+			bytes.alignBytes();
+			var header:TagHeaderRecord = swf.tags[iter].header;
+			writeTagHeaderRecord(_currentContext, header);
+			bytes.writeBytes(tagBytes[iter]);
+			}
+			
+
 			var tag:SWFTag = swf.tags[iter];
 			tagBytes[iter] = new ByteArray();
 			try
@@ -200,8 +184,23 @@ package com.swfwire.decompiler
 				
 		protected function finishAsync():void
 		{
-			active = false;
-			eventDispatcher.dispatchEvent(new Event('done'));
+			_active = false;
+			/*
+			var bytes1:ByteArray = new ByteArray();
+			var bytes:SWFByteArray = new SWFByteArray(bytes1);
+			_currentContext.bytes = bytes;
+			
+			writeSWFHeader(_currentContext, swf.header);
+			
+			bytes.setBytePosition(0);
+			_currentWriteResult.bytes = bytes1;
+			
+
+			bytes.setBytePosition(4);
+			var tl:uint = bytes.getLength();
+			bytes.writeUI32(tl);
+			*/
+			dispatchEvent(new AsyncSWFWriterEvent(AsyncSWFWriterEvent.WRITE_COMPLETE, _currentContext, _currentWriteResult));
 		}
 	}
 }

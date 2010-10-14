@@ -6,8 +6,6 @@ package com.swfwire.decompiler
 	import com.swfwire.decompiler.events.AsyncSWFReaderEvent;
 	
 	import flash.events.Event;
-	import flash.events.EventDispatcher;
-	import flash.events.IEventDispatcher;
 	import flash.events.TimerEvent;
 	import flash.utils.Timer;
 	import flash.utils.getQualifiedClassName;

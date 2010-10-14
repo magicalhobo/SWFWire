@@ -7,9 +7,10 @@ package com.swfwire.decompiler
 	import com.swfwire.decompiler.data.swf3.tags.PlaceObject2Tag;
 	import com.swfwire.decompiler.data.swf8.tags.FileAttributesTag;
 	
+	import flash.events.EventDispatcher;
 	import flash.utils.ByteArray;
 
-	public class SWFWriter
+	public class SWFWriter extends EventDispatcher
 	{
 		private static var FILE_VERSION:uint = 1;
 		
@@ -19,7 +20,7 @@ package com.swfwire.decompiler
 		{
 			var result:SWFWriteResult = new SWFWriteResult();
 			
-			var context:SWFWriterContext = new SWFWriterContext(new SWFByteArray(new ByteArray()), null, swf.header.fileVersion);
+			var context:SWFWriterContext = new SWFWriterContext(new SWFByteArray(new ByteArray()), swf.header.fileVersion, result);
 			
 			if(swf.header.fileVersion > version)
 			{

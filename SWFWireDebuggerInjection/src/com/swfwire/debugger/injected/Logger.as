@@ -95,8 +95,6 @@ package com.swfwire.debugger.injected
 				}
 			}
 			
-			
-			
 			if(showReturn && returnValue)
 			{
 				_log('return '+ObjectUtil.objectToString(returnValue, 2, 2, 50, 50, '	'));
@@ -113,7 +111,7 @@ package com.swfwire.debugger.injected
 				
 				_log('< '+diff+'ms');
 				
-				if(diff > 1000)
+				if(diff > 3000)
 				{
 					showMethodEntry = false;
 					trace('Show method entry disabled for performance');

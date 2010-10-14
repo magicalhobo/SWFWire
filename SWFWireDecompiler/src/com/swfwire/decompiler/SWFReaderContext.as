@@ -4,8 +4,8 @@ package com.swfwire.decompiler
 
 	public class SWFReaderContext
 	{
-		public var bytes:SWFByteArray;
 		public var fileVersion:uint;
+		public var bytes:SWFByteArray;
 		public var result:SWFReadResult;
 		
 		public var fontGlyphCounts:Object;
@@ -20,16 +20,6 @@ package com.swfwire.decompiler
 			
 			tagStack = new Vector.<SWFTag>();
 			fontGlyphCounts = {};
-		}
-		
-		public function pushTag(tag:SWFTag):void
-		{
-			tagStack.push(tag);
-		}
-		
-		public function popTag(tag:SWFTag):void
-		{
-			tagStack.pop();
 		}
 	}
 }

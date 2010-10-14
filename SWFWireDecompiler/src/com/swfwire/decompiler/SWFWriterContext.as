@@ -4,17 +4,19 @@ package com.swfwire.decompiler
 
 	public class SWFWriterContext
 	{
-		public var uncompressedBytes:SWFByteArray;
-		public var bytes:SWFByteArray;
 		public var fileVersion:uint;
+		public var bytes:SWFByteArray;
+		public var result:SWFWriteResult;
+		
 		public var tagId:int;
 		public var tagStack:Vector.<SWFTag>;
 		
-		public function SWFWriterContext(uncompressedBytes:SWFByteArray, bytes:SWFByteArray, fileVersion:uint)
+		public function SWFWriterContext(bytes:SWFByteArray, fileVersion:uint, result:SWFWriteResult)
 		{
-			this.uncompressedBytes = uncompressedBytes;
 			this.bytes = bytes;
 			this.fileVersion = fileVersion;
+			this.result = result;
+			
 			this.tagStack = new Vector.<SWFTag>;
 		}
 	}
