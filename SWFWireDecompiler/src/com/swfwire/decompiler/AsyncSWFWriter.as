@@ -30,6 +30,8 @@ package com.swfwire.decompiler
 		}
 		
 		protected var _currentContext:SWFWriterContext;
+		protected var _currentPointer:int;
+		protected var _currentSWF:SWF;
 		protected var _currentWriteResult:SWFWriteResult;
 		
 		protected var writeTimer:Timer;
@@ -51,8 +53,9 @@ package com.swfwire.decompiler
 			}
 			
 			_currentWriteResult = new SWFWriteResult();
-			
 			_currentContext = new SWFWriterContext(new SWFByteArray(new ByteArray()), swf.header.fileVersion, _currentWriteResult);
+			_currentSWF = swf;
+			_currentPointer = 0;
 			
 			if(swf.header.fileVersion > version)
 			{
@@ -86,121 +89,72 @@ package com.swfwire.decompiler
 		
 		protected function writeTagAsync():void
 		{
-			/*
-			var iter:uint;
-			for(iter = 0; iter < tagCount; iter++)
+			if(_currentPointer >= _currentSWF.tags.length)
 			{
-			bytes.alignBytes();
-			var header:TagHeaderRecord = swf.tags[iter].header;
-			writeTagHeaderRecord(_currentContext, header);
-			bytes.writeBytes(tagBytes[iter]);
-			}
-			
-
-			var tag:SWFTag = swf.tags[iter];
-			tagBytes[iter] = new ByteArray();
-			try
-			{
-				currentContext.tagId = iter;
-				currentContext.bytes = new SWFByteArray(tagBytes[iter]);
-				writeTag(currentContext, tag);
-				tag.header.length = tagBytes[iter].length;
-			}
-			catch(e:Error)
-			{
-				currentWriteResult.errors.push('Could not write Tag #'+iter+': '+e);
-			}
-
-			var context:SWFWriterContext = currentContext;
-			var bytes:SWFByteArray = context.bytes;
-			var result:SWFWriteResult = currentWriteResult;
-			var swf:SWF = result.swf;
-			
-			if(bytes.getBytesAvailable() == 0)
-			{
-				result.warnings.push('Expected end tag.');
+				_currentWriteResult.warnings.push('Expected end tag.');
 				finishAsync();
 			}
 			else
 			{
-				var tagId:uint = swf.tags.length;
-				var preHeaderStart:uint = bytes.getBytePosition();
+				var tag:SWFTag = _currentSWF.tags[_currentPointer];
 				
-				var header:TagHeaderRecord = readTagHeaderRecord(context);
+				var bytes:ByteArray = new ByteArray();
 				
-				var startPosition:uint = context.bytes.getBytePosition();
-				var expectedEndPosition:uint = startPosition + header.length;
-				
-				var tag:SWFTag;
-				
-				context.tagId = tagId;
-				
-				tag = readTag(context, header);
-				/*
+				_currentContext.tagBytes[_currentPointer] = bytes;
 				try
 				{
-				tag = readTag(context, header);
+					_currentContext.tagId = _currentPointer;
+					_currentContext.bytes = new SWFByteArray(bytes);
+					writeTag(_currentContext, tag);
+					tag.header.length = bytes.length;
 				}
 				catch(e:Error)
 				{
-				bytes.setBytePosition(startPosition);
-				tag = readUnknownTag(context, header);
-				}
-				* /
-				
-				tag.header = header;
-				
-				swf.tags.push(tag);
-				context.bytes.alignBytes();
-				var newPosition:uint = context.bytes.getBytePosition();
-				if(newPosition > expectedEndPosition)
-				{
-					result.warnings.push('Read overflow for Tag #'+tagId+' (type: '+tag.header.type+').' +
-						' Read '+(newPosition - startPosition)+' bytes, expected '+(tag.header.length)+' bytes.');
-				}
-				if(newPosition < expectedEndPosition)
-				{
-					result.warnings.push('Read underflow for Tag #'+tagId+' (type: '+tag.header.type+').' +
-						' Read '+(newPosition - startPosition)+' bytes, expected '+(tag.header.length)+' bytes.');
-				}
-				bytes.setBytePosition(expectedEndPosition);
-				
-				result.tagMetadata[tagId] = {name: getQualifiedClassName(tag), start: preHeaderStart, length: (expectedEndPosition - preHeaderStart), contentStart: startPosition, contentLength: tag.header.length};
-				
-				if(tag is UnknownTag)
-				{
-					result.warnings.push('Unknown tag type: '+header.type+' (id: '+tagId+')');
+					_currentWriteResult.errors.push('Could not write Tag #'+_currentPointer+': '+e);
 				}
 				
-				eventDispatcher.dispatchEvent(new Event('tagRead'));
+				_currentPointer++;
 				
+				dispatchEvent(new AsyncSWFWriterEvent(AsyncSWFWriterEvent.TAG_WRITTEN, _currentContext, _currentWriteResult, _currentPointer/_currentSWF.tags.length));
+
 				if(tag is EndTag)
 				{
 					finishAsync();
 				}
 			}
-			*/
 		}
 				
 		protected function finishAsync():void
 		{
 			_active = false;
-			/*
+			
+			var tagBytes:Vector.<ByteArray> = _currentContext.tagBytes;
+			
 			var bytes1:ByteArray = new ByteArray();
 			var bytes:SWFByteArray = new SWFByteArray(bytes1);
 			_currentContext.bytes = bytes;
 			
-			writeSWFHeader(_currentContext, swf.header);
+			writeSWFHeader(_currentContext, _currentSWF.header);
+			
+			var iter:int;
+			var tagCount:uint = _currentContext.tagBytes.length;
+			
+			for(iter = 0; iter < tagCount; iter++)
+			{
+				bytes.alignBytes();
+				var header:TagHeaderRecord = _currentSWF.tags[iter].header;
+				writeTagHeaderRecord(_currentContext, header);
+				bytes.writeBytes(tagBytes[iter]);
+			}
+			
+			bytes.setBytePosition(4);
+			var tl:uint = bytes.getLength();
+			bytes.writeUI32(tl);
 			
 			bytes.setBytePosition(0);
 			_currentWriteResult.bytes = bytes1;
 			
-
-			bytes.setBytePosition(4);
-			var tl:uint = bytes.getLength();
-			bytes.writeUI32(tl);
-			*/
-			dispatchEvent(new AsyncSWFWriterEvent(AsyncSWFWriterEvent.WRITE_COMPLETE, _currentContext, _currentWriteResult));
+			dispatchEvent(new AsyncSWFWriterEvent(AsyncSWFWriterEvent.WRITE_COMPLETE, _currentContext, _currentWriteResult, 1));
 		}
 	}
 }

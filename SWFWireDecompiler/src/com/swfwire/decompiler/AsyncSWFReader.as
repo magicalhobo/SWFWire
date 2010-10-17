@@ -98,12 +98,7 @@ package com.swfwire.decompiler
 			var result:SWFReadResult = _currentReadResult;
 			var swf:SWF = result.swf;
 			
-			if(bytes.getBytesAvailable() == 0)
-			{
-				result.warnings.push('Expected end tag.');
-				finishAsync();
-			}
-			else
+			if(bytes.getBytesAvailable() > 0)
 			{
 				var tagId:uint = swf.tags.length;
 				var preHeaderStart:uint = bytes.getBytePosition();
@@ -158,6 +153,11 @@ package com.swfwire.decompiler
 				{
 					finishAsync();
 				}
+			}
+			else
+			{
+				result.warnings.push('Expected end tag.');
+				finishAsync();
 			}
 		}
 		

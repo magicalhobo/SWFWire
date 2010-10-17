@@ -218,7 +218,7 @@
 			private function loadDefault():void
 			{
 				
-				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpseFlex4-1/bin-debug/Main.swf').url);
+				load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpseFlex4-1/bin-debug/Main.swf').url);
 				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpse/bin-debug/SWFCorpse.swf').url);
 				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpse/bin-release/SWFCorpse.swf').url);
 				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFWireInspector/bin-debug/SWFWireInspector.swf').url);
@@ -228,7 +228,7 @@
 				//load('cs5-5_pfflib.swf');
 				//load('frees.swf');
 				//load('cs5-5_corpse.swf');
-				load('watch_as3.swf');
+				//load('watch_as3.swf');
 			}
 			
 			private var lastTarget:DisplayObject;
@@ -431,15 +431,15 @@
 				swfReader.includedTags[9] = true;
 				swfReader.includedTags[76] = true;
 				swfReader.includedTags[82] = true;
-				swfReader.addEventListener(AsyncSWFReaderEvent.TAG_READ, function(ev:Event):void
+				swfReader.addEventListener(AsyncSWFReaderEvent.TAG_READ, function(ev:AsyncSWFReaderEvent):void
 				{
-					var current:uint = swfBytes.getBytePosition();
-					var max:uint = swfBytes.getLength();
+					var current:uint = ev.context.bytes.getBytePosition();
+					var max:uint = ev.context.bytes.getLength();
 					readProgress.setProgress(current, max);
 				});
-				swfReader.addEventListener(AsyncSWFReaderEvent.READ_COMPLETE, function(ev:Event):void
+				swfReader.addEventListener(AsyncSWFReaderEvent.READ_COMPLETE, function(ev:AsyncSWFReaderEvent):void
 				{
-					inject(result.swf, result.abcMetadata);
+					inject(ev.result.swf, ev.result.abcMetadata);
 				});
 				
 				result = swfReader.read(swfBytes);
@@ -841,10 +841,12 @@
 				var result:SWFWriteResult = swfWriter.write(swf);
 				*/
 				
+				currentState = 'writing';
+				
 				var swfWriter:AsyncSWFWriter = new AsyncSWFWriter();
 				swfWriter.addEventListener(AsyncSWFWriterEvent.TAG_WRITTEN, function(ev:AsyncSWFWriterEvent):void
 				{
-					trace('Tag written');
+					writeProgress.setProgress(ev.progress, 1);
 				});
 				
 				swfWriter.addEventListener(AsyncSWFWriterEvent.WRITE_COMPLETE, function(ev:AsyncSWFWriterEvent):void

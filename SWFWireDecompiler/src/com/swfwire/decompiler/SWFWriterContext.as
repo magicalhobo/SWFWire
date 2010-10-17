@@ -1,11 +1,15 @@
 package com.swfwire.decompiler
 {
+	import com.swfwire.decompiler.data.swf.SWF;
 	import com.swfwire.decompiler.data.swf.tags.SWFTag;
+	
+	import flash.utils.ByteArray;
 
 	public class SWFWriterContext
 	{
 		public var fileVersion:uint;
 		public var bytes:SWFByteArray;
+		public var tagBytes:Vector.<ByteArray> = new Vector.<ByteArray>();
 		public var result:SWFWriteResult;
 		
 		public var tagId:int;
