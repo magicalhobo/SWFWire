@@ -15,7 +15,9 @@
   </compiler>
   <applications>
     <application path="SWFWireDebugger.mxml">
-      <airExcludes/>
+      <airExcludes>
+        <airExclude path="catalog.xml"/>
+      </airExcludes>
     </application>
   </applications>
   <modules/>

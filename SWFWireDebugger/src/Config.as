@@ -2,6 +2,6 @@ package
 {
 	public class Config
 	{
-		public static const VERSION:String = '0.1.8';
+		public static const VERSION:String = '0.2.11';
 	}
 }

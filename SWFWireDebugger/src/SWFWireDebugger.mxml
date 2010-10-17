@@ -62,7 +62,7 @@
 			
 			private function main():void
 			{
-				logOut.text = 'Version '+Config.VERSION+'\n';
+				log('SWFWireDebugger Version '+Config.VERSION);
 				
 				stage.addEventListener(Event.ENTER_FRAME, function(ev:*):void
 				{
@@ -85,8 +85,8 @@
 				urlLoader.addEventListener(Event.COMPLETE,			 loadCompleteHandler);
 				urlLoader.dataFormat = URLLoaderDataFormat.BINARY;
 				
-				header.addEventListener(NativeDragEvent.NATIVE_DRAG_ENTER,	 dragEnterHandler);
-				header.addEventListener(NativeDragEvent.NATIVE_DRAG_DROP,	 dragDropHandler);
+				swfDropTarget.addEventListener(NativeDragEvent.NATIVE_DRAG_ENTER,	 dragEnterHandler);
+				swfDropTarget.addEventListener(NativeDragEvent.NATIVE_DRAG_DROP,	 dragDropHandler);
 				
 				preview.addEventListener(MouseEvent.MIDDLE_MOUSE_DOWN, previewMiddleDownHandler);
 				preview.addEventListener(MouseEvent.MOUSE_WHEEL, previewMiddleScrollHandler);
@@ -97,6 +97,8 @@
 					ev.stopPropagation();
 					ev.stopImmediatePropagation();
 					logger.uncaughtError(ev.error);
+					log('Uncaught error in root.');
+					log(ObjectUtil.objectToString(ev.error, 2, 2, 50, 50, '	'));
 				});
 				
 				//preview.addEventListener(MouseEvent.CONTEXT_MENU, inspectHandler);
@@ -109,6 +111,8 @@
 						ev.stopPropagation();
 						ev.stopImmediatePropagation();
 						logger.uncaughtError(ev.error);
+						log('Uncaught error in child.');
+						log(ObjectUtil.objectToString(ev.error, 2, 2, 50, 50, '	'));
 					});
 					
 					if(!sanityCheck)
@@ -220,7 +224,7 @@
 			private function loadDefault():void
 			{
 				
-				load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpseFlex4-1/bin-debug/Main.swf').url);
+				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpseFlex4-1/bin-debug/Main.swf').url);
 				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpse/bin-debug/SWFCorpse.swf').url);
 				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpse/bin-release/SWFCorpse.swf').url);
 				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFWireInspector/bin-debug/SWFWireInspector.swf').url);
@@ -426,10 +430,16 @@
 			
 			public function load(url:String):void
 			{
-				var orig:File = File.applicationDirectory.resolvePath(url);
+				log('Attempting to load: '+url);
+				
+				//var orig:File = new File(url);//File.applicationDirectory.resolvePath(url);
 				
 				lastUrl = url;
 				
+				//Caching has problems right now and prevents urls from working.
+				isCached = false;
+				
+				/*
 				lastFileSize = orig.size;
 				
 				var newUrl:String = url+'.recompiled.'+orig.size+'.swf';
@@ -443,6 +453,7 @@
 				{
 					isCached = false;
 				}
+				*/
 				
 				currentState = 'loading';
 				
@@ -535,12 +546,19 @@
 					preview.setSWFSize((swf.header.frameSize.xMax - swf.header.frameSize.xMin)/20, (swf.header.frameSize.yMax - swf.header.frameSize.yMin)/20);
 					
 					//var f:File = new File(File.applicationDirectory.nativePath).resolvePath('recompiled.swf');
-					var f:File = new File(File.applicationDirectory.nativePath).resolvePath(lastUrl+'.recompiled.'+lastFileSize+'.swf');
-					trace(f.nativePath);
-					var fs:FileStream = new FileStream();
-					fs.open(f, FileMode.WRITE);
-					fs.writeBytes(result.bytes);
-					fs.close();
+					try
+					{
+						var f:File = new File(File.applicationDirectory.nativePath).resolvePath(lastUrl+'.recompiled.'+lastFileSize+'.swf');
+						trace(f.nativePath);
+						var fs:FileStream = new FileStream();
+						fs.open(f, FileMode.WRITE);
+						fs.writeBytes(result.bytes);
+						fs.close();
+					}
+					catch(e:*)
+					{
+						log('Could not write cached file');
+					}
 					
 					run(result.bytes);
 				});
@@ -563,7 +581,7 @@
 			{
 				trace(message);
 				logOut.text += message+'\n';
-				systemLog.text += '\n'+message;
+				systemLog.text += message+'\n';
 			}
 			
 			protected function showMethodEntry_clickHandler(event:MouseEvent):void
@@ -657,24 +675,24 @@
 			<mx:RemoveChild target="{readProgress}"/>
 			<mx:RemoveChild target="{modifyProgress}"/>
 			<mx:RemoveChild target="{writeProgress}"/>
-			<mx:RemoveChild target="{canvas1}"/>
+			<mx:RemoveChild target="{swfDropTarget}"/>
 		</mx:State>
 		<mx:State name="reading">
-			<mx:RemoveChild target="{canvas1}"/>
+			<mx:RemoveChild target="{swfDropTarget}"/>
 			<mx:RemoveChild target="{hdividedbox1}"/>
 			<mx:RemoveChild target="{loadProgress}"/>
 			<mx:RemoveChild target="{writeProgress}"/>
 			<mx:RemoveChild target="{modifyProgress}"/>
 		</mx:State>
 		<mx:State name="modifying">
-			<mx:RemoveChild target="{canvas1}"/>
+			<mx:RemoveChild target="{swfDropTarget}"/>
 			<mx:RemoveChild target="{hdividedbox1}"/>
 			<mx:RemoveChild target="{loadProgress}"/>
 			<mx:RemoveChild target="{readProgress}"/>
 			<mx:RemoveChild target="{writeProgress}"/>
 		</mx:State>
 		<mx:State name="writing">
-			<mx:RemoveChild target="{canvas1}"/>
+			<mx:RemoveChild target="{swfDropTarget}"/>
 			<mx:RemoveChild target="{hdividedbox1}"/>
 			<mx:RemoveChild target="{loadProgress}"/>
 			<mx:RemoveChild target="{readProgress}"/>
@@ -685,7 +703,7 @@
 			<mx:RemoveChild target="{readProgress}"/>
 			<mx:RemoveChild target="{modifyProgress}"/>
 			<mx:RemoveChild target="{writeProgress}"/>
-			<mx:RemoveChild target="{canvas1}"/>
+			<mx:RemoveChild target="{swfDropTarget}"/>
 			<mx:RemoveChild target="{systemLog}"/>
 			<mx:SetStyle target="{hbox1}" name="verticalAlign" value="middle"/>
 		</mx:State>
@@ -695,13 +713,13 @@
 		<mx:Image source="@Embed('logo.png')"/>
 	</mx:HBox>
 	<ui:BreadCrumb id="breadCrumb" width="100%" height="26"/>
-	<mx:Canvas width="100%" height="100%" id="canvas1">
+	<mx:Canvas width="100%" height="100%" id="swfDropTarget" backgroundColor="#000000" backgroundAlpha="0">
 		<mx:VBox horizontalCenter="0" verticalCenter="0" horizontalAlign="center">
-			<mx:Label text="Drop File on Logo" styleName="bigText"/>
+			<mx:Label text="Drop File Here" styleName="bigText"/>
 			<!--<mx:CheckBox id="useCached" label="Use Cached"/>-->
 		</mx:VBox>
 	</mx:Canvas>
-	<mx:TextArea id="systemLog" editable="false" width="100%" height="100%" text="SWFWire Debugger."/>
+	<mx:TextArea id="systemLog" editable="false" width="100%" height="100%"/>
 	<mx:HDividedBox width="100%" height="100%" id="hdividedbox1">
 		<mx:VDividedBox width="100%" height="100%">
 			<mx:HDividedBox width="100%" height="100%">
