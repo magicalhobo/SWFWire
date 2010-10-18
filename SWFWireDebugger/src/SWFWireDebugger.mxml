@@ -5,6 +5,7 @@
 						applicationComplete="main()"
 						minWidth="400" minHeight="300"
 						paddingLeft="5" paddingTop="5"
+						paddingRight="5" paddingBottom="5"
 						horizontalAlign="right"
 						currentState="waiting" backgroundColor="#222222">
 	<mx:Style source="style.css"/>
@@ -151,6 +152,23 @@
 					dumpArguments.selected = logger.showArguments;
 					showReturn.selected = logger.showReturn;
 					
+					var urlLoaderClass:* = injectedAppDomain.getDefinition('com.swfwire.debugger.injected.URLLoader');
+					urlLoaderClass.globalEvents.addEventListener(Event.OPEN, function(ev:*):void
+					{
+						logToNet(ev.url+': open');
+					});
+					urlLoaderClass.globalEvents.addEventListener(ProgressEvent.PROGRESS, function(ev:*):void
+					{
+						logToNet(ev.url+': '+ev.bytesLoaded+'/'+ev.bytesTotal);
+					});
+					urlLoaderClass.globalEvents.addEventListener(Event.COMPLETE, function(ev:*):void
+					{
+						logToNet(ev.url+': complete');
+					});
+					urlLoaderClass.globalEvents.addEventListener(IOErrorEvent.IO_ERROR, function(ev:*):void
+					{
+						logToNet(ev.url+': error'+ev);
+					});
 					//injectedAppDomain.getDefinition('com.swfwire.debugger.injected').output = logOut;
 					loadDefault();
 				});
@@ -225,7 +243,7 @@
 			{
 				
 				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpseFlex4-1/bin-debug/Main.swf').url);
-				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpse/bin-debug/SWFCorpse.swf').url);
+				load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpse/bin-debug/SWFCorpse.swf').url);
 				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpse/bin-release/SWFCorpse.swf').url);
 				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFWireInspector/bin-debug/SWFWireInspector.swf').url);
 				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpseFlex3-5/bin-debug/Main.swf').url);
@@ -303,8 +321,11 @@
 				
 				for each(node in description.variable)
 				{
-					props.push(node.@name);
-					inspectGridDP.addItem({name: node.@name, value: target[node.@name]});
+					var q:QName = new QName(node.@uri, node.@name);
+					props.push(q);
+					
+					//props.push(node.@name);
+					//inspectGridDP.addItem({name: node.@name, value: target[node.@name]});
 				}
 				
 				inspectType.text = description.@name;
@@ -366,6 +387,7 @@
 					if(isCached || sanityCheck)
 					{
 						readProgress.setProgress(1, 1);
+						modifyProgress.setProgress(1, 1);
 						writeProgress.setProgress(1, 1);
 						run(bytes);
 						/*
@@ -584,6 +606,12 @@
 				systemLog.text += message+'\n';
 			}
 			
+			private function logToNet(message:String):void
+			{
+				trace(message);
+				netLog.text += message+'\n';
+			}
+			
 			protected function showMethodEntry_clickHandler(event:MouseEvent):void
 			{
 				logger.showMethodEntry = showMethodEntry.selected;
@@ -738,27 +766,35 @@
 			</mx:HDividedBox>
 			<mx:VBox width="100%" height="100%">
 				<mx:HBox height="40">
-					<mx:Button id="reloadButton" label="Reload" click="button2_clickHandler(event)" height="100%"/>
-					<mx:Button id="resetButton" label="Reset Position" click="preview.resetSWFPosition()" height="100%"/>
 					<mx:Button id="inspectButton" label="Inspect" click="startInspection()" height="100%"/>
-					<mx:Button label="Clear Console" click="button1_clickHandler(event)" height="100%"/>
+					<mx:Button id="resetButton" label="Reset Position" click="preview.resetSWFPosition()" height="100%"/>
+					<mx:Button id="reloadButton" label="Reload" click="button2_clickHandler(event)" height="100%"/>
 				</mx:HBox>
-				<mx:HBox width="100%" height="100%">
-					<mx:VBox height="100%">
-						<mx:CheckBox id="logToOutput" label="Log to output" click="logToOutput_clickHandler(event)" styleName="smallText"/>
-						<mx:CheckBox id="logToTrace" label="Log to trace" click="logToTrace_clickHandler(event)" styleName="smallText"/>
-						<mx:CheckBox id="showMethodEntry" label="Show method entry" click="showMethodEntry_clickHandler(event)" styleName="smallText"/>
-						<mx:CheckBox id="showMethodExit" label="Show method exit" click="showMethodExit_clickHandler(event)" styleName="smallText"/>
-						<mx:CheckBox id="showTrace" label="Show trace" click="showTrace_clickHandler(event)" styleName="smallText"/>
-						<mx:CheckBox id="dumpArguments" label="Show arguments" click="dumpArguments_clickHandler(event)" styleName="smallText"/>
-						<mx:CheckBox id="showReturn" label="Show return values" click="showReturn_clickHandler(event)" styleName="smallText"/>
-						<mx:HBox id="hbox1">
-							<mx:Label text="Max Stack Depth:" styleName="smallText"/>
-							<mx:NumericStepper id="maxStackDepth" value="10"/>
-						</mx:HBox>
-					</mx:VBox>
-					<mx:TextArea id="logOut" width="100%" height="100%" editable="false" fontFamily="Courier New" fontSize="11"/>
-				</mx:HBox>
+				<mx:TabNavigator width="100%" height="100%" creationPolicy="all" backgroundAlpha="0">
+					<mx:HBox label="Console" width="100%" height="100%">
+						<mx:VBox height="100%">
+							<mx:CheckBox id="logToOutput" label="Log to output" click="logToOutput_clickHandler(event)" styleName="smallText"/>
+							<mx:CheckBox id="logToTrace" label="Log to trace" click="logToTrace_clickHandler(event)" styleName="smallText"/>
+							<mx:CheckBox id="showMethodEntry" label="Show method entry" click="showMethodEntry_clickHandler(event)" styleName="smallText"/>
+							<mx:CheckBox id="showMethodExit" label="Show method exit" click="showMethodExit_clickHandler(event)" styleName="smallText"/>
+							<mx:CheckBox id="showTrace" label="Show trace" click="showTrace_clickHandler(event)" styleName="smallText"/>
+							<mx:CheckBox id="dumpArguments" label="Show arguments" click="dumpArguments_clickHandler(event)" styleName="smallText"/>
+							<mx:CheckBox id="showReturn" label="Show return values" click="showReturn_clickHandler(event)" styleName="smallText"/>
+							<mx:HBox id="hbox1">
+								<mx:Label text="Max Stack Depth:" styleName="smallText"/>
+								<mx:NumericStepper id="maxStackDepth" value="10"/>
+							</mx:HBox>
+							<mx:Button label="Clear Console" click="button1_clickHandler(event)" width="100%"/>
+						</mx:VBox>
+						<mx:TextArea id="logOut" width="100%" height="100%" editable="false" fontFamily="Courier New" fontSize="11"/>
+					</mx:HBox>
+					<mx:Canvas label="Display List">
+						<mx:TextArea id="tempDisplayList" width="100%" height="100%" editable="false"/>
+					</mx:Canvas>
+					<mx:Canvas label="Net">
+						<mx:TextArea id="netLog" width="100%" height="100%" editable="false"/>
+					</mx:Canvas>
+				</mx:TabNavigator>
 			</mx:VBox>
 		</mx:VDividedBox>
 	</mx:HDividedBox>

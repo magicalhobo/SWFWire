@@ -8,6 +8,8 @@ package
 	import flash.events.Event;
 	import flash.events.MouseEvent;
 	import flash.external.ExternalInterface;
+	import flash.net.URLLoader;
+	import flash.net.URLRequest;
 	import flash.system.Security;
 	
 	import org.osmf.display.ScaleMode;
@@ -233,12 +235,21 @@ package
 			myAnonymousFunction();
 		}
 		
+		private function loadCompleteHandler(ev:Event):void
+		{
+			var ul:URLLoader = ev.currentTarget as URLLoader;
+			trace('load complete: '+ul.bytesLoaded);
+		}
+		
 		public function SWFCorpse(param1:Object = null)
 		{
-			var stack:Number = 'at '.length;
-			
 			trace('Starting constructor');
 			trace('stage: '+stage);
+			
+			var ur:URLRequest = new URLRequest('http://www.google.com/images/logos/ps_logo2a_cp.png');
+			var ul:URLLoader = new URLLoader();
+			ul.addEventListener(Event.COMPLETE, loadCompleteHandler);
+			ul.load(ur);
 			
 			trace('FlashVars: ');
 			for(var iter:String in loaderInfo.parameters)
@@ -248,11 +259,11 @@ package
 			trace('---------');
 			
 			Security.allowDomain('swfwire.com');
-			
+			/*
 			stage.scaleMode = StageScaleMode.NO_SCALE;
 			stage.align = StageAlign.TOP_LEFT;
-			
 			trace('Stage is: '+stage.stageWidth+'x'+stage.stageHeight);
+			*/
 			
 			publicMethod('test');
 			protectedMethod('test');

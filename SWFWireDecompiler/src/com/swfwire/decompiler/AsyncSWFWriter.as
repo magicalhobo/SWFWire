@@ -53,7 +53,7 @@ package com.swfwire.decompiler
 			}
 			
 			_currentWriteResult = new SWFWriteResult();
-			_currentContext = new SWFWriterContext(new SWFByteArray(new ByteArray()), swf.header.fileVersion, _currentWriteResult);
+			_currentContext = new SWFWriterContext(null, swf.header.fileVersion, _currentWriteResult);
 			_currentSWF = swf;
 			_currentPointer = 0;
 			
@@ -63,7 +63,7 @@ package com.swfwire.decompiler
 			}
 			
 			var tagCount:uint = swf.tags.length;
-			var tagBytes:Vector.<ByteArray> = new Vector.<ByteArray>();
+			_currentContext.tagBytes = new Vector.<ByteArray>(tagCount, true);
 			
 			_active = true;
 			
@@ -100,7 +100,6 @@ package com.swfwire.decompiler
 				
 				var bytes:ByteArray = new ByteArray();
 				
-				_currentContext.tagBytes[_currentPointer] = bytes;
 				try
 				{
 					_currentContext.tagId = _currentPointer;
@@ -112,6 +111,8 @@ package com.swfwire.decompiler
 				{
 					_currentWriteResult.errors.push('Could not write Tag #'+_currentPointer+': '+e);
 				}
+				
+				_currentContext.tagBytes[_currentPointer] = bytes;
 				
 				_currentPointer++;
 				

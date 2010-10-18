@@ -172,6 +172,22 @@ package com.swfwire.debugger
 						var externalInterfaceQName:MultinameQNameToken = abcTag.abcFile.cpool.multinames[externalInterfaceIndex].data as MultinameQNameToken;
 						externalInterfaceQName.ns = injectedNamespace;
 					}
+					/*
+					var stageIndex:int = wrapper.getMultinameIndex('', 'stage');
+					if(stageIndex >= 0)
+					{
+						var externalInterfaceQName:MultinameQNameToken = abcTag.abcFile.cpool.multinames[stageIndex].data as MultinameQNameToken;
+						externalInterfaceQName.ns = injectedNamespace;
+					}
+					*/
+					
+					var urlLoaderIndex:int = wrapper.getMultinameIndex('flash.net', 'URLLoader');
+					if(urlLoaderIndex >= 0)
+					{
+						trace('found urlloader: '+urlLoaderIndex);
+						var urlLoaderQName:MultinameQNameToken = abcTag.abcFile.cpool.multinames[urlLoaderIndex].data as MultinameQNameToken;
+						urlLoaderQName.ns = injectedNamespace;
+					}
 					
 					var mainIndex:int = wrapper.getMultinameIndex(mainClassPackage, mainClassName);
 					var mainInst:InstanceToken = null;

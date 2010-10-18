@@ -2,6 +2,8 @@
 <flexLibProperties includeAllClasses="true" version="3">
   <includeClasses>
     <classEntry path="com.swfwire.debugger.injected.ExternalInterface"/>
+    <classEntry path="com.swfwire.debugger.injected.URLLoader"/>
+    <classEntry path="com.swfwire.debugger.injected.events.DynamicEvent"/>
   </includeClasses>
   <includeResources/>
   <namespaceManifests/>

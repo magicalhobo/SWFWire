@@ -9,7 +9,7 @@ package com.swfwire.decompiler
 	{
 		public var fileVersion:uint;
 		public var bytes:SWFByteArray;
-		public var tagBytes:Vector.<ByteArray> = new Vector.<ByteArray>();
+		public var tagBytes:Vector.<ByteArray>;
 		public var result:SWFWriteResult;
 		
 		public var tagId:int;
