@@ -250,17 +250,20 @@ package com.swfwire.decompiler.utils
 			}
 			
 			var flow:Array = [];
+			var breakOn:int = -1;
 			
 			for(var iter:uint = start; iter < instructions.length; iter++)
 			{
 				if(hitmap[iter])
 				{
-					trace('already hit');
+					trace('already hit: '+iter);
+					breakOn = iter;
 					break;
 				}
 				if(iter == target)
 				{
-					trace('target hit');
+					trace('target hit: '+iter);
+					breakOn = iter;
 					break;
 				}
 				if(op is EndInstruction)
@@ -284,13 +287,13 @@ package com.swfwire.decompiler.utils
 				const showByteCode:Boolean = false;
 				const showActionScript:Boolean = true;
 				const showStack:Boolean = false;
-				const showDebug:Boolean = true;
+				const showDebug:Boolean = false;
 				
 				if(showByteCode)
 				{
 					var description:XML = describeType(op);
 					var string:String = '    '
-					string += '#'+iter+'	';
+					string += StringUtil.padEnd('#'+iter, '      ');
 					/*
 					if(offsetLookup && offsetLookup[iter])
 					{
@@ -368,6 +371,11 @@ package com.swfwire.decompiler.utils
 					else if(op is Instruction_label)
 					{
 					}
+					else if(op is Instruction_hasnext2)
+					{
+						tempStr = locals.getName(Instruction_hasnext2(op).objectReg);
+						stack.push(tempStr+'.hasNext()');
+					}
 					else if(op is Instruction_lookupswitch)
 					{
 						tempInt = stack.pop();
@@ -436,13 +444,113 @@ package com.swfwire.decompiler.utils
 					}
 					else if(op is Instruction_iftrue)
 					{
+						var tempStr4:String = stack.pop();
+						
+						var hitmapCopy1:Object = {};
+						var hitmapCopy2:Object = {};
+						for(var iterHit1:String in hitmap)
+						{
+							hitmapCopy1[iterHit1] = hitmap[iterHit1];
+							hitmapCopy2[iterHit1] = hitmap[iterHit1];
+						}
 						trace('iftrue jump!');
+						tempInt = positionLookup[Instruction_iftrue(op).reference];
+						var r1:Object = instructionsToString(instructions, tempInt, hitmapCopy1, positionLookup, true, scope, locals, stack);
+						tempStr = r1.result;
+						var r2:Object = instructionsToString(instructions, iter + 1, hitmapCopy2, positionLookup, true, scope, locals, stack);
+						tempStr3 = r2.result;
+						
+						var isWhile:Boolean = false;
+						
+						trace(r1.breakOn+', '+r2.breakOn);
+						
+						if(r1.breakOn > 0)
+						{
+							if(hitmap[r1.breakOn])
+							{
+								isWhile = true;
+								r2.flow = {};
+							}
+						}
+						
+						var a1:int = -1;
+						outert:
+						for(var iter4:int = 0; iter4 < r1.flow.length; iter4++)
+						{
+							for(var iter5:int = 0; iter5 < r2.flow.length; iter5++)
+							{
+								if(r1.flow[iter4] == r2.flow[iter5])
+								{
+									a1 = r1.flow[iter4];
+									r1.flow.splice(iter4);
+									r2.flow.splice(iter5);
+									break outert;
+								}
+							}
+						}
+						
+						Debug.dump(r1.flow);
+						Debug.dump(r2.flow);
+						
+						for(var iterHit2:uint = 0; iterHit2 < r1.flow.length; iterHit2++)
+						{
+							hitmap[r1.flow[iterHit2]] = 1;
+						}
+						
+						for(var iterHit3:uint = 0; iterHit3 < r2.flow.length; iterHit3++)
+						{
+							hitmap[r2.flow[iterHit3]] = 1;
+						}
+						
+						trace(tempStr);
+						tempStr = StringUtil.indent(tempStr, '	');
+						tempStr3 = StringUtil.indent(tempStr3, '	');
+						
+						var cond:String = isWhile ? 'while' : 'if';
+						
+						if(r1.flow.length > 0)
+						{
+							if(r2.flow.length > 0)
+							{
+								tempStr2 = 'if('+tempStr4 + ')\n{\n'+tempStr+'\n}\nelse\n{\n'+tempStr3+'\n}';
+							}
+							else
+							{
+								tempStr2 = cond+'('+tempStr4 + ')\n{\n'+tempStr+'\n}';
+							}
+						}
+						else
+						{
+							if(r2.flow.length > 0)
+							{
+								tempStr2 = cond+'(!'+tempStr4 + ')\n{\n'+tempStr3+'\n}';
+							}
+							else
+							{
+								tempStr2 = '';
+							}
+						}
+						
+						if(tempStr2)
+						{
+							lines.push(tempStr2);
+						}
+						
+						if(a1 > 0)
+						{
+							iter = a1 - 1;
+						}
+
+						/*						
+						trace('iftrue jump!');
+						tempStr2 = stack.pop();
 						tempInt = positionLookup[Instruction_iftrue(op).reference];
 						tempStr = instructionsToString(instructions, tempInt, hitmap, positionLookup, true, scope, locals, stack).result;
 						tempStr3 = instructionsToString(instructions, iter + 1, hitmap, positionLookup, true, scope, locals, stack).result;
 						trace(tempStr);
 						tempStr = StringUtil.indent(tempStr, '	');
 						tempStr3 = StringUtil.indent(tempStr3, '	');
+						/*
 						//this is stupid
 						if(tempInt > iter)
 						{
@@ -452,8 +560,11 @@ package com.swfwire.decompiler.utils
 						{
 							tempStr2 = 'while('+stack.pop() + ' == true)\n{\n'+tempStr+'\n}\n'+tempStr3+'\n';
 						}
+						* /
+						tempStr2 = 'if('+tempStr2+' == true)\n{\n'+tempStr+'\n}\nelse\n{\n'+tempStr3+'\n}';
 						
 						lines.push(tempStr2);
+						*/
 					}
 					else if(op is Instruction_iffalse)
 					{
@@ -821,7 +932,7 @@ package com.swfwire.decompiler.utils
 					}
 				}
 			}
-			return {result: lines.join('\n'), flow: flow};
+			return {result: lines.join('\n'), flow: flow, breakOn: breakOn};
 		}
 		
 		public function traitToString(r:ReadableTrait):String
