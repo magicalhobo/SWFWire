@@ -46,6 +46,7 @@
 			import mx.events.DataGridEvent;
 			import mx.events.DataGridEventReason;
 			import mx.events.DynamicEvent;
+			import mx.events.ListEvent;
 			import mx.managers.DragManager;
 			
 			private var windowTracker:WindowTracker;
@@ -59,19 +60,45 @@
 			private var foundMainClass:Boolean;
 			
 			private var sanityCheck:Boolean = false;
-			private var cacheEnabled:Boolean = false;
+			private var cacheEnabled:Boolean = true;
 			
 			private function main():void
 			{
 				log('SWFWireDebugger Version '+Config.VERSION);
 				
-				stage.addEventListener(Event.ENTER_FRAME, function(ev:*):void
+				stage.addEventListener(Event.EXIT_FRAME, function(ev:Event):void
 				{
 					if(logger)
 					{
-						logger.enterFrame();
+						logger.enterFrameStart();
 					}
-				});
+				}, false, int.MIN_VALUE);
+				
+				/*
+				stage.addEventListener(Event.ENTER_FRAME, function(ev:Event):void
+				{
+					if(logger)
+					{
+						logger.enterFrameEnd();
+					}
+				}, false, int.MIN_VALUE);
+				
+				stage.addEventListener(Event.RENDER, function(ev:*):void
+				{
+					if(logger)
+					{
+						logger.renderStart();
+					}
+				}, true, int.MAX_VALUE);
+				
+				stage.addEventListener(Event.RENDER, function(ev:*):void
+				{
+					if(logger)
+					{
+						logger.renderEnd();
+					}
+				}, false, int.MIN_VALUE);
+				*/
 				
 				appUpdater = new ApplicationUpdaterUI();
 				appUpdater.configurationFile = new File('app:/updateConfig.xml');
@@ -116,12 +143,21 @@
 						log(ObjectUtil.objectToString(ev.error, 2, 2, 50, 50, '	'));
 					});
 					
+					var loaderClass:* = injectedAppDomain.getDefinition('com.swfwire.debugger.injected.Loader');
+					loaderClass.overrideApplicationDomain = preview.loader.contentLoaderInfo.applicationDomain;
+					
+					//loaderClass.overrideApplicationDomain = new ApplicationDomain(preview.loader.contentLoaderInfo.applicationDomain);
+					
 					if(!sanityCheck)
 					{
 						var a:* = preview.loader.content;
-						if(foundMainClass)
+						try
 						{
 							a.deferredConstructor();
+						}
+						catch(e:Error)
+						{
+							trace('Error calling deferredConstructor: '+e.getStackTrace());
 						}
 						preview.invalidateDisplayList();
 						preview.validateDisplayList();
@@ -169,11 +205,19 @@
 					{
 						logToNet(ev.url+': error'+ev);
 					});
+					
+					var ncClass:* = injectedAppDomain.getDefinition('com.swfwire.debugger.injected.NetConnection');
+					ncClass.globalEvents.addEventListener('connect', function(ev:*):void
+					{
+						logToNet(ev.command+': rtmp connect');
+					});
+					
 					//injectedAppDomain.getDefinition('com.swfwire.debugger.injected').output = logOut;
 					loadDefault();
 				});
 				
 				var librarySwf:String = 'app:/library.swf';
+				//var librarySwf:String = 'app:/library.swf';
 				//var librarySwf:String = new File(File.applicationDirectory.nativePath).resolvePath('library.swf?nocache='+Math.random()).url;
 				
 				inspectGrid.dataProvider = inspectGridDP;
@@ -241,9 +285,10 @@
 			
 			private function loadDefault():void
 			{
-				
+				//load('http://localhost/workspaces/fb4_swfwire/SWFCorpseP1Container/bin-debug/SWFCorpseP1Container.swf');
+				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpseP1Container/bin-debug/SWFCorpseP1Container.swf').url);
 				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpseFlex4-1/bin-debug/Main.swf').url);
-				load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpse/bin-debug/SWFCorpse.swf').url);
+				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpse/bin-debug/SWFCorpse.swf').url);
 				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpse/bin-release/SWFCorpse.swf').url);
 				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFWireInspector/bin-debug/SWFWireInspector.swf').url);
 				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpseFlex3-5/bin-debug/Main.swf').url);
@@ -253,9 +298,11 @@
 				//load('frees.swf');
 				//load('cs5-5_corpse.swf');
 				//load('watch_as3.swf');
+				load('Main_112710.swf');
 			}
 			
 			private var lastTarget:DisplayObject;
+			private var lastInspectTarget:Object;
 			private var inspectGridDP:ArrayCollection = new ArrayCollection();
 			private var pathRefs:Array;
 			
@@ -310,7 +357,7 @@
 				}
 			}
 			
-			protected function inspect(target:DisplayObject):void
+			protected function inspect(target:Object):void
 			{
 				inspectGridDP.removeAll();
 				
@@ -353,18 +400,20 @@
 						inspectGridDP.addItem({name: props[iter], value: '<exception thrown by getter>'});
 					}
 				}
+				
+				lastInspectTarget = target;
 			}
 			
 			protected function inspectGrid_itemEditEndHandler(event:DataGridEvent):void
 			{
 				if(event.reason != DataGridEventReason.CANCELLED)
 				{
-					if(lastTarget)
+					if(lastInspectTarget)
 					{
 						var info:Object = inspectGridDP.getItemAt(event.rowIndex);
 						try
 						{
-							lastTarget[info.name] = TextInput(event.currentTarget.itemEditorInstance).text;
+							lastInspectTarget[info.name] = TextInput(event.currentTarget.itemEditorInstance).text;
 						}
 						catch(e:*)
 						{
@@ -465,6 +514,8 @@
 				lastFileSize = orig.size;
 				
 				var newUrl:String = url+'.recompiled.'+orig.size+'.swf';
+				*/
+				var newUrl:String = url+'.recompiled.0.swf';
 				var f:File = File.applicationDirectory.resolvePath(newUrl);
 				if(f.exists && cacheEnabled)
 				{
@@ -475,9 +526,10 @@
 				{
 					isCached = false;
 				}
-				*/
 				
 				currentState = 'loading';
+				
+				log('Loading: '+url);
 				
 				loadProgress.setProgress(0, 0);
 				readProgress.setProgress(0, 0);
@@ -535,6 +587,8 @@
 					log('Modifying swf took: '+diff+'ms');
 					
 					preview.setSWFBackground(modifier.backgroundColor);
+					
+					foundMainClass = modifier.foundMainClass;
 					
 					write(swf);
 				});
@@ -687,6 +741,19 @@
 				trace('key: '+event.keyCode);
 			}
 
+			protected function inspectGrid_itemDoubleClickHandler(event:ListEvent):void
+			{
+				var info:Object = inspectGridDP.getItemAt(event.rowIndex);
+				try
+				{
+					inspect(lastInspectTarget[info.name]);
+				}
+				catch(e:*)
+				{
+					logOut.text += 'Error inspecting property.\n';
+				}
+			}
+
 		]]>
 	</mx:Script>
 	<mx:states>
@@ -697,6 +764,13 @@
 			<mx:RemoveChild target="{modifyProgress}"/>
 			<mx:RemoveChild target="{writeProgress}"/>
 			<mx:RemoveChild target="{systemLog}"/>
+			<mx:SetProperty target="{flashvars}" name="text" value="test=1"/>
+			<mx:SetStyle target="{hbox2}" name="verticalAlign" value="middle"/>
+			<mx:SetStyle target="{label2}" name="paddingTop" value="2"/>
+			<mx:SetStyle target="{hbox2}" name="horizontalGap" value="0"/>
+			<mx:SetProperty target="{flashvars}" name="width" value="100%"/>
+			<mx:SetProperty target="{hbox2}" name="width" value="100%"/>
+			<mx:SetProperty target="{vbox1}" name="width" value="100%"/>
 		</mx:State>
 		<mx:State name="loading">
 			<mx:RemoveChild target="{hdividedbox1}"/>
@@ -734,6 +808,16 @@
 			<mx:RemoveChild target="{swfDropTarget}"/>
 			<mx:RemoveChild target="{systemLog}"/>
 			<mx:SetStyle target="{hbox1}" name="verticalAlign" value="middle"/>
+			<mx:SetProperty target="{hbox1}" name="height" value="50"/>
+			<mx:SetStyle target="{label1}" name="paddingTop" value="2"/>
+			<mx:SetStyle target="{tabnavigator1}" name="backgroundAlpha" value="1.0"/>
+			<mx:SetStyle target="{tabnavigator1}" name="contentBackgroundColor"/>
+			<mx:SetStyle target="{tabnavigator1}" name="paddingBottom" value="5"/>
+			<mx:SetStyle target="{tabnavigator1}" name="paddingLeft" value="5"/>
+			<mx:SetStyle target="{tabnavigator1}" name="paddingRight" value="5"/>
+			<mx:SetStyle target="{tabnavigator1}" name="paddingTop" value="5"/>
+			<mx:SetStyle target="{tabnavigator1}" name="chromeColor" value="#131313"/>
+			<mx:SetStyle target="{tabnavigator1}" name="backgroundColor" value="#2C2C2C"/>
 		</mx:State>
 	</mx:states>
 	<mx:HBox id="header" width="100%">
@@ -742,7 +826,11 @@
 	</mx:HBox>
 	<ui:BreadCrumb id="breadCrumb" width="100%" height="26"/>
 	<mx:Canvas width="100%" height="100%" id="swfDropTarget" backgroundColor="#000000" backgroundAlpha="0">
-		<mx:VBox horizontalCenter="0" verticalCenter="0" horizontalAlign="center">
+		<mx:VBox horizontalCenter="0" verticalCenter="0" horizontalAlign="center" id="vbox1">
+			<mx:HBox id="hbox2">
+				<mx:Label text="FlashVars: " id="label2"/>
+				<mx:TextInput id="flashvars"/>
+			</mx:HBox>
 			<mx:Label text="Drop File Here" styleName="bigText"/>
 			<!--<mx:CheckBox id="useCached" label="Use Cached"/>-->
 		</mx:VBox>
@@ -755,7 +843,9 @@
 				<mx:VBox width="400" height="100%" verticalGap="0">
 					<mx:Label id="inspectType" width="100%"/>
 					<mx:DataGrid id="inspectGrid" width="100%" height="100%" editable="true"
+								 doubleClickEnabled="true"
 								 itemEditEnd="inspectGrid_itemEditEndHandler(event)"
+								 itemDoubleClick="inspectGrid_itemDoubleClickHandler(event)"
 								 keyDown="inspectGrid_keyDownHandler(event)">
 						<mx:columns>
 							<mx:DataGridColumn headerText="Name" dataField="name" editable="false" width="180"/>
@@ -770,7 +860,7 @@
 					<mx:Button id="resetButton" label="Reset Position" click="preview.resetSWFPosition()" height="100%"/>
 					<mx:Button id="reloadButton" label="Reload" click="button2_clickHandler(event)" height="100%"/>
 				</mx:HBox>
-				<mx:TabNavigator width="100%" height="100%" creationPolicy="all" backgroundAlpha="0">
+				<mx:TabNavigator width="100%" height="100%" creationPolicy="all" backgroundAlpha="0" contentBackgroundColor="#555555" id="tabnavigator1">
 					<mx:HBox label="Console" width="100%" height="100%">
 						<mx:VBox height="100%">
 							<mx:CheckBox id="logToOutput" label="Log to output" click="logToOutput_clickHandler(event)" styleName="smallText"/>
@@ -781,7 +871,7 @@
 							<mx:CheckBox id="dumpArguments" label="Show arguments" click="dumpArguments_clickHandler(event)" styleName="smallText"/>
 							<mx:CheckBox id="showReturn" label="Show return values" click="showReturn_clickHandler(event)" styleName="smallText"/>
 							<mx:HBox id="hbox1">
-								<mx:Label text="Max Stack Depth:" styleName="smallText"/>
+								<mx:Label text="Max Stack Depth:" styleName="smallText" id="label1"/>
 								<mx:NumericStepper id="maxStackDepth" value="10"/>
 							</mx:HBox>
 							<mx:Button label="Clear Console" click="button1_clickHandler(event)" width="100%"/>

@@ -139,14 +139,31 @@ package com.swfwire.debugger
 				foundMainClass = true;
 			}
 			
-			var mainClassPackage:String = '';
-			var mainClassName:String = mainClass;
+			mainClassPackage = '';
+			mainClassName = mainClass;
 			
 			if(mainClass.indexOf('.') >= 0)
 			{
 				mainClassName = mainClass.substr(mainClass.lastIndexOf('.') + 1);
 				mainClassPackage = mainClass.substr(0, mainClass.lastIndexOf('.'));
 			}			
+		}
+		
+		protected function update(wrapper:ABCWrapper, abcTag:DoABCTag, ns:String, name:String, newNs:int = -1, newName:int = -1):void
+		{
+			var index :int = wrapper.getMultinameIndex(ns, name);
+			if(index >= 0)
+			{
+				var qName:MultinameQNameToken = abcTag.abcFile.cpool.multinames[index].data as MultinameQNameToken;
+				if(newNs >= 0)
+				{
+					qName.ns = newNs;
+				}
+				if(newName >= 0)
+				{
+					qName.name = newName;
+				}
+			}
 		}
 		
 		protected function phase3():void
@@ -184,10 +201,21 @@ package com.swfwire.debugger
 					var urlLoaderIndex:int = wrapper.getMultinameIndex('flash.net', 'URLLoader');
 					if(urlLoaderIndex >= 0)
 					{
-						trace('found urlloader: '+urlLoaderIndex);
 						var urlLoaderQName:MultinameQNameToken = abcTag.abcFile.cpool.multinames[urlLoaderIndex].data as MultinameQNameToken;
 						urlLoaderQName.ns = injectedNamespace;
 					}
+					
+					var netConnectionIndex:int = wrapper.getMultinameIndex('flash.net', 'NetConnection');
+					if(netConnectionIndex >= 0)
+					{
+						var netConnectionQName:MultinameQNameToken = abcTag.abcFile.cpool.multinames[netConnectionIndex].data as MultinameQNameToken;
+						netConnectionQName.ns = injectedNamespace;
+					}
+					
+					update(wrapper, abcTag, 'flash.display', 'Loader', injectedNamespace, -1);
+					//update(wrapper, abcTag, 'flash.display', 'Sprite', injectedNamespace, -1);
+					//update(wrapper, abcTag, 'flash.display', 'LoaderInfo', injectedNamespace, wrapper.addString('SWFWire_LoaderInfo'));
+					//update(wrapper, abcTag, '', 'loaderInfo', -1, wrapper.addString('swfWire_loaderInfo'));
 					
 					var mainIndex:int = wrapper.getMultinameIndex(mainClassPackage, mainClassName);
 					var mainInst:InstanceToken = null;

@@ -4,7 +4,7 @@
 			    width="800" height="800" frameRate="60"
 				layout="absolute"
 				creationPolicy="all"
-				showStatusBar="false" currentState="waiting" xmlns:display="com.swfwire.inspector.display.*">
+				showStatusBar="false" currentState="waiting" xmlns:ui="com.swfwire.inspector.flex.ui.*">
 	<mx:Style source="style.css"/>
 	<mx:Script>
 		<![CDATA[
@@ -78,6 +78,12 @@
 				{
 					detailsPanel.preview.invalidateDisplayList();
 					detailsPanel.preview.validateDisplayList();
+				});
+				
+				loaderInfo.uncaughtErrorEvents.addEventListener(UncaughtErrorEvent.UNCAUGHT_ERROR, function(ev:UncaughtErrorEvent):void
+				{
+					log('Uncaught Error.');
+					log(ev.error);
 				});
 				
 				detailsPanel.preview.addChild(loader);
@@ -157,7 +163,7 @@
 				}
 			}
 			
-			private function log(str:String):void
+			private function log(str:*):void
 			{
 				var scrollToBottom:Boolean = logPanel.verticalScrollPosition >= logPanel.maxVerticalScrollPosition;
 				logPanel.text += str+'\n';
@@ -288,7 +294,7 @@
 					rc.className = new ReadableMultiname();
 					translator.getReadableMultiname(instance.name, rc.className);
 					
-					classes.push({name: rc.className.name, index: iter});
+					classes.push({id: iter, className: rc.className.name, packageName: rc.className.namespace});
 				}
 				
 				detailsPanel.actionScript.classesList.dataProvider = classes;
@@ -532,7 +538,7 @@
 			private function updateClasses():void
 			{
 				var item:Object = detailsPanel.actionScript.classesList.selectedItem;
-				var index:uint = item.index;
+				var index:uint = item.id;
 				var tag:DoABCTag = lastResult.swf.tags[detailsPanel.tagList.selectedItem.id] as DoABCTag;
 				if(tag)
 				{
@@ -610,7 +616,7 @@
 				<mx:Label text="Drop File Here" horizontalCenter="0" verticalCenter="0" fontSize="32" styleName="bigText"/>
 			</mx:Canvas>
 		</mx:HDividedBox>
-		<display:SWFPanel id="detailsPanel" width="100%" height="100%" currentStateChange="updateBottomPanel()"/>
+		<ui:SWFPanel id="detailsPanel" width="100%" height="100%" currentStateChange="updateBottomPanel()"/>
 		<mx:TextArea id="logPanel" editable="false" width="100%" height="100%"/>
 		<mx:ProgressBar id="loadProgress" width="100%" height="20" mode="manual" minimum="0" maximum="1" labelPlacement="center" label="Loading SWF: %3%%"/>
 		<mx:ProgressBar id="parseProgress" width="100%" height="20" mode="manual" minimum="0" maximum="1" labelPlacement="center" label="Parsing SWF: %3%%"/>

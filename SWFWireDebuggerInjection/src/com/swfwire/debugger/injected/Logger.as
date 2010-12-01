@@ -3,6 +3,7 @@ package com.swfwire.debugger.injected
 	import com.swfwire.utils.ObjectUtil;
 	import com.swfwire.utils.StringUtil;
 	
+	import flash.events.Event;
 	import flash.utils.getTimer;
 	
 	public class Logger
@@ -14,15 +15,18 @@ package com.swfwire.debugger.injected
 		public static var showTraceStatements:Boolean = true;
 		public static var showArguments:Boolean = false;
 		public static var showReturn:Boolean = false;
+		public static var skipEnterFrameEvents:Boolean = true;
+		public static var indentString:String = '  ';
 		
 		public static var output:*;
 		public static var buffer:String = '';
 		
+		private static var inEnterFrame:Boolean;
 		private static var indent:int = 0;
 		private static var startTimes:Array = [];
 		private static var stack:Array = [];
 		
-		public static function enterFrame():void
+		public static function enterFrameStart():void
 		{
 			if(buffer)
 			{
@@ -51,9 +55,13 @@ package com.swfwire.debugger.injected
 			}
 		}
 		
-		public static function _log(message:*):void
+		public static function _log(message:*, autoIndent:Boolean = true):void
 		{
-			var str:String = StringUtil.indent(message, StringUtil.repeat('	', indent));
+			var str:String = String(message);
+			if(autoIndent)
+			{
+				str = StringUtil.indent(message, StringUtil.repeat(indentString, indent + 2));
+			}
 			buffer += str + '\n';
 		}
 		
@@ -62,13 +70,34 @@ package com.swfwire.debugger.injected
 		{
 			if(showTraceStatements)
 			{
-				_log(args);
+				_log(args, false);
 			}
 		}
 		
 		public static function enterFunction(methodName:String = 'unk', caller:* = null, params:Object = null):void
 		{
-			if(showMethodEntry)
+			if(stack.length == 0)
+			{
+				for(var iter:* in params)
+				{
+					if(params[iter] is Event)
+					{
+						if(Event(params[iter]).type == Event.ENTER_FRAME)
+						{
+							inEnterFrame = true;
+						}
+					}
+					break;
+				}
+			}
+			/*
+			if(methodName.substr(0, 3) == 'fl.')
+			{
+				return;
+			}
+			*/
+			var show:Boolean = showMethodEntry && (!skipEnterFrameEvents || !inEnterFrame);// && (!skipEnterFrameEvents || !(inEnterFrame || inRender));
+			if(show)
 			{
 				//var methodName2:String = new StackInfo(1).functionName;
 				//_log('> ' + methodName + ' | '+methodName2);
@@ -77,9 +106,9 @@ package com.swfwire.debugger.injected
 			}
 			stack.push(methodName);
 			indent = stack.length;
-			if(showMethodEntry && showArguments && params)
+			if(show && showArguments && params)
 			{
-				_log(ObjectUtil.objectToString(params, 2, 2, 50, 50, '	'));
+				_log(ObjectUtil.objectToString(params, 2, 2, 50, 50, indentString));
 			}
 			startTimes.push(getTimer());
 		}
@@ -95,14 +124,21 @@ package com.swfwire.debugger.injected
 				}
 			}
 			
-			if(showMethodEntry && showReturn && returnValue)
+			var show:Boolean = showMethodEntry && (!skipEnterFrameEvents || !inEnterFrame);
+			
+			if(stack.length == 0)
 			{
-				_log('return '+ObjectUtil.objectToString(returnValue, 2, 2, 50, 50, '	'));
+				inEnterFrame = false;
+			}
+			
+			if(showReturn && returnValue !== null)
+			{
+				_log('return '+ObjectUtil.objectToString(returnValue, 2, 2, 50, 50, indentString));
 			}
 			indent = stack.length;
 			//indent = Math.max(indent, 0);
 			
-			if(showMethodEntry && showMethodExit)
+			if(show && showMethodExit)
 			{
 				//var methodName2:String = new StackInfo(1).functionName;
 				//_log('<< ' + methodName2);
@@ -114,7 +150,7 @@ package com.swfwire.debugger.injected
 				if(diff > 3000)
 				{
 					showMethodEntry = false;
-					trace('Show method entry disabled for performance');
+					_log('Show method entry disabled for performance');
 				}
 				
 				//_log('<<');
@@ -129,7 +165,7 @@ package com.swfwire.debugger.injected
 			stack = [];
 			
 			_log('Uncaught error:');
-			_log(ObjectUtil.objectToString(e, 2, 2, 50, 50, '	'));
+			_log(ObjectUtil.objectToString(e, 2, 2, 50, 50, indentString));
 		}
 	}
 }

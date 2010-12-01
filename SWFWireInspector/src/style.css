@@ -22,7 +22,7 @@ mx|WindowedApplication
 	background-color: #2f2e2a;
 }
 
-mx|DataGrid, mx|List
+mx|DataGrid
 {
 	alternating-item-colors: #383733, #3f3e3a;
 	vertical-grid-line-color: #000000;

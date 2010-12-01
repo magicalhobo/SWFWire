@@ -1,6 +1,7 @@
 package
 {
 	import flash.display.DisplayObject;
+	import flash.display.LoaderInfo;
 	import flash.display.Shape;
 	import flash.display.Sprite;
 	import flash.display.StageAlign;
@@ -8,6 +9,7 @@ package
 	import flash.events.Event;
 	import flash.events.MouseEvent;
 	import flash.external.ExternalInterface;
+	import flash.net.NetConnection;
 	import flash.net.URLLoader;
 	import flash.net.URLRequest;
 	import flash.system.Security;
@@ -240,9 +242,13 @@ package
 			var ul:URLLoader = ev.currentTarget as URLLoader;
 			trace('load complete: '+ul.bytesLoaded);
 		}
-		
+
 		public function SWFCorpse(param1:Object = null)
 		{
+			for(var iter:String in loaderInfo.parameters)
+			{
+				trace(iter+': '+loaderInfo.parameters[iter]);
+			}
 			trace('Starting constructor');
 			trace('stage: '+stage);
 			
@@ -250,6 +256,9 @@ package
 			var ul:URLLoader = new URLLoader();
 			ul.addEventListener(Event.COMPLETE, loadCompleteHandler);
 			ul.load(ur);
+			
+			var nc:NetConnection = new NetConnection();
+			nc.connect('rtmp://localhost');
 			
 			trace('FlashVars: ');
 			for(var iter:String in loaderInfo.parameters)
