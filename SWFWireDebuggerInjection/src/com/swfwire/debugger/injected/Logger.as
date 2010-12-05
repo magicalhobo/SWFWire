@@ -4,6 +4,7 @@ package com.swfwire.debugger.injected
 	import com.swfwire.utils.StringUtil;
 	
 	import flash.events.Event;
+	import flash.events.TimerEvent;
 	import flash.utils.getTimer;
 	
 	public class Logger
@@ -15,13 +16,27 @@ package com.swfwire.debugger.injected
 		public static var showTraceStatements:Boolean = true;
 		public static var showArguments:Boolean = false;
 		public static var showReturn:Boolean = false;
-		public static var skipEnterFrameEvents:Boolean = true;
+		
+		public static var skipEnterFrame:Boolean = true;
+		public static var skipExitFrame:Boolean = true;
+		public static var skipRender:Boolean = true;
+		public static var skipFrameConstructed:Boolean = true;
+		public static var skipTimer:Boolean = true;
+		
 		public static var indentString:String = '  ';
+		
+		public static var maxStack:uint = 20;
 		
 		public static var output:*;
 		public static var buffer:String = '';
 		
 		private static var inEnterFrame:Boolean;
+		private static var inExitFrame:Boolean;
+		private static var inRender:Boolean;
+		private static var inFrameConstructed:Boolean;
+		private static var inTimer:Boolean;
+		private static var show2:Boolean;
+		
 		private static var indent:int = 0;
 		private static var startTimes:Array = [];
 		private static var stack:Array = [];
@@ -68,7 +83,7 @@ package com.swfwire.debugger.injected
 
 		public static function log(... args):void
 		{
-			if(showTraceStatements)
+			if(show2 && showTraceStatements)
 			{
 				_log(args, false);
 			}
@@ -82,13 +97,35 @@ package com.swfwire.debugger.injected
 				{
 					if(params[iter] is Event)
 					{
-						if(Event(params[iter]).type == Event.ENTER_FRAME)
+						var t:String = Event(params[iter]).type;
+						if(t == 'enterFrame')
 						{
 							inEnterFrame = true;
+						}
+						else if(t == 'exitFrame')
+						{
+							inExitFrame = true;
+						}
+						else if(t == 'render')
+						{
+							inRender = true;
+						}
+						else if(t == 'frameConstructed')
+						{
+							inFrameConstructed = true;
+						}
+						else if(t == 'timer')
+						{
+							inTimer = true;
 						}
 					}
 					break;
 				}
+				show2 = (!skipEnterFrame || !inEnterFrame) &&
+						(!skipExitFrame || !inExitFrame) &&
+						(!skipRender || !inRender) &&
+						(!skipFrameConstructed || !inFrameConstructed) &&
+						(!skipTimer || !inTimer);
 			}
 			/*
 			if(methodName.substr(0, 3) == 'fl.')
@@ -96,17 +133,19 @@ package com.swfwire.debugger.injected
 				return;
 			}
 			*/
-			var show:Boolean = showMethodEntry && (!skipEnterFrameEvents || !inEnterFrame);// && (!skipEnterFrameEvents || !(inEnterFrame || inRender));
-			if(show)
+			
+			var show3:Boolean = show2 && stack.length < maxStack;
+			
+			stack.push(methodName);
+			if(show3 && showMethodEntry)
 			{
 				//var methodName2:String = new StackInfo(1).functionName;
 				//_log('> ' + methodName + ' | '+methodName2);
 				//methodName = new StackInfo(1).functionName;
 				_log('> ' + methodName);
 			}
-			stack.push(methodName);
 			indent = stack.length;
-			if(show && showArguments && params)
+			if(show3 && showArguments && params)
 			{
 				_log(ObjectUtil.objectToString(params, 2, 2, 50, 50, indentString));
 			}
@@ -124,21 +163,37 @@ package com.swfwire.debugger.injected
 				}
 			}
 			
-			var show:Boolean = showMethodEntry && (!skipEnterFrameEvents || !inEnterFrame);
+			var show:Boolean = show2;
+			/*
+			var show:Boolean = showMethodEntry &&
+				(!skipEnterFrame|| !inEnterFrame) &&
+				(!skipExitFrame || !inExitFrame) &&
+				(!skipRender || !inRender) &&
+				(!skipFrameConstructed || !inFrameConstructed) &&
+				(!skipTimer || !inTimer);
+			*/
 			
 			if(stack.length == 0)
 			{
-				inEnterFrame = false;
+ 				inEnterFrame = false;
+ 				inExitFrame = false;
+ 				inRender = false;
+ 				inFrameConstructed = false;
+ 				inTimer = false;
+				
+				show2 = true;
 			}
 			
-			if(showReturn && returnValue !== null)
+			var show3:Boolean = show && stack.length < maxStack;
+			
+			if(showReturn && returnValue !== null && show3)
 			{
 				_log('return '+ObjectUtil.objectToString(returnValue, 2, 2, 50, 50, indentString));
 			}
 			indent = stack.length;
 			//indent = Math.max(indent, 0);
 			
-			if(show && showMethodExit)
+			if(show3 && showMethodEntry && showMethodExit)
 			{
 				//var methodName2:String = new StackInfo(1).functionName;
 				//_log('<< ' + methodName2);

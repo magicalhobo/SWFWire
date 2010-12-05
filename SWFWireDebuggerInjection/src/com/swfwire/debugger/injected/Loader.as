@@ -1,5 +1,7 @@
 package com.swfwire.debugger.injected
 {
+	import com.swfwire.debugger.injected.events.DynamicEvent;
+	
 	import flash.display.Loader;
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
@@ -17,12 +19,14 @@ package com.swfwire.debugger.injected
 		override public function load(request:URLRequest, context:LoaderContext = null):void
 		{
 			trace('Loader.load("'+request.url+'")');
+			var instance:* = this;
+			
 			var ul:URLLoader = new URLLoader(request);
 			ul.dataFormat = URLLoaderDataFormat.BINARY;
 			ul.addEventListener(Event.COMPLETE, function(ev:Event):void
 			{
 				ul.removeEventListener(Event.COMPLETE, arguments.callee);
-				loadBytes(ul.data, context);
+				globalEvents.dispatchEvent(new DynamicEvent('loadComplete', {request: request, data: ul.data, context: context, instance: instance}));
 				ul = null;
 			});
 			ul.load(request);

@@ -24,17 +24,19 @@ package com.swfwire.debugger
 		private var iTag:uint;
 		private var swf:SWF;
 		private var metadata:Vector.<ABCReaderMetadata>;
+		private var deferConstructor:Boolean;
 		public var foundMainClass:Boolean;
 		public var mainClassPackage:String;
 		public var mainClassName:String;
 		public var backgroundColor:uint;
 		
-		public function DebuggerAsyncModifier(swf:SWF, metadata:Vector.<ABCReaderMetadata>, timeLimit:uint = 100)
+		public function DebuggerAsyncModifier(swf:SWF, metadata:Vector.<ABCReaderMetadata>, deferConstructor:Boolean = true, timeLimit:uint = 100)
 		{
 			super(timeLimit);
 			
 			this.swf = swf;
 			this.metadata = metadata;
+			this.deferConstructor = deferConstructor;
 		}
 		
 		override public function start():Boolean
@@ -74,7 +76,6 @@ package com.swfwire.debugger
 			
 			swf.header.signature = SWFHeader.UNCOMPRESSED_SIGNATURE;
 			
-			var mainClass:String = '';
 			var iTag:uint;
 			
 			backgroundColor = 0xFFFFFF;
@@ -86,17 +87,6 @@ package com.swfwire.debugger
 				{
 					backgroundColor = bgt.backgroundColor.red << 16 | bgt.backgroundColor.green << 8 | bgt.backgroundColor.blue;
 				}
-				var sct:SymbolClassTag = swf.tags[iTag] as SymbolClassTag;
-				if(sct)
-				{
-					for(var isym:uint = 0; isym < sct.symbols.length; isym++)
-					{
-						if(sct.symbols[isym].characterId == 0)
-						{
-							mainClass = sct.symbols[isym].className;
-						}
-					}
-				}
 			}
 		}
 		
@@ -104,20 +94,11 @@ package com.swfwire.debugger
 		{
 			var start:uint = getTimer();
 			
-			swf.header.signature = SWFHeader.UNCOMPRESSED_SIGNATURE;
-			
 			var mainClass:String = '';
 			var iTag:uint;
 			
-			var backgroundColor:uint = 0xFFFFFF;
-			
 			for(iTag = 0; iTag < swf.tags.length; iTag++)
 			{
-				var bgt:SetBackgroundColorTag = swf.tags[iTag] as SetBackgroundColorTag;
-				if(bgt)
-				{
-					backgroundColor = bgt.backgroundColor.red << 16 | bgt.backgroundColor.green << 8 | bgt.backgroundColor.blue;
-				}
 				var sct:SymbolClassTag = swf.tags[iTag] as SymbolClassTag;
 				if(sct)
 				{
@@ -130,7 +111,7 @@ package com.swfwire.debugger
 					}
 				}
 			}
-			
+
 			trace('main class: '+mainClass);
 			
 			foundMainClass = false;
@@ -233,7 +214,7 @@ package com.swfwire.debugger
 						}
 					}
 					
-					if(mainInst)
+					if(mainInst && deferConstructor)
 					{
 						var mainMB:MethodBodyInfoToken = wrapper.findMethodBody(mainInst.iinit);
 						
