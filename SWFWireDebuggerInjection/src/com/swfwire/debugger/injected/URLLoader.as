@@ -14,6 +14,7 @@ package com.swfwire.debugger.injected
 	public class URLLoader extends flash.net.URLLoader
 	{
 		public static var globalEvents:EventDispatcher = new EventDispatcher();
+		public static var applicationRoot:String = '';
 		
 		private static var urlMap:Dictionary = new Dictionary(true);
 		
@@ -51,6 +52,15 @@ package com.swfwire.debugger.injected
 		override public function load(request:URLRequest):void
 		{
 			urlMap[this] = request.url;
+			
+			if(request.url.indexOf('://') == -1)
+			{
+				if(request.url.substr(0, 5) == 'app:/')
+				{
+					request.url = request.url.substr(5);
+				}
+				request.url = applicationRoot + request.url;
+			}
 			//request.url = 'http://localhost/proxy?url='+encodeURIComponent(request.url);
 			super.load(request);
 		}

@@ -10,9 +10,9 @@ package com.swfwire.debugger.injected
 	public class Logger
 	{
 		public static var logToTrace:Boolean = true;
-		public static var logToOutput:Boolean = true;
-		public static var showMethodEntry:Boolean = false;
-		public static var showMethodExit:Boolean = false;
+		public static var logToOutput:Boolean = false;
+		public static var showMethodEntry:Boolean = true;
+		public static var showMethodExit:Boolean = true;
 		public static var showTraceStatements:Boolean = true;
 		public static var showArguments:Boolean = false;
 		public static var showReturn:Boolean = false;
@@ -25,7 +25,7 @@ package com.swfwire.debugger.injected
 		
 		public static var indentString:String = '  ';
 		
-		public static var maxStack:uint = 20;
+		public static var maxStack:uint = 50;
 		
 		public static var output:*;
 		public static var buffer:String = '';
@@ -41,7 +41,7 @@ package com.swfwire.debugger.injected
 		private static var startTimes:Array = [];
 		private static var stack:Array = [];
 		
-		public static function enterFrameStart():void
+		public static function flushBuffer():void
 		{
 			if(buffer)
 			{
@@ -218,6 +218,8 @@ package com.swfwire.debugger.injected
 			indent = 0;
 			startTimes = [];
 			stack = [];
+			
+			flushBuffer();
 			
 			_log('Uncaught error:');
 			_log(ObjectUtil.objectToString(e, 2, 2, 50, 50, indentString));

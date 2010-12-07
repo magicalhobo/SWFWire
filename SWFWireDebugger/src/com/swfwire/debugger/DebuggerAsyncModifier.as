@@ -312,16 +312,20 @@ package com.swfwire.debugger
 						
 						var nameFromMethodId:Object = {};
 						
-						function qnameToString(index:uint):String
+						function qnameToString(instance:String, index:uint):String
 						{
 							var result:String = '<Not a QName>';
 							var mq:MultinameQNameToken = cp.multinames[index].data as MultinameQNameToken;
 							if(mq)
 							{
 								var ns:String = cp.strings[cp.namespaces[mq.ns].name].utf8;
+								if(ns == instance)
+								{
+									ns = '';
+								}
 								if(ns != '')
 								{
-									ns = ns + '::';
+									ns = ns + ':';
 								}
 								result = ns + cp.strings[mq.name].utf8;
 							}
@@ -332,12 +336,12 @@ package com.swfwire.debugger
 						{
 							var inst2:InstanceToken = abcTag.abcFile.instances[i11];
 							
-							var instName:String = qnameToString(inst2.name);
+							var instName:String = qnameToString('', inst2.name);
 							
 							nameFromMethodId[inst2.iinit] = instName;
 							for(var i12:int = 0; i12 < inst2.traits.length; i12++)
 							{
-								var name:String = qnameToString(inst2.traits[i12].name);
+								var name:String = qnameToString(instName, inst2.traits[i12].name);
 								var tmt:TraitMethodToken = inst2.traits[i12].data as TraitMethodToken;
 								switch(inst2.traits[i12].kind)
 								{
@@ -360,13 +364,13 @@ package com.swfwire.debugger
 							var classInfo:ClassInfoToken = abcTag.abcFile.classes[i13];
 							var inst3:InstanceToken = abcTag.abcFile.instances[i13];
 							
-							var className:String = qnameToString(inst3.name);
+							var className:String = qnameToString('', inst3.name);
 							
 							nameFromMethodId[classInfo.cinit] = className+'$cinit';
 							
 							for(var i14:int = 0; i14 < classInfo.traits.length; i14++)
 							{
-								var name2:String = qnameToString(classInfo.traits[i14].name);
+								var name2:String = qnameToString('', classInfo.traits[i14].name);
 								var tmt2:TraitMethodToken = classInfo.traits[i14].data as TraitMethodToken;
 								switch(classInfo.traits[i14].kind)
 								{

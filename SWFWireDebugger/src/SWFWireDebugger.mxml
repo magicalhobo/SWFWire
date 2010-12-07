@@ -61,19 +61,19 @@
 			private var foundMainClass:Boolean;
 			
 			private var sanityCheck:Boolean = false;
-			private var cacheEnabled:Boolean = true;
+			private var cacheEnabled:Boolean = false;
 			
 			private function main():void
 			{
 				log('SWFWireDebugger Version '+Config.VERSION);
 				
-				stage.addEventListener(Event.EXIT_FRAME, function(ev:Event):void
+				stage.addEventListener(Event.ENTER_FRAME, function(ev:Event):void
 				{
 					if(logger)
 					{
-						logger.enterFrameStart();
+						logger.flushBuffer();
 					}
-				}, false, int.MIN_VALUE);
+				});
 				
 				/*
 				stage.addEventListener(Event.ENTER_FRAME, function(ev:Event):void
@@ -146,6 +146,9 @@
 					
 					var loaderClass:* = injectedAppDomain.getDefinition('com.swfwire.debugger.injected.Loader');
 					loaderClass.overrideApplicationDomain = preview.loader.contentLoaderInfo.applicationDomain;
+					
+					var urlLoaderClass:* = injectedAppDomain.getDefinition('com.swfwire.debugger.injected.URLLoader');
+					urlLoaderClass.applicationRoot = lastUrl.substr(0, lastUrl.lastIndexOf('/') + 1);
 					
 					//loaderClass.overrideApplicationDomain = new ApplicationDomain(preview.loader.contentLoaderInfo.applicationDomain);
 					
@@ -315,6 +318,7 @@
 			private function loadDefault():void
 			{
 				//load('http://localhost/workspaces/fb4_swfwire/SWFCorpseP1Container/bin-debug/SWFCorpseP1Container.swf');
+				load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpseAIR/bin-debug/SWFCorpseAIR.swf').url);
 				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpseP1Container/bin-debug/SWFCorpseP1Container.swf').url);
 				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpseFlex4-1/bin-debug/Main.swf').url);
 				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpse/bin-debug/SWFCorpse.swf').url);
@@ -327,7 +331,7 @@
 				//load('frees.swf');
 				//load('cs5-5_corpse.swf');
 				//load('watch_as3.swf');
-				load('Main_112710.swf');
+				//load('Main_112710.swf');
 			}
 			
 			private var lastTarget:DisplayObject;
