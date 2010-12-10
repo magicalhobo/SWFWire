@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" currentState="cpool">
+	<mx:states>
+		<mx:State name="cpool">
+			<mx:RemoveChild target="{classesPanel}"/>
+			<mx:SetProperty target="{cpoolLabel}" name="selected" value="true"/>
+		</mx:State>
+		<mx:State name="classes">
+			<mx:RemoveChild target="{cpool}"/>
+			<mx:SetProperty target="{classesLabel}" name="selected" value="true"/>
+		</mx:State>
+	</mx:states>
+	<mx:Script>
+		<![CDATA[
+			[Bindable]
+			public var classesCount:uint;
+		]]>
+	</mx:Script>
+	<mx:VBox width="100%" height="100%">
+		<mx:HBox width="100%">
+			<mx:Button id="cpoolLabel" label="Constant Pool" click="currentState = 'cpool'"/>
+			<mx:Button id="classesLabel" label="Classes ({classesCount})" click="currentState = 'classes'"/>
+			<!--<mx:Button id="exportLabel" label="Export as SWC"/>-->
+		</mx:HBox>
+		<mx:TextArea id="cpool" width="100%" height="100%" editable="false" wordWrap="false" fontFamily="Courier New" fontSize="12"/>
+		<mx:HDividedBox id="classesPanel" width="100%" height="100%">
+			<mx:DataGrid id="classesList" height="100%">
+				<mx:columns>
+					<mx:DataGridColumn dataField="id" headerText="ID" width="40"/>
+					<mx:DataGridColumn dataField="packageName" headerText="Package"/>
+					<mx:DataGridColumn dataField="className" headerText="Class"/>
+				</mx:columns>
+			</mx:DataGrid>
+			<mx:TextArea id="classes" width="100%" height="100%" editable="false" wordWrap="false" fontFamily="Courier New" fontSize="12"/>
+		</mx:HDividedBox>
+	</mx:VBox>
+</mx:Canvas>
