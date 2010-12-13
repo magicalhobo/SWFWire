@@ -9,9 +9,9 @@ package com.swfwire.debugger.injected
 	
 	public class Logger
 	{
-		public static var logToTrace:Boolean = true;
-		public static var logToOutput:Boolean = false;
-		public static var showMethodEntry:Boolean = true;
+		public static var logToTrace:Boolean = false;
+		public static var logToOutput:Boolean = true;
+		public static var showMethodEntry:Boolean = false;
 		public static var showMethodExit:Boolean = true;
 		public static var showTraceStatements:Boolean = true;
 		public static var showArguments:Boolean = false;

@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Window xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		   xmlns:s="library://ns.adobe.com/flex/spark" 
+		   xmlns:mx="library://ns.adobe.com/flex/mx"
+		   showStatusBar="false" title="Current SWF"
+		   width="800" height="600"
+		   layout="absolute"
+		   creationPolicy="all"
+		   creationComplete="main()">
+	<fx:Script>
+		<![CDATA[
+			import com.swfwire.utils.DisplayUtil;
+			
+			public var loader:Loader;
+			
+			private var swfWidth:Number;
+			private var swfHeight:Number;
+			
+			private function main():void
+			{
+				addEventListener(MouseEvent.MIDDLE_MOUSE_DOWN, previewMiddleDownHandler, false, 0, true);
+				addEventListener(MouseEvent.MOUSE_WHEEL, previewMiddleScrollHandler, false, 0, true);
+			}
+			
+			private function loaderCompleteHandler(ev:Event):void
+			{
+				/*
+				stage.scaleMode = StageScaleMode.NO_SCALE;
+				stage.align = StageAlign.TOP_LEFT;
+				*/
+				
+				resetSWFPosition();
+				
+				dispatchEvent(new Event('loaderComplete'));
+			}
+			
+			private var previewStartDown:Point;
+			
+			private function previewMiddleDownHandler(ev:MouseEvent):void
+			{
+				//stopInspection();
+				loader.mouseEnabled = false;
+				loader.mouseChildren = false;
+				stage.addEventListener(MouseEvent.MIDDLE_MOUSE_UP, previewMiddleUpHandler, false, 0, true);
+				stage.addEventListener(MouseEvent.MOUSE_MOVE, previewMoveHandler, false, 0, true);
+				previewStartDown = new Point(stage.mouseX - loader.x, stage.mouseY - loader.y);
+			}
+			
+			private function previewMoveHandler(ev:MouseEvent):void
+			{
+				if(previewStartDown)
+				{
+					loader.x = stage.mouseX - previewStartDown.x; 
+					loader.y = stage.mouseY - previewStartDown.y; 
+				}
+			}
+			
+			private function previewMiddleUpHandler(ev:MouseEvent):void
+			{
+				stage.removeEventListener(MouseEvent.MOUSE_MOVE, previewMoveHandler);
+				stage.removeEventListener(MouseEvent.MIDDLE_MOUSE_UP, previewMiddleUpHandler);
+				loader.mouseChildren = true;
+				loader.mouseEnabled = true;
+			}
+			
+			private function previewMiddleScrollHandler(ev:MouseEvent):void
+			{
+				var scaleFactor:Number = Math.pow(1.05, ev.delta);
+				
+				var mouseNow:Point = new Point(loader.mouseX, loader.mouseY);
+				var previousMousePosition:Point = loader.localToGlobal(mouseNow);
+				
+				loader.scaleX *= scaleFactor;
+				loader.scaleY *= scaleFactor;
+				
+				var newMousePosition:Point = loader.localToGlobal(mouseNow);
+				
+				loader.x -= newMousePosition.x - previousMousePosition.x;
+				loader.y -= newMousePosition.y - previousMousePosition.y;
+			}
+			
+			override protected function updateDisplayList(unscaledWidth:Number, unscaledHeight:Number):void
+			{
+				super.updateDisplayList(unscaledWidth, unscaledHeight);
+				return;
+				if(loader)
+				{
+					loader.scaleX = 1;
+					loader.scaleY = 1;
+					
+					var rawBounds:Rectangle = loader.getBounds(this);
+					
+					var offset:Point = new Point(rawBounds.x - loader.x, rawBounds.y - loader.y);
+					
+					var scaledBounds:Rectangle = DisplayUtil.scaleToFit(rawBounds.width, rawBounds.height, unscaledWidth, unscaledHeight);
+					loader.x = scaledBounds.x;
+					loader.y = scaledBounds.y;
+					loader.width = scaledBounds.width;
+					loader.height = scaledBounds.height;
+					
+					loader.x += -offset.x * loader.scaleX;
+					loader.y += -offset.y * loader.scaleY;
+				}
+			}
+			
+			public function loadBytes(bytes:ByteArray, context:LoaderContext):void
+			{
+				if(loader)
+				{
+					loader.unloadAndStop();
+				}
+				else
+				{
+					loader = new Loader();
+					loader.contentLoaderInfo.addEventListener(Event.COMPLETE, loaderCompleteHandler, false, 0, true);
+					content.addChild(loader);
+				}
+				loader.loadBytes(bytes, context);
+			}
+			
+			public function unload():void
+			{
+				if(loader)
+				{
+					loader.unloadAndStop();
+					loader = null;
+				}
+			}
+			
+			public function setSWFBackground(color:uint):void
+			{
+				setStyle('backgroundColor', color);
+			}
+			
+			public function setSWFSize(width:Number, height:Number):void
+			{
+				swfWidth = width;
+				swfHeight = height;
+				
+				nativeWindow.width = swfWidth;
+				nativeWindow.height = swfHeight;
+			}
+			
+			public function resetSWFPosition():void
+			{
+				loader.scaleX = 1;
+				loader.scaleY = 1;
+				
+				var ratioX:Number = loader.width/swfWidth;
+				var ratioY:Number = loader.height/swfHeight;
+				
+				var scaledBounds:Rectangle = DisplayUtil.scaleToFit(swfWidth, swfHeight, unscaledWidth, unscaledHeight);
+				loader.x = scaledBounds.x;
+				loader.y = scaledBounds.y;
+				loader.width = scaledBounds.width * ratioX;
+				loader.height = scaledBounds.height * ratioY;
+			}
+			
+			public function clearOverlay():void
+			{
+				overlay.graphics.clear();
+			}
+		]]>
+	</fx:Script>
+	<mx:UIComponent id="content" mask="{contentMask}"/>
+	<mx:UIComponent id="overlay" width="100%" height="100%" mouseEnabled="false" mouseChildren="false" mask="{overlayMask}"/>
+	<mx:Canvas id="contentMask" width="100%" height="100%" backgroundColor="#000000"/>
+	<mx:Canvas id="overlayMask" width="100%" height="100%" backgroundColor="#000000"/>
+</mx:Window>

@@ -15,6 +15,7 @@
 			
 			import com.swfwire.debugger.DebuggerAsyncModifier;
 			import com.swfwire.debugger.events.AsyncSWFModifierEvent;
+			import com.swfwire.debugger.flex.ui.PreviewWindow;
 			import com.swfwire.debugger.utils.*;
 			import com.swfwire.decompiler.*;
 			import com.swfwire.decompiler.abc.ABCInstructions;
@@ -63,6 +64,8 @@
 			private var sanityCheck:Boolean = false;
 			private var cacheEnabled:Boolean = false;
 			
+			private var preview:PreviewWindow = new PreviewWindow();
+			
 			private function main():void
 			{
 				log('SWFWireDebugger Version '+Config.VERSION);
@@ -75,31 +78,16 @@
 					}
 				});
 				
-				/*
-				stage.addEventListener(Event.ENTER_FRAME, function(ev:Event):void
+				preview.visible = false;
+				preview.addEventListener(Event.CLOSING, function(ev:Event):void
 				{
-					if(logger)
-					{
-						logger.enterFrameEnd();
-					}
-				}, false, int.MIN_VALUE);
-				
-				stage.addEventListener(Event.RENDER, function(ev:*):void
-				{
-					if(logger)
-					{
-						logger.renderStart();
-					}
-				}, true, int.MAX_VALUE);
-				
-				stage.addEventListener(Event.RENDER, function(ev:*):void
-				{
-					if(logger)
-					{
-						logger.renderEnd();
-					}
-				}, false, int.MIN_VALUE);
-				*/
+					ev.preventDefault();
+					preview.unload();
+					preview.visible = false;
+					currentState = 'waiting';
+				});
+				preview.alwaysInFront = true;
+				preview.open();
 				
 				appUpdater = new ApplicationUpdaterUI();
 				appUpdater.configurationFile = new File('app:/updateConfig.xml');
@@ -118,7 +106,7 @@
 				swfDropTarget.addEventListener(NativeDragEvent.NATIVE_DRAG_DROP,	 dragDropHandler);
 				
 				preview.addEventListener(MouseEvent.MIDDLE_MOUSE_DOWN, previewMiddleDownHandler);
-				preview.addEventListener(MouseEvent.MOUSE_WHEEL, previewMiddleScrollHandler);
+				//preview.addEventListener(MouseEvent.MOUSE_WHEEL, previewMiddleScrollHandler);
 				
 				loaderInfo.uncaughtErrorEvents.addEventListener(UncaughtErrorEvent.UNCAUGHT_ERROR, function(ev:UncaughtErrorEvent):void
 				{
@@ -134,6 +122,9 @@
 				//preview.addEventListener(MouseEvent.MOUSE_MOVE, inspectHandler);
 				preview.addEventListener('loaderComplete', function(ev:Event):void
 				{
+					preview.visible = true;
+					preview.activate();
+					
 					preview.loader.contentLoaderInfo.uncaughtErrorEvents.addEventListener(UncaughtErrorEvent.UNCAUGHT_ERROR, function(ev:UncaughtErrorEvent):void
 					{
 						ev.preventDefault();
@@ -144,11 +135,29 @@
 						log(ObjectUtil.objectToString(ev.error, 2, 2, 50, 50, '	'));
 					});
 					
+					var parameters:Object = {};
+					var flashvarParser:URLVariables;
+					try
+					{
+						flashvarParser = new URLVariables(flashvars.text);
+						for(var iter:String in flashvarParser)
+						{
+							parameters[iter] = flashvarParser[iter];
+						}
+					}
+					catch(e:Error)
+					{
+						log('Error parsing flashvars');
+					}
+					
 					var loaderClass:* = injectedAppDomain.getDefinition('com.swfwire.debugger.injected.Loader');
 					loaderClass.overrideApplicationDomain = preview.loader.contentLoaderInfo.applicationDomain;
 					
 					var urlLoaderClass:* = injectedAppDomain.getDefinition('com.swfwire.debugger.injected.URLLoader');
 					urlLoaderClass.applicationRoot = lastUrl.substr(0, lastUrl.lastIndexOf('/') + 1);
+					
+					var loaderInfoClass:* = injectedAppDomain.getDefinition('com.swfwire.debugger.injected.SWFWire_LoaderInfo');
+					loaderInfoClass.defaultParameters = parameters;
 					
 					//loaderClass.overrideApplicationDomain = new ApplicationDomain(preview.loader.contentLoaderInfo.applicationDomain);
 					
@@ -166,6 +175,8 @@
 						preview.invalidateDisplayList();
 						preview.validateDisplayList();
 					}
+					
+					inspect(preview.loader.content);
 				});
 				
 				Debug.enabled = true;
@@ -268,11 +279,13 @@
 			private function previewMiddleDownHandler(ev:MouseEvent):void
 			{
 				stopInspection();
+				/*
 				preview.loader.mouseEnabled = false;
 				preview.loader.mouseChildren = false;
 				stage.addEventListener(MouseEvent.MIDDLE_MOUSE_UP, previewMiddleUpHandler);
 				stage.addEventListener(MouseEvent.MOUSE_MOVE, previewMoveHandler);
 				previewStartDown = new Point(stage.mouseX - preview.loader.x, stage.mouseY - preview.loader.y);
+				*/
 			}
 			
 			private function previewMoveHandler(ev:MouseEvent):void
@@ -318,7 +331,7 @@
 			private function loadDefault():void
 			{
 				//load('http://localhost/workspaces/fb4_swfwire/SWFCorpseP1Container/bin-debug/SWFCorpseP1Container.swf');
-				load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpseAIR/bin-debug/SWFCorpseAIR.swf').url);
+				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpseAIR/bin-debug/SWFCorpseAIR.swf').url);
 				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpseP1Container/bin-debug/SWFCorpseP1Container.swf').url);
 				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpseFlex4-1/bin-debug/Main.swf').url);
 				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpse/bin-debug/SWFCorpse.swf').url);
@@ -343,8 +356,9 @@
 			{
 				var previewOverlay:UIComponent = preview.overlay;
 				
-				var point:Point = new Point(stage.mouseX, stage.mouseY);
-				var hits:Array = stage.getObjectsUnderPoint(point);
+				//var point:Point = new Point(stage.mouseX, stage.mouseY);
+				var point:Point = new Point(preview.stage.mouseX, preview.stage.mouseY);
+				var hits:Array = preview.stage.getObjectsUnderPoint(point);
 				
 				var target:DisplayObject = hits.pop();
 				if(target == previewOverlay)
@@ -520,8 +534,7 @@
 				}
 				if(url)
 				{
-					currentState = 'loading';
-					load(url);
+					swfUrl.text = url;
 				}
 				else
 				{
@@ -550,6 +563,7 @@
 				*/
 				var newUrl:String = url+'.recompiled.0.swf';
 				var f:File = File.applicationDirectory.resolvePath(newUrl);
+				cacheEnabled = useCached.selected;
 				if(f.exists && cacheEnabled)
 				{
 					url = newUrl;
@@ -841,6 +855,12 @@
 				logger.maxStack = maxStackDepth.value;
 			}
 
+
+			protected function button3_clickHandler(event:MouseEvent):void
+			{
+				load(swfUrl.text);
+			}
+
 		]]>
 	</mx:Script>
 	<mx:states>
@@ -851,6 +871,7 @@
 			<mx:RemoveChild target="{modifyProgress}"/>
 			<mx:RemoveChild target="{writeProgress}"/>
 			<mx:RemoveChild target="{systemLog}"/>
+			<mx:RemoveChild target="{breadCrumb}"/>
 		</mx:State>
 		<mx:State name="loading">
 			<mx:RemoveChild target="{hdividedbox1}"/>
@@ -858,6 +879,7 @@
 			<mx:RemoveChild target="{modifyProgress}"/>
 			<mx:RemoveChild target="{writeProgress}"/>
 			<mx:RemoveChild target="{swfDropTarget}"/>
+			<mx:RemoveChild target="{breadCrumb}"/>
 		</mx:State>
 		<mx:State name="reading">
 			<mx:RemoveChild target="{swfDropTarget}"/>
@@ -865,6 +887,7 @@
 			<mx:RemoveChild target="{loadProgress}"/>
 			<mx:RemoveChild target="{writeProgress}"/>
 			<mx:RemoveChild target="{modifyProgress}"/>
+			<mx:RemoveChild target="{breadCrumb}"/>
 		</mx:State>
 		<mx:State name="modifying">
 			<mx:RemoveChild target="{swfDropTarget}"/>
@@ -872,6 +895,7 @@
 			<mx:RemoveChild target="{loadProgress}"/>
 			<mx:RemoveChild target="{readProgress}"/>
 			<mx:RemoveChild target="{writeProgress}"/>
+			<mx:RemoveChild target="{breadCrumb}"/>
 		</mx:State>
 		<mx:State name="writing">
 			<mx:RemoveChild target="{swfDropTarget}"/>
@@ -879,6 +903,7 @@
 			<mx:RemoveChild target="{loadProgress}"/>
 			<mx:RemoveChild target="{readProgress}"/>
 			<mx:RemoveChild target="{modifyProgress}"/>
+			<mx:RemoveChild target="{breadCrumb}"/>
 		</mx:State>
 		<mx:State name="loaded">
 			<mx:RemoveChild target="{loadProgress}"/>
@@ -896,31 +921,49 @@
 	<ui:BreadCrumb id="breadCrumb" width="100%" height="26"/>
 	<mx:Canvas width="100%" height="100%" id="swfDropTarget" backgroundColor="#000000" backgroundAlpha="0">
 		<mx:VBox horizontalCenter="0" verticalCenter="0" horizontalAlign="center" id="vbox1" width="100%">
-			<mx:HBox id="hbox2" visible="false" verticalAlign="middle" horizontalGap="0" width="100%">
-				<mx:Label text="FlashVars: " id="label2" paddingTop="2"/>
-				<mx:TextInput id="flashvars" width="100%"/>
-			</mx:HBox>
 			<mx:Label text="Drop File Here" styleName="bigText"/>
-			<!--<mx:CheckBox id="useCached" label="Use Cached"/>-->
+			<mx:Form width="80%" id="form1">
+				<mx:FormItem label="FlashVars: " width="100%">
+					<mx:TextInput id="flashvars" width="100%"/>
+				</mx:FormItem>
+				<mx:FormItem label="SWF URL: " width="100%">
+					<mx:TextInput id="swfUrl" width="100%"/>
+				</mx:FormItem>
+				<mx:FormItem label="Use Cached: ">
+					<mx:CheckBox id="useCached"/>
+				</mx:FormItem>
+			</mx:Form>
+			<mx:Button label="Debug" click="button3_clickHandler(event)" styleName="bigText"/>
 		</mx:VBox>
 	</mx:Canvas>
 	<mx:TextArea id="systemLog" editable="false" width="100%" height="100%"/>
 	<mx:HDividedBox width="100%" height="100%" id="hdividedbox1">
 		<mx:VDividedBox width="100%" height="100%">
 			<mx:HDividedBox width="100%" height="100%">
-				<ui:PreviewPanel id="preview" width="100%" height="100%"/>
+				<!--<ui:PreviewPanel id="preview" width="100%" height="100%"/>-->
 				<mx:VBox width="400" height="100%" verticalGap="0">
 					<mx:Label id="inspectType" width="100%"/>
-					<mx:DataGrid id="inspectGrid" width="100%" height="100%" editable="true"
-								 doubleClickEnabled="true"
-								 itemEditEnd="inspectGrid_itemEditEndHandler(event)"
-								 itemDoubleClick="inspectGrid_itemDoubleClickHandler(event)"
-								 keyDown="inspectGrid_keyDownHandler(event)">
-						<mx:columns>
-							<mx:DataGridColumn headerText="Name" dataField="name" editable="false" width="180"/>
-							<mx:DataGridColumn headerText="Value" dataField="value" editable="true"/>
-						</mx:columns>
-					</mx:DataGrid>
+					<mx:TabNavigator id="tabnavigator2" width="100%" height="100%" creationPolicy="all" backgroundAlpha="1" backgroundColor="#2C2C2C"
+									 paddingBottom="5" paddingLeft="5" paddingTop="5" paddingRight="5" chromeColor="#131313" minHeight="0">
+						<mx:Canvas width="100%" height="100%" label="Public Properties">
+							<mx:DataGrid id="inspectGrid" width="100%" height="100%" editable="true"
+										 doubleClickEnabled="true"
+										 itemEditEnd="inspectGrid_itemEditEndHandler(event)"
+										 itemDoubleClick="inspectGrid_itemDoubleClickHandler(event)"
+										 keyDown="inspectGrid_keyDownHandler(event)">
+								<mx:columns>
+									<mx:DataGridColumn headerText="Name" dataField="name" editable="false" width="180"/>
+									<mx:DataGridColumn headerText="Value" dataField="value" editable="true"/>
+								</mx:columns>
+							</mx:DataGrid>
+						</mx:Canvas>
+						<mx:Canvas width="100%" height="100%" label="Private/Protected Properties">
+						</mx:Canvas>
+						<mx:Canvas width="100%" height="100%" label="Public Methods">
+						</mx:Canvas>
+						<mx:Canvas width="100%" height="100%" label="Private/Protected Methods">
+						</mx:Canvas>
+					</mx:TabNavigator>
 				</mx:VBox>
 			</mx:HDividedBox>
 			<mx:VBox width="100%" height="100%">
@@ -930,9 +973,10 @@
 					<mx:Button id="reloadButton" label="Reload" click="button2_clickHandler(event)" height="100%"/>
 				</mx:HBox>
 				<mx:TabNavigator id="tabnavigator1" width="100%" height="100%" creationPolicy="all" backgroundAlpha="1" backgroundColor="#2C2C2C"
-								 paddingBottom="5" paddingLeft="5" paddingTop="5" paddingRight="5" chromeColor="#131313">
-					<mx:HBox label="Console" width="100%" height="100%">
-						<mx:VBox height="100%">
+								 paddingBottom="5" paddingLeft="5" paddingTop="5" paddingRight="5" chromeColor="#131313" minHeight="0">
+					<mx:HBox label="Console" width="100%" height="100%" horizontalGap="5">
+						<mx:TextArea id="logOut" width="100%" height="100%" editable="false" fontFamily="Courier New" fontSize="11"/>
+						<mx:VBox height="100%" id="vbox2" paddingRight="5" minHeight="0" horizontalScrollPolicy="off" width="200">
 							<mx:CheckBox id="logToOutput" label="Log to output" click="logToOutput_clickHandler(event)" styleName="smallText"/>
 							<mx:CheckBox id="logToTrace" label="Log to trace" click="logToTrace_clickHandler(event)" styleName="smallText"/>
 							<mx:CheckBox id="showMethodEntry"		 label="Show method entry"		 click="showMethodEntry_clickHandler(event)" styleName="smallText"/>
@@ -946,12 +990,11 @@
 							<mx:CheckBox id="dumpArguments" label="Show arguments" click="dumpArguments_clickHandler(event)" styleName="smallText"/>
 							<mx:CheckBox id="showReturn" label="Show return values" click="showReturn_clickHandler(event)" styleName="smallText"/>
 							<mx:HBox id="hbox1" height="50" verticalAlign="middle">
-								<mx:Label text="Max Stack Depth:" styleName="smallText" id="label1" paddingTop="2"/>
+								<mx:Label text="Max Stack Depth:" styleName="smallText" paddingTop="2"/>
 								<mx:NumericStepper id="maxStackDepth" value="10" change="maxStackDepth_changeHandler(event)" minimum="0" maximum="100"/>
 							</mx:HBox>
 							<mx:Button label="Clear Console" click="button1_clickHandler(event)" width="100%"/>
 						</mx:VBox>
-						<mx:TextArea id="logOut" width="100%" height="100%" editable="false" fontFamily="Courier New" fontSize="11"/>
 					</mx:HBox>
 					<mx:Canvas label="Display List">
 						<mx:TextArea id="tempDisplayList" width="100%" height="100%" editable="false"/>
