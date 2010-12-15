@@ -156,6 +156,9 @@
 					var urlLoaderClass:* = injectedAppDomain.getDefinition('com.swfwire.debugger.injected.URLLoader');
 					urlLoaderClass.applicationRoot = lastUrl.substr(0, lastUrl.lastIndexOf('/') + 1);
 					
+					var stageClass:* = injectedAppDomain.getDefinition('com.swfwire.debugger.injected.SWFWire_Stage');
+					stageClass.stage = preview.stage;
+					
 					var loaderInfoClass:* = injectedAppDomain.getDefinition('com.swfwire.debugger.injected.SWFWire_LoaderInfo');
 					loaderInfoClass.defaultParameters = parameters;
 					

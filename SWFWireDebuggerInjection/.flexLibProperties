@@ -5,9 +5,10 @@
     <classEntry path="com.swfwire.debugger.injected.URLLoader"/>
     <classEntry path="com.swfwire.debugger.injected.events.DynamicEvent"/>
     <classEntry path="com.swfwire.debugger.injected.NetConnection"/>
-    <classEntry path="com.swfwire.debugger.injected.Sprite"/>
+    <classEntry path="com.swfwire.debugger.injected.SWFWire_Sprite"/>
     <classEntry path="com.swfwire.debugger.injected.SWFWire_LoaderInfo"/>
     <classEntry path="com.swfwire.debugger.injected.Loader"/>
+    <classEntry path="com.swfwire.debugger.injected.SWFWire_Stage"/>
   </includeClasses>
   <includeResources/>
   <namespaceManifests/>

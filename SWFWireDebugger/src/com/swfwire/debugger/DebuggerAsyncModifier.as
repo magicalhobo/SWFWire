@@ -194,9 +194,14 @@ package com.swfwire.debugger
 					}
 					
 					update(wrapper, abcTag, 'flash.display', 'Loader', injectedNamespace, -1);
-					update(wrapper, abcTag, 'flash.display', 'Sprite', injectedNamespace, -1);
+					update(wrapper, abcTag, 'flash.display', 'Sprite', injectedNamespace, wrapper.addString('SWFWire_Sprite'));
+					update(wrapper, abcTag, 'flash.display', 'MovieClip', injectedNamespace, wrapper.addString('SWFWire_MovieClip'));
+					
 					update(wrapper, abcTag, '', 'loaderInfo', -1, wrapper.addString('swfWire_loaderInfo'));
-					//update(wrapper, abcTag, 'flash.display', 'LoaderInfo', injectedNamespace, wrapper.addString('SWFWire_LoaderInfo'));
+					update(wrapper, abcTag, 'flash.display', 'LoaderInfo', injectedNamespace, wrapper.addString('SWFWire_LoaderInfo'));
+
+					update(wrapper, abcTag, '', 'stage', -1, wrapper.addString('swfWire_stage'));
+					update(wrapper, abcTag, 'flash.display', 'Stage', injectedNamespace, wrapper.addString('SWFWire_Stage'));
 					
 					var mainIndex:int = wrapper.getMultinameIndex(mainClassPackage, mainClassName);
 					var mainInst:InstanceToken = null;
