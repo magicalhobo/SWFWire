@@ -132,7 +132,7 @@ package com.swfwire.debugger
 		
 		protected function update(wrapper:ABCWrapper, abcTag:DoABCTag, ns:String, name:String, newNs:int = -1, newName:int = -1):void
 		{
-			var index :int = wrapper.getMultinameIndex(ns, name);
+			var index:int = wrapper.getMultinameIndex(ns, name);
 			if(index >= 0)
 			{
 				var qName:MultinameQNameToken = abcTag.abcFile.cpool.multinames[index].data as MultinameQNameToken;
@@ -145,6 +145,40 @@ package com.swfwire.debugger
 					qName.name = newName;
 				}
 			}
+		}
+		
+		protected function updatePublic(wrapper:ABCWrapper, abcTag:DoABCTag, name:String, newName:int):void
+		{
+			var nameIndex:int = wrapper.getStringIndex(name);
+			if(nameIndex > 0)
+			{
+				for(var iter:* in abcTag.abcFile.cpool.multinames)
+				{
+					var qName:MultinameQNameToken = abcTag.abcFile.cpool.multinames[iter].data as MultinameQNameToken;
+					if(qName)
+					{
+						if(qName.name == nameIndex)
+						{
+							qName.name = newName;
+						}
+					}
+				}
+			}
+			/*
+			var index:int = wrapper.getMultinameIndex(ns, name);
+			if(index >= 0)
+			{
+				var qName:MultinameQNameToken = abcTag.abcFile.cpool.multinames[index].data as MultinameQNameToken;
+				if(newNs >= 0)
+				{
+					qName.ns = newNs;
+				}
+				if(newName >= 0)
+				{
+					qName.name = newName;
+				}
+			}
+			*/
 		}
 		
 		protected function phase3():void
@@ -197,11 +231,14 @@ package com.swfwire.debugger
 					update(wrapper, abcTag, 'flash.display', 'Sprite', injectedNamespace, wrapper.addString('SWFWire_Sprite'));
 					update(wrapper, abcTag, 'flash.display', 'MovieClip', injectedNamespace, wrapper.addString('SWFWire_MovieClip'));
 					
-					update(wrapper, abcTag, '', 'loaderInfo', -1, wrapper.addString('swfWire_loaderInfo'));
+					//update(wrapper, abcTag, '', 'loaderInfo', -1, wrapper.addString('swfWire_loaderInfo'));
 					update(wrapper, abcTag, 'flash.display', 'LoaderInfo', injectedNamespace, wrapper.addString('SWFWire_LoaderInfo'));
 
-					update(wrapper, abcTag, '', 'stage', -1, wrapper.addString('swfWire_stage'));
+					//update(wrapper, abcTag, '', 'stage', -1, wrapper.addString('swfWire_stage'));
 					update(wrapper, abcTag, 'flash.display', 'Stage', injectedNamespace, wrapper.addString('SWFWire_Stage'));
+
+					updatePublic(wrapper, abcTag, 'loaderInfo', wrapper.addString('swfWire_loaderInfo'));
+					updatePublic(wrapper, abcTag, 'stage', wrapper.addString('swfWire_stage'));
 					
 					var mainIndex:int = wrapper.getMultinameIndex(mainClassPackage, mainClassName);
 					var mainInst:InstanceToken = null;
