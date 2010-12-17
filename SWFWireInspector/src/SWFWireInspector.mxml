@@ -249,10 +249,7 @@
 					dp.push({name: label, id: iterTag, displayId: iterTag, size: metadata.length});
 				}
 				
-				detailsPanel.tagList.addEventListener(ListEvent.CHANGE, function(ev:ListEvent):void
-				{
-					updateBottomPanel();
-				});
+				detailsPanel.tagList.addEventListener(ListEvent.CHANGE, tagListChangeHandler);
 				
 				detailsPanel.tagList.dataProvider = dp;
 				if(Config.TESTING)
@@ -270,6 +267,11 @@
 				
 				updateBottomPanel();
 				return;
+			}
+			
+			private function tagListChangeHandler(ev:ListEvent):void
+			{
+				updateBottomPanel();
 			}
 			
 			private function parseABC(tag:DoABCTag, id:uint):void

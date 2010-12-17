@@ -106,7 +106,7 @@ package com.swfwire.decompiler.utils
 				getReadableMultiname(slotInfo.typeName, r.type);
 				//result = traitName+':'+multinameTypeToString(TraitSlotToken(traitInfo.data).typeName, r);
 			}
-			else if(traitInfo.kind == TraitsInfoToken.KIND_TRAIT_METHOD)
+			else if(traitInfo.kind == TraitsInfoToken.KIND_TRAIT_METHOD || traitInfo.kind == TraitsInfoToken.KIND_TRAIT_GETTER || traitInfo.kind == TraitsInfoToken.KIND_TRAIT_SETTER)
 			{
 				r.traitType = ReadableTrait.TYPE_METHOD;
 				var traitMethod:TraitMethodToken = TraitMethodToken(traitInfo.data);
@@ -134,6 +134,14 @@ package com.swfwire.decompiler.utils
 				r.type = new ReadableMultiname();
 				getReadableMultiname(TraitSlotToken(traitInfo.data).typeName, r.type);
 				r.isConst = true;
+			}
+			if(traitInfo.kind == TraitsInfoToken.KIND_TRAIT_GETTER)
+			{
+				r.declaration.name = 'get '+r.declaration.name;
+			}
+			if(traitInfo.kind == TraitsInfoToken.KIND_TRAIT_SETTER)
+			{
+				r.declaration.name = 'get '+r.declaration.name;
 			}
 			if(traitInfo.kind == TraitsInfoToken.KIND_TRAIT_SLOT || traitInfo.kind == TraitsInfoToken.KIND_TRAIT_CONST)
 			{
@@ -1042,7 +1050,11 @@ package com.swfwire.decompiler.utils
 			//properties.push(traitToString(c.traits[iter]));
 			for(var iter:String in c.traits)
 			{
-				properties.push(traitToString(c.traits[iter]));
+				var str:String = traitToString(c.traits[iter]);
+				if(str != '')
+				{
+					properties.push(str);
+				}
 			}
 			var result:String = 
 'package '+c.className.namespace+'\n' +
