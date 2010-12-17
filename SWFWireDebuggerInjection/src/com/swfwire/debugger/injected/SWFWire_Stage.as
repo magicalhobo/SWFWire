@@ -25,6 +25,12 @@ package com.swfwire.debugger.injected
 			_swfWire_loaderInfo = new SWFWire_LoaderInfo(stage.loaderInfo);
 		}
 		
+		public function get align():String { return _stage.align; }
+		public function set align(value:String):void { _stage.align = value; }
+		
+		public function get scaleMode():String { return _stage.scaleMode; }
+		public function set scaleMode(value:String):void { _stage.scaleMode = value; }
+		
 		public function get stage():SWFWire_Stage
 		{
 			return _swfWireStage;
