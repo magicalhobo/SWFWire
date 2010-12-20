@@ -266,7 +266,10 @@
 				//var librarySwf:String = 'app:/library.swf';
 				//var librarySwf:String = new File(File.applicationDirectory.nativePath).resolvePath('library.swf?nocache='+Math.random()).url;
 				
-				inspectGrid.dataProvider = inspectGridDP;
+				publicPropertiesGrid.dataProvider = publicPropertiesDP;
+				privatePropertiesGrid.dataProvider = privatePropertiesDP;
+				publicMethodsGrid.dataProvider = publicMethodsDP;
+				privateMethodsGrid.dataProvider = privateMethodsDP;
 				
 				breadCrumb.addEventListener('breadCrumbClick', function(ev:DynamicEvent):void
 				{
@@ -352,7 +355,10 @@
 			
 			private var lastTarget:DisplayObject;
 			private var lastInspectTarget:Object;
-			private var inspectGridDP:ArrayCollection = new ArrayCollection();
+			private var publicPropertiesDP:ArrayCollection = new ArrayCollection();
+			private var privatePropertiesDP:ArrayCollection = new ArrayCollection();
+			private var publicMethodsDP:ArrayCollection = new ArrayCollection();
+			private var privateMethodsDP:ArrayCollection = new ArrayCollection();
 			private var pathRefs:Array;
 			
 			private function inspectHandler(ev:MouseEvent):void
@@ -409,12 +415,16 @@
 			
 			protected function inspect(target:Object):void
 			{
-				inspectGridDP.removeAll();
+				publicPropertiesDP.removeAll();
+				privatePropertiesDP.removeAll();
+				privateMethodsDP.removeAll();
+				publicMethodsDP.removeAll();
 				
 				var description:XML = describeType(target);
 				var node:XML;
 				var name:String;
 				var props:Array = [];
+				var methods:Object;
 				
 				for each(node in description.variable)
 				{
@@ -423,6 +433,32 @@
 					
 					//props.push(node.@name);
 					//inspectGridDP.addItem({name: node.@name, value: target[node.@name]});
+				}
+				
+				try
+				{
+					methods = target.enumerateMethods();
+					for(var iter2:* in methods)
+					{
+						privateMethodsDP.addItem({name: iter2, value: ''});
+					}
+				}
+				catch(e:*)
+				{
+					log('Error enumerating private methods');
+				}
+				
+				try
+				{
+					methods = target.enumerateProperties();
+					for(var iter2:* in methods)
+					{
+						privatePropertiesDP.addItem({name: iter2, value: methods[iter2]});
+					}
+				}
+				catch(e:*)
+				{
+					log('Error enumerating private properties');
 				}
 				
 				inspectType.text = description.@name;
@@ -443,12 +479,19 @@
 				{
 					try
 					{
-						inspectGridDP.addItem({name: props[iter], value: target[props[iter]]});
+						publicPropertiesDP.addItem({name: props[iter], value: target[props[iter]]});
 					}
 					catch(e:Error)
 					{
-						inspectGridDP.addItem({name: props[iter], value: '<exception thrown by getter>'});
+						publicPropertiesDP.addItem({name: props[iter], value: '<exception thrown by getter>'});
 					}
+				}
+				
+				var pubMeth:Array = [];
+				
+				for each(node in description.method)
+				{
+					publicMethodsDP.addItem({name: node.@name, value: ''});
 				}
 				
 				lastInspectTarget = target;
@@ -460,7 +503,7 @@
 				{
 					if(lastInspectTarget)
 					{
-						var info:Object = inspectGridDP.getItemAt(event.rowIndex);
+						var info:Object = publicPropertiesDP.getItemAt(event.rowIndex);
 						try
 						{
 							lastInspectTarget[info.name] = TextInput(event.currentTarget.itemEditorInstance).text;
@@ -841,7 +884,7 @@
 
 			protected function inspectGrid_itemDoubleClickHandler(event:ListEvent):void
 			{
-				var info:Object = inspectGridDP.getItemAt(event.rowIndex);
+				var info:Object = publicPropertiesDP.getItemAt(event.rowIndex);
 				try
 				{
 					inspect(lastInspectTarget[info.name]);
@@ -949,7 +992,7 @@
 					<mx:TabNavigator id="tabnavigator2" width="100%" height="100%" creationPolicy="all" backgroundAlpha="1" backgroundColor="#2C2C2C"
 									 paddingBottom="5" paddingLeft="5" paddingTop="5" paddingRight="5" chromeColor="#131313" minHeight="0">
 						<mx:Canvas width="100%" height="100%" label="Public Properties">
-							<mx:DataGrid id="inspectGrid" width="100%" height="100%" editable="true"
+							<mx:DataGrid id="publicPropertiesGrid" width="100%" height="100%" editable="true"
 										 doubleClickEnabled="true"
 										 itemEditEnd="inspectGrid_itemEditEndHandler(event)"
 										 itemDoubleClick="inspectGrid_itemDoubleClickHandler(event)"
@@ -960,11 +1003,39 @@
 								</mx:columns>
 							</mx:DataGrid>
 						</mx:Canvas>
-						<mx:Canvas width="100%" height="100%" label="Private/Protected Properties">
+						<mx:Canvas width="100%" height="100%" label="Private Properties">
+							<mx:DataGrid id="privatePropertiesGrid" width="100%" height="100%" editable="true"
+										 doubleClickEnabled="true"
+										 itemEditEnd="inspectGrid_itemEditEndHandler(event)"
+										 itemDoubleClick="inspectGrid_itemDoubleClickHandler(event)"
+										 keyDown="inspectGrid_keyDownHandler(event)">
+								<mx:columns>
+									<mx:DataGridColumn headerText="Name" dataField="name" editable="false" width="180"/>
+									<mx:DataGridColumn headerText="Value" dataField="value" editable="true"/>
+								</mx:columns>
+							</mx:DataGrid>
 						</mx:Canvas>
 						<mx:Canvas width="100%" height="100%" label="Public Methods">
+							<mx:DataGrid id="publicMethodsGrid" width="100%" height="100%" editable="true"
+										 doubleClickEnabled="true"
+										 itemEditEnd="inspectGrid_itemEditEndHandler(event)"
+										 itemDoubleClick="inspectGrid_itemDoubleClickHandler(event)"
+										 keyDown="inspectGrid_keyDownHandler(event)">
+								<mx:columns>
+									<mx:DataGridColumn headerText="Name" dataField="name" editable="false" width="180"/>
+								</mx:columns>
+							</mx:DataGrid>
 						</mx:Canvas>
-						<mx:Canvas width="100%" height="100%" label="Private/Protected Methods">
+						<mx:Canvas width="100%" height="100%" label="Private Methods">
+							<mx:DataGrid id="privateMethodsGrid" width="100%" height="100%" editable="true"
+										 doubleClickEnabled="true"
+										 itemEditEnd="inspectGrid_itemEditEndHandler(event)"
+										 itemDoubleClick="inspectGrid_itemDoubleClickHandler(event)"
+										 keyDown="inspectGrid_keyDownHandler(event)">
+								<mx:columns>
+									<mx:DataGridColumn headerText="Name" dataField="name" editable="false" width="180"/>
+								</mx:columns>
+							</mx:DataGrid>
 						</mx:Canvas>
 					</mx:TabNavigator>
 				</mx:VBox>

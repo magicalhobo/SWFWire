@@ -181,6 +181,66 @@ package com.swfwire.debugger
 			*/
 		}
 		
+		protected function createMethod(abcTag:DoABCTag, wrapper:ABCWrapper, instance:InstanceToken, 
+										name:String, instructions:Vector.<IInstruction>, maxStack:int):void
+		{
+			var methodQName:int = wrapper.addQName(
+				wrapper.addNamespaceFromString(''), 
+				wrapper.addString(name));
+			
+			var methodIndex:uint = abcTag.abcFile.methods.push(
+				new MethodInfoToken(0, wrapper.addQName(wrapper.addNamespaceFromString(''), wrapper.addString('Object')))
+			) - 1;
+			
+			var emptyMethod:MethodBodyInfoToken = new MethodBodyInfoToken(methodIndex, maxStack, 1, 0, 1);
+			emptyMethod.instructions = instructions;
+			
+			var methodTrait:TraitsInfoToken = new TraitsInfoToken(methodQName,
+				TraitsInfoToken.KIND_TRAIT_METHOD,
+				0,
+				new TraitMethodToken(0, methodIndex));
+			
+			instance.traits.push(methodTrait);
+			
+			abcTag.abcFile.methodBodies.push(emptyMethod);
+		}
+		
+		protected function createMethodWithArguments(abcTag:DoABCTag, wrapper:ABCWrapper, instance:InstanceToken, 
+										name:String, instructions:Vector.<IInstruction>, maxStack:int,
+										args:Vector.<String>):void
+		{
+			var methodQName:int = wrapper.addQName(
+				wrapper.addNamespaceFromString(''), 
+				wrapper.addString(name));
+			
+			var params:Vector.<uint> = new Vector.<uint>();
+			
+			for(var iter:String in args)
+			{
+				var pieces:Array = args[iter].split(':', 2);
+				params.push(wrapper.addQName(wrapper.addNamespaceFromString(pieces[0]), wrapper.addString(pieces[1])));
+			}
+			
+			var methodIndex:uint = abcTag.abcFile.methods.push(
+				new MethodInfoToken(0, 
+					wrapper.addQName(wrapper.addNamespaceFromString(''), wrapper.addString('Object')),
+					params
+				)
+			) - 1;
+			
+			var emptyMethod:MethodBodyInfoToken = new MethodBodyInfoToken(methodIndex, maxStack, 1, 0, 1);
+			emptyMethod.instructions = instructions;
+			
+			var methodTrait:TraitsInfoToken = new TraitsInfoToken(methodQName,
+				TraitsInfoToken.KIND_TRAIT_METHOD,
+				0,
+				new TraitMethodToken(0, methodIndex));
+			
+			instance.traits.push(methodTrait);
+			
+			abcTag.abcFile.methodBodies.push(emptyMethod);
+		}
+		
 		protected function phase3():void
 		{
 			if(iTag < swf.tags.length)
@@ -272,13 +332,6 @@ package com.swfwire.debugger
 						
 						mainInst.traits.push(mainTrait);
 						
-						//Update the readable name for the method
-						/*
-						var origcm:MethodInfoToken = abcTag.abcFile.methods[mainInst.iinit];
-						origcm.name = wrapper.addString(mainClass+'/deferredConstructor');
-						*/
-						
-						//Create the new constructor
 						var defcmi:uint = abcTag.abcFile.methods.push(new MethodInfoToken()) - 1;
 						
 						var emptyMethod:MethodBodyInfoToken = new MethodBodyInfoToken(
@@ -287,11 +340,54 @@ package com.swfwire.debugger
 						
 						abcTag.abcFile.methodBodies.push(emptyMethod);
 						
-						//mainMB.method = defcmi;
-						
 						mainInst.iinit = defcmi;
+					}
+					
+					for(var iterInstance:int = 0; iterInstance < abcTag.abcFile.instances.length; iterInstance++)
+					{
+						var enumerateMethodsInstructions:Vector.<IInstruction> = new Vector.<IInstruction>();
+						var enumeratePropertiesInstructions:Vector.<IInstruction> = new Vector.<IInstruction>();
 						
-						//mainInst.iinit = fci;
+						var thisInstance:InstanceToken = abcTag.abcFile.instances[iterInstance];
+						
+						for(var iterMainTraits:* in thisInstance.traits)
+						{
+							var traitsInfo:TraitsInfoToken = thisInstance.traits[iterMainTraits];
+							var qname:MultinameQNameToken;
+							if(traitsInfo.kind == TraitsInfoToken.KIND_TRAIT_METHOD)
+							{
+								qname = abcTag.abcFile.cpool.multinames[traitsInfo.name].data as MultinameQNameToken;
+								enumerateMethodsInstructions.push(new Instruction_pushstring(qname.name));
+								enumerateMethodsInstructions.push(new Instruction_getlocal0);
+								enumerateMethodsInstructions.push(new Instruction_getproperty(traitsInfo.name));
+							}
+							else if(traitsInfo.kind == TraitsInfoToken.KIND_TRAIT_SLOT)
+							{
+								qname = abcTag.abcFile.cpool.multinames[traitsInfo.name].data as MultinameQNameToken;
+								enumeratePropertiesInstructions.push(new Instruction_pushstring(qname.name));
+								enumeratePropertiesInstructions.push(new Instruction_getlocal0);
+								enumeratePropertiesInstructions.push(new Instruction_getproperty(traitsInfo.name));
+							}
+						}
+						
+						enumerateMethodsInstructions.push(new Instruction_newobject(enumerateMethodsInstructions.length * 1 / 3));
+						enumerateMethodsInstructions.push(new Instruction_returnvalue());
+						createMethod(abcTag, wrapper, thisInstance, 'enumerateMethods', enumerateMethodsInstructions, enumerateMethodsInstructions.length);
+
+						enumeratePropertiesInstructions.push(new Instruction_newobject(enumeratePropertiesInstructions.length * 1 / 3));
+						enumeratePropertiesInstructions.push(new Instruction_returnvalue());
+						createMethod(abcTag, wrapper, thisInstance, 'enumerateProperties', enumeratePropertiesInstructions, enumeratePropertiesInstructions.length);
+
+						var getPropertyInstructions:Vector.<IInstruction> = new Vector.<IInstruction>();
+						getPropertyInstructions.push(new Instruction_newobject(getPropertyInstructions.length * 1 / 3));
+						getPropertyInstructions.push(new Instruction_returnvalue());
+						createMethodWithArguments(abcTag,
+							wrapper,
+							thisInstance, 
+							'swfWire_getProperty',
+							getPropertyInstructions,
+							getPropertyInstructions.length,
+							Vector.<String>([':String']));
 					}
 					
 					//Debug.log('test', 'after', mainInst.traits);
