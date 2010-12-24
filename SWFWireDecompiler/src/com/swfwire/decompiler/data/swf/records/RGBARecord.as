@@ -1,7 +1,7 @@
 package com.swfwire.decompiler.data.swf.records
 {
-	import com.swfwire.decompiler.SWFReader;
 	import com.swfwire.decompiler.SWFByteArray;
+	import com.swfwire.decompiler.SWFReader;
 
 	public class RGBARecord implements IRGBRecord
 	{
@@ -10,19 +10,12 @@ package com.swfwire.decompiler.data.swf.records
 		public var blue:uint;
 		public var alpha:uint;
 		
-		public function read(swf:SWFByteArray):void
+		public function RGBARecord(red:uint = 0, green:uint = 0, blue:uint = 0, alpha:uint = 0xFF)
 		{
-			red = swf.readUI8();
-			green = swf.readUI8();
-			blue = swf.readUI8();
-			alpha = swf.readUI8();
-		}
-		public function write(swf:SWFByteArray):void
-		{
-			swf.writeUI8(red);
-			swf.writeUI8(green);
-			swf.writeUI8(blue);
-			swf.writeUI8(alpha);
+			this.red = red;
+			this.green = green;
+			this.blue = blue;
+			this.alpha = alpha;
 		}
 	}
 }

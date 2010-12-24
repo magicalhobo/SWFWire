@@ -7,18 +7,5 @@ package com.swfwire.decompiler.data.swf.records
 	{
 		public var ratio:uint;
 		public var color:RGBARecord;
-		
-		public function read(swf:SWFByteArray):void
-		{
-			ratio = swf.readUI8();
-			color = new RGBARecord();
-			color.read(swf);
-		}
-		
-		public function write(swf:SWFByteArray):void
-		{
-			swf.writeUI8(ratio);
-			color.write(swf);
-		}
 	}
 }

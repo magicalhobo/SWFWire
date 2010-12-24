@@ -170,7 +170,7 @@ package com.swfwire.decompiler
 			
 			if(tag.matrix)
 			{
-				//writeMatrixRecord(context, tag.matrix);
+				writeMatrixRecord(context, tag.matrix);
 			}
 			
 			if(tag.colorTransform)
@@ -204,6 +204,14 @@ package com.swfwire.decompiler
 			context.bytes.writeUI8(record.red);
 			context.bytes.writeUI8(record.green);
 			context.bytes.writeUI8(record.blue);
+		}
+		
+		protected function writeRGBARecord(context:SWFWriterContext, record:RGBARecord):void
+		{
+			context.bytes.writeUI8(record.red);
+			context.bytes.writeUI8(record.green);
+			context.bytes.writeUI8(record.blue);
+			context.bytes.writeUI8(record.alpha);
 		}
 		
 		protected function writeRectangleRecord(context:SWFWriterContext, record:RectangleRecord):void
@@ -247,5 +255,36 @@ package com.swfwire.decompiler
 			context.bytes.writeSB(nTranslateBits, record.translate.y);
 		}
 		
+		protected function writeStraightEdgeRecord(context:SWFWriterContext, record:StraightEdgeRecord):void
+		{
+			context.bytes.writeUB(4, record.numBits);
+			context.bytes.writeFlag(record.generalLineFlag);
+			if(record.generalLineFlag)
+			{
+				context.bytes.writeSB(record.numBits + 2, record.deltaX);
+				context.bytes.writeSB(record.numBits + 2, record.deltaY);
+			}
+			else
+			{
+				context.bytes.writeFlag(record.vertLineFlag);
+				if(!record.vertLineFlag)
+				{
+					context.bytes.writeSB(record.numBits + 2, record.deltaX);
+				}
+				else
+				{
+					context.bytes.writeSB(record.numBits + 2, record.deltaY);
+				}
+			}
+		}
+		
+		protected function writeCurvedEdgeRecord(context:SWFWriterContext, record:CurvedEdgeRecord):void
+		{
+			context.bytes.writeUB(4, record.numBits);
+			context.bytes.writeSB(record.numBits + 2, record.controlDeltaX);
+			context.bytes.writeSB(record.numBits + 2, record.controlDeltaY);
+			context.bytes.writeSB(record.numBits + 2, record.anchorDeltaX);
+			context.bytes.writeSB(record.numBits + 2, record.anchorDeltaY);
+		}
 	}
 }

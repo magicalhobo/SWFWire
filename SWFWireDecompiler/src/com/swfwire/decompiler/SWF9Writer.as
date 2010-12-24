@@ -9,7 +9,7 @@ package com.swfwire.decompiler
 	
 	import flash.utils.ByteArray;
 
-	public class SWF9Writer extends SWFWriter
+	public class SWF9Writer extends SWF8Writer
 	{
 		private static var FILE_VERSION:uint = 9;
 		

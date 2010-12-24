@@ -11,32 +11,16 @@ package com.swfwire.decompiler.data.swf.records
 		public var length:uint;
 		public var forceLong:Boolean;
 		
+		public function TagHeaderRecord(type:uint = 0, length:uint = 0, forceLong:Boolean = false)
+		{
+			this.type = type;
+			this.length = length;
+			this.forceLong = forceLong;
+		}
+		
 		public function isLong():Boolean
 		{
 			return length >= SHORT_HEADER_MAX_LENGTH;
-		}
-		
-		public function read(swf:SWFByteArray):void
-		{
-			var tagInfo:uint = swf.readUI16();
-			type = tagInfo >> 6;
-			length = tagInfo & ((1 << 6) - 1);
-			if(length == SHORT_HEADER_MAX_LENGTH)
-			{
-				length = swf.readSI32();
-				forceLong = true;
-			}
-		}
-		public function write(swf:SWFByteArray):void
-		{
-			var tagInfo:uint = type << 6;
-			var firstLength:uint = forceLong || isLong() ? SHORT_HEADER_MAX_LENGTH : length;
-			tagInfo = tagInfo | (firstLength & ((1 << 6) - 1));
-			swf.writeUI16(tagInfo);
-			if(firstLength == SHORT_HEADER_MAX_LENGTH)
-			{
-				swf.writeSI32(length);
-			}
 		}
 	}
 }
