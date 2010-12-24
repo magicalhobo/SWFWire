@@ -387,6 +387,7 @@
     <classEntry path="com.swfwire.decompiler.abc.instructions.UnknownInstruction"/>
     <classEntry path="com.swfwire.decompiler.SWF8Writer"/>
     <classEntry path="com.swfwire.decompiler.SWF3Writer"/>
+    <classEntry path="com.swfwire.decompiler.SWFTagIdentifier"/>
   </includeClasses>
   <includeResources/>
   <namespaceManifests/>

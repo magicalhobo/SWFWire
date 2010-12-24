@@ -7,8 +7,11 @@ package com.swfwire.decompiler.data.swf3.records
 
 	public class FillStyleArrayRecord3 implements IRecord
 	{
-		public var count:uint;
-		public var countExtended:uint;
 		public var fillStyles:Vector.<FillStyleRecord2>;
+
+		public function FillStyleArrayRecord3(count:uint = 0, countExtended:uint = 0, fillStyles:Vector.<FillStyleRecord2> = null)
+		{
+			this.fillStyles = fillStyles;
+		}
 	}
 }

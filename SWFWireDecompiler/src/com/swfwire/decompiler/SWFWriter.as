@@ -9,12 +9,49 @@ package com.swfwire.decompiler
 	
 	import flash.events.EventDispatcher;
 	import flash.utils.ByteArray;
+	import flash.utils.Dictionary;
 
 	public class SWFWriter extends EventDispatcher
 	{
+		public static const TAG_IDS:Object = {
+				0: EndTag,
+				1: ShowFrameTag,
+				2: DefineShapeTag,
+				4: PlaceObjectTag,
+				5: RemoveObjectTag,
+				6: DefineBitsTag,
+				7: DefineButtonTag,
+				8: JPEGTablesTag,
+				9: SetBackgroundColorTag,
+				11: DefineTextTag,
+				13: DefineFontInfoTag,
+				14: DefineSoundTag,
+				15: StartSoundTag,
+				18: SoundStreamHeadTag,
+				19: SoundStreamBlockTag,
+				77: MetadataTag,
+				86: DefineSceneAndFrameLabelDataTag
+			};
+		
 		private static var FILE_VERSION:uint = 1;
 		
 		public var version:uint = FILE_VERSION;
+		
+		protected var registeredTags:Dictionary;
+		
+		public function SWFWriter()
+		{
+			registeredTags = new Dictionary();
+			registerTags(TAG_IDS);
+		}
+		
+		public function registerTags(map:Object):void
+		{
+			for(var iter:String in map)
+			{
+				registeredTags[map[iter]] = iter;
+			}
+		}
 
 		public function write(swf:SWF):SWFWriteResult
 		{
@@ -59,6 +96,7 @@ package com.swfwire.decompiler
 			{
 				bytes.alignBytes();
 				var header:TagHeaderRecord = swf.tags[iter].header;
+				header.type = registeredTags[Object(swf.tags[iter]).constructor];
 				writeTagHeaderRecord(context, header);
 				bytes.writeBytes(tagBytes[iter]);
 			}

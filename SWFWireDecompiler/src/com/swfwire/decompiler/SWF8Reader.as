@@ -389,13 +389,13 @@ package com.swfwire.decompiler
 		{
 			var record:FillStyleArrayRecord3 = new FillStyleArrayRecord3();
 			
-			record.count = context.bytes.readUI8();
-			if(record.count == 0xFF)
+			var count:uint = context.bytes.readUI8();
+			if(count == 0xFF)
 			{
-				record.countExtended = context.bytes.readUI16();
+				count = context.bytes.readUI16();
 			}
-			record.fillStyles = new Vector.<FillStyleRecord2>(record.count);
-			for(var iter:uint = 0; iter < record.count; iter++)
+			record.fillStyles = new Vector.<FillStyleRecord2>(count);
+			for(var iter:uint = 0; iter < count; iter++)
 			{
 				record.fillStyles[iter] = readFillStyleRecord3(context);
 			}

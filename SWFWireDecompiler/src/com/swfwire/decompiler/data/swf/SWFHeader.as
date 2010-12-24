@@ -14,5 +14,16 @@ package com.swfwire.decompiler.data.swf
 		public var frameSize:RectangleRecord;
 		public var frameRate:Number;
 		public var frameCount:uint;
+
+		public function SWFHeader(signature:String = null, fileVersion:uint = 0, uncompressedSize:uint = 0,
+								  frameSize:RectangleRecord = null, frameRate:Number = NaN, frameCount:uint = 0)
+		{
+			this.signature = signature;
+			this.fileVersion = fileVersion;
+			this.uncompressedSize = uncompressedSize;
+			this.frameSize = frameSize;
+			this.frameRate = frameRate;
+			this.frameCount = frameCount;
+		}
 	}
 }

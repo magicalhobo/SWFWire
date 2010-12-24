@@ -1,28 +1,33 @@
 package com.swfwire.decompiler
 {
-	import com.swfwire.decompiler.data.swf.records.CurvedEdgeRecord;
-	import com.swfwire.decompiler.data.swf.records.EndShapeRecord;
-	import com.swfwire.decompiler.data.swf.records.IShapeRecord;
-	import com.swfwire.decompiler.data.swf.records.StraightEdgeRecord;
+	import com.swfwire.decompiler.data.swf.records.*;
 	import com.swfwire.decompiler.data.swf.tags.SWFTag;
-	import com.swfwire.decompiler.data.swf3.records.FillStyleArrayRecord3;
-	import com.swfwire.decompiler.data.swf3.records.FillStyleRecord2;
-	import com.swfwire.decompiler.data.swf3.records.GradientControlPointRecord2;
-	import com.swfwire.decompiler.data.swf3.records.GradientRecord2;
-	import com.swfwire.decompiler.data.swf8.records.FocalGradientRecord;
-	import com.swfwire.decompiler.data.swf8.records.LineStyle2ArrayRecord;
-	import com.swfwire.decompiler.data.swf8.records.LineStyle2Record;
-	import com.swfwire.decompiler.data.swf8.records.ShapeWithStyleRecord4;
-	import com.swfwire.decompiler.data.swf8.records.StyleChangeRecord4;
-	import com.swfwire.decompiler.data.swf8.tags.DefineShape4Tag;
+	import com.swfwire.decompiler.data.swf3.records.*;
+	import com.swfwire.decompiler.data.swf8.records.*;
+	import com.swfwire.decompiler.data.swf8.tags.*;
 
 	public class SWF8Writer extends SWF3Writer
 	{
+		public static const TAG_IDS:Object = {
+			21: DefineBitsJPEG2Tag2,
+			60: DefineVideoStreamTag,
+			69: FileAttributesTag,
+			70: PlaceObject3Tag,
+			71: ImportAssets2Tag,
+			73: DefineFontAlignZonesTag,
+			74: CSMTextSettingsTag,
+			75: DefineFont3Tag,
+			78: DefineScalingGridTag,
+			83: DefineShape4Tag,
+			84: DefineMorphShape2Tag
+		};
+
 		private static var FILE_VERSION:uint = 8;
 		
 		public function SWF8Writer()
 		{
 			version = FILE_VERSION;
+			registerTags(TAG_IDS);
 		}
 		
 		override protected function writeTag(context:SWFWriterContext, tag:SWFTag):void
@@ -99,12 +104,18 @@ package com.swfwire.decompiler
 		
 		protected function writeFillStyleArrayRecord4(context:SWFWriterContext, record:FillStyleArrayRecord3):void
 		{
-			context.bytes.writeUI8(record.count);
-			if(record.count == 0xFF)
+			var count:uint = record.fillStyles.length;
+			
+			if(count < 0xFF)
 			{
-				context.bytes.writeUI16(record.countExtended);
+				context.bytes.writeUI8(count);
 			}
-			for(var iter:uint = 0; iter < record.count; iter++)
+			else
+			{
+				context.bytes.writeUI8(0xFF);
+				context.bytes.writeUI16(count);
+			}
+			for(var iter:uint = 0; iter < count; iter++)
 			{
 				writeFillStyleRecord3(context, record.fillStyles[iter]);
 			}

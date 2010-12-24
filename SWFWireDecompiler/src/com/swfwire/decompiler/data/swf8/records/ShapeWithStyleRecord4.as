@@ -10,5 +10,17 @@ package com.swfwire.decompiler.data.swf8.records
 		public var numFillBits:uint;
 		public var numLineBits:uint;
 		public var shapeRecords:Vector.<IShapeRecord>;
+
+		public function ShapeWithStyleRecord4(fillStyles:FillStyleArrayRecord3 = null,
+											  lineStyles:LineStyle2ArrayRecord = null,
+											  numFillBits:uint = 0, numLineBits:uint = 0,
+											  shapeRecords:Vector.<IShapeRecord> = null)
+		{
+			this.fillStyles = fillStyles;
+			this.lineStyles = lineStyles;
+			this.numFillBits = numFillBits;
+			this.numLineBits = numLineBits;
+			this.shapeRecords = shapeRecords;
+		}
 	}
 }

@@ -18,5 +18,18 @@ package com.swfwire.decompiler.data.swf3.tags
 		public var name:String;
 		public var clipDepth:Object;
 		public var clipActions:ClipActionsRecord;
+
+		public function PlaceObject2Tag(move:Boolean = false, depth:uint = 0, characterId:Object = null, matrix:MatrixRecord = null, colorTransform:CXFormWithAlphaRecord = null, ratio:Object = null, name:String = null, clipDepth:Object = null, clipActions:ClipActionsRecord = null)
+		{
+			this.move = move;
+			this.depth = depth;
+			this.characterId = characterId;
+			this.matrix = matrix;
+			this.colorTransform = colorTransform;
+			this.ratio = ratio;
+			this.name = name;
+			this.clipDepth = clipDepth;
+			this.clipActions = clipActions;
+		}
 	}
 }
