@@ -295,23 +295,24 @@ package com.swfwire.decompiler
 		
 		protected function writeStraightEdgeRecord(context:SWFWriterContext, record:StraightEdgeRecord):void
 		{
-			context.bytes.writeUB(4, record.numBits);
+			var numBits:uint = Math.max(SWFByteArray.calculateUBBits(Math.max(record.deltaX, record.deltaY)) - 2, 1);
+			context.bytes.writeUB(4, numBits);
 			context.bytes.writeFlag(record.generalLineFlag);
 			if(record.generalLineFlag)
 			{
-				context.bytes.writeSB(record.numBits + 2, record.deltaX);
-				context.bytes.writeSB(record.numBits + 2, record.deltaY);
+				context.bytes.writeSB(numBits, record.deltaX);
+				context.bytes.writeSB(numBits, record.deltaY);
 			}
 			else
 			{
 				context.bytes.writeFlag(record.vertLineFlag);
 				if(!record.vertLineFlag)
 				{
-					context.bytes.writeSB(record.numBits + 2, record.deltaX);
+					context.bytes.writeSB(numBits, record.deltaX);
 				}
 				else
 				{
-					context.bytes.writeSB(record.numBits + 2, record.deltaY);
+					context.bytes.writeSB(numBits, record.deltaY);
 				}
 			}
 		}

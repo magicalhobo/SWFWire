@@ -6,6 +6,7 @@ package com.swfwire.decompiler.abc
 	public class ABCByteArray
 	{
 		private static const filter7:uint = (1 << 7) - 1;
+		private static const filter30:uint = (1 << 30) - 1;
 		
 		private var bytes:ByteArray;
 		
@@ -42,6 +43,7 @@ package com.swfwire.decompiler.abc
 			bytes.writeByte(value & 0xFF);
 			bytes.writeShort((value >> 8) & 0xFFFF);
 		}
+		
 		public function readS32():int
 		{
 			return int(readEncodedU32());
@@ -74,11 +76,11 @@ package com.swfwire.decompiler.abc
 		
 		public function readU30():uint
 		{
-			return readEncodedU32() & ((1 << 30) - 1)
+			return readEncodedU32() & filter30;
 		}
 		public function writeU30(value:uint):void
 		{
-			writeEncodedU32(value & ((1 << 30) - 1));
+			writeEncodedU32(value & filter30);
 		}
 		
 		public function readU32():uint
@@ -107,16 +109,11 @@ package com.swfwire.decompiler.abc
 		}
 		private function writeEncodedU32(value:uint):void
 		{
-			//Temp hack
-			if(value == 0)
-			{
-				bytes.writeByte(0);
-				return;
-			}
 			var remaining:uint = value;
 			var bytesWritten:uint;
 			var currentByte:uint;
-			while(remaining > 0 && bytesWritten < 5)
+			var shouldContinue:Boolean = true;
+			while(shouldContinue && bytesWritten < 5)
 			{
 				currentByte = remaining & filter7;
 				remaining = remaining >> 7;
@@ -125,6 +122,7 @@ package com.swfwire.decompiler.abc
 					currentByte = currentByte | (1 << 7);
 				}
 				bytes.writeByte(currentByte);
+				shouldContinue = remaining > 0;
 				bytesWritten++;
 			}
 		}

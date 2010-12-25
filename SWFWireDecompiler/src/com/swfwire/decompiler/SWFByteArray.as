@@ -5,19 +5,33 @@ package com.swfwire.decompiler
 	
 	import flash.utils.ByteArray;
 	import flash.utils.Endian;
-	import com.swfwire.utils.ByteArrayUtil;
 	
 	public class SWFByteArray
 	{
-		private static const filter7:uint = (1 << 7) - 1;
-		private static const filter8:uint = (1 << 8) - 1;
+		private static const filter7:uint = ~0 >>> -7;
+		private static const filter8:uint = ~0 >>> -8;
 		
 		private var bytes:ByteArray;
 		private var bitPosition:uint = 0;
 		
 		public static function calculateUBBits(number:uint):uint
 		{
-			return Math.ceil(Math.log(number) * Math.LOG2E);
+			return number == 0 ? 1 : Math.floor(Math.log(number) * Math.LOG2E) + 1;
+		}
+		
+		public static function calculateSBBits(number:int):uint
+		{
+			var bits:uint = calculateUBBits(Math.abs(number));
+			if(number > 0)
+			{
+				bits++;
+			}
+			return bits;
+		}
+		
+		public static function calculateFBBits(number:Number):uint
+		{
+			return calculateSBBits(int(number)) + 16;
 		}
 		
 		public function SWFByteArray(bytes:ByteArray)
@@ -306,16 +320,11 @@ package com.swfwire.decompiler
 		}
 		public function writeEncodedUI32(value:uint):void
 		{
-			//Temp hack
-			if(value == 0)
-			{
-				bytes.writeByte(0);
-				return;
-			}
 			var remaining:uint = value;
 			var bytesWritten:uint;
 			var currentByte:uint;
-			while(remaining > 0 && bytesWritten < 5)
+			var shouldContinue:Boolean = true;
+			while(shouldContinue && bytesWritten < 5)
 			{
 				currentByte = remaining & filter7;
 				remaining = remaining >> 7;
@@ -324,6 +333,7 @@ package com.swfwire.decompiler
 					currentByte = currentByte | (1 << 7);
 				}
 				bytes.writeByte(currentByte);
+				shouldContinue = remaining > 0;
 				bytesWritten++;
 			}
 		}
@@ -331,14 +341,6 @@ package com.swfwire.decompiler
 		/**
 		 * Bit values
 		 */
-		public function readSB(length:uint):int
-		{
-			return int(readUB(length));
-		}
-		public function writeSB(length:uint, value:int):void
-		{
-			writeUB(length, uint(value));
-		}
 		public function readUB(length:uint):uint
 		{
 			var totalBytes:uint = Math.ceil((bitPosition + length) / 8);
@@ -358,7 +360,7 @@ package com.swfwire.decompiler
 			
 			var excessBits:uint = (totalBytes * 8 - (bitPosition + length));
 			result = result >> excessBits;
-			result = result & ((1 << length) - 1);
+			result = result & (~0 >>> -length);
 			
 			bitPosition = newBitPosition;
 			if(bitPosition > 0)
@@ -387,10 +389,10 @@ package com.swfwire.decompiler
 			var result:uint;
 			result = existing >> (totalBytes * 8 - bitPosition);
 			result = result << length;
-			result = result | (value & ((1 << length) - 1));
+			result = result | (value & (~0 >>> -length));
 			var excessBits:uint = (totalBytes * 8 - (bitPosition + length));
 			result = result << excessBits;
-			result = result | (existing & ((1 << excessBits) - 1));
+			result = result | (existing & (~0 >>> -excessBits));
 			
 			bytes.position = startPosition;
 			
@@ -411,14 +413,44 @@ package com.swfwire.decompiler
 				bytes.position--;
 			}
 		}
+		
+		public function readSB(length:uint):int
+		{
+			var result:int = readUB(length);
+			var leadingDigit:uint = result >>> (length - 1);
+			if(leadingDigit == 1)
+			{
+				return -((~result & (~0 >>> -length)) + 1);
+			}
+			return result;
+		}
+		public function writeSB(length:uint, value:int):void
+		{
+			if(value < 0)
+			{
+				writeUB(length, ~(Math.abs(value) - 1));
+			}
+			else
+			{
+				writeUB(1, 0);
+				writeUB(length - 1, value);
+			}
+		}
+
 		public function readFB(length:uint):Number
 		{
-			//TODO: do some magic
-			return readUB(length);
+			var integer:int = readSB(length - 16);
+			var decimal:Number = readUB(16) / 0xFFFF;
+			if(integer < 0)
+			{
+				decimal *= -1;
+			}
+			return integer + decimal;
 		}
 		public function writeFB(length:uint, value:Number):void
 		{
-			writeSB(length, int(value));
+			writeSB(length - 16, int(value));
+			writeUB(16, Math.round(Math.abs(value - int(value)) * 0xFFFF));
 		}
 		
 		/**

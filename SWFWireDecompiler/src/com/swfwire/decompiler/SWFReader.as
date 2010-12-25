@@ -541,23 +541,23 @@ package com.swfwire.decompiler
 		protected function readStraightEdgeRecord(context:SWFReaderContext):StraightEdgeRecord
 		{
 			var record:StraightEdgeRecord = new StraightEdgeRecord();
-			record.numBits = context.bytes.readUB(4);
+			var numBits:uint = context.bytes.readUB(4) + 2;
 			record.generalLineFlag = context.bytes.readFlag();
 			if(record.generalLineFlag)
 			{
-				record.deltaX = context.bytes.readSB(record.numBits + 2);
-				record.deltaY = context.bytes.readSB(record.numBits + 2);
+				record.deltaX = context.bytes.readSB(numBits);
+				record.deltaY = context.bytes.readSB(numBits);
 			}
 			else
 			{
 				record.vertLineFlag = context.bytes.readFlag();
 				if(!record.vertLineFlag)
 				{
-					record.deltaX = context.bytes.readSB(record.numBits + 2);
+					record.deltaX = context.bytes.readSB(numBits);
 				}
 				else
 				{
-					record.deltaY = context.bytes.readSB(record.numBits + 2);
+					record.deltaY = context.bytes.readSB(numBits);
 				}
 			}
 			return record;
