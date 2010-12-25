@@ -21,10 +21,14 @@ package com.swfwire.decompiler
 		
 		public static function calculateSBBits(number:int):uint
 		{
-			var bits:uint = calculateUBBits(Math.abs(number));
-			if(number > 0)
+			var bits:uint;
+			if(number == 0)
 			{
-				bits++;
+				bits = 1;
+			}
+			else
+			{
+				bits = calculateUBBits(number < 0 ? ~number : number) + 1;
 			}
 			return bits;
 		}
@@ -428,7 +432,7 @@ package com.swfwire.decompiler
 		{
 			if(value < 0)
 			{
-				writeUB(length, ~(Math.abs(value) - 1));
+				writeUB(length, ~Math.abs(value) + 1);
 			}
 			else
 			{
