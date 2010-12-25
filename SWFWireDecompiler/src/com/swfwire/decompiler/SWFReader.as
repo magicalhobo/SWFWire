@@ -665,7 +665,6 @@ package com.swfwire.decompiler
 			context.bytes.alignBytes();
 			var record:RectangleRecord = new RectangleRecord();
 			var nBits:uint = context.bytes.readUB(5);
-			record.nBits = nBits;
 			record.xMin = context.bytes.readSB(nBits);
 			record.xMax = context.bytes.readSB(nBits);
 			record.yMin = context.bytes.readSB(nBits);

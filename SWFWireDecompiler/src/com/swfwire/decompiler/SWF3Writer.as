@@ -1,21 +1,9 @@
 package com.swfwire.decompiler
 {
+	import com.swfwire.decompiler.data.swf.tags.SWFTag;
 	import com.swfwire.decompiler.data.swf3.records.GradientControlPointRecord2;
 	import com.swfwire.decompiler.data.swf3.records.GradientRecord2;
-	import com.swfwire.decompiler.data.swf3.tags.DefineBitsJPEG3Tag;
-	import com.swfwire.decompiler.data.swf3.tags.DefineBitsLossless2Tag;
-	import com.swfwire.decompiler.data.swf3.tags.DefineButton2Tag;
-	import com.swfwire.decompiler.data.swf3.tags.DefineFont2Tag;
-	import com.swfwire.decompiler.data.swf3.tags.DefineMorphShapeTag;
-	import com.swfwire.decompiler.data.swf3.tags.DefineShape3Tag;
-	import com.swfwire.decompiler.data.swf3.tags.DefineSpriteTag;
-	import com.swfwire.decompiler.data.swf3.tags.DefineText2Tag;
-	import com.swfwire.decompiler.data.swf3.tags.DoActionTag;
-	import com.swfwire.decompiler.data.swf3.tags.FrameLabelTag;
-	import com.swfwire.decompiler.data.swf3.tags.PlaceObject2Tag;
-	import com.swfwire.decompiler.data.swf3.tags.RemoveObject2Tag;
-	import com.swfwire.decompiler.data.swf3.tags.SoundStreamHead2Tag;
-	import com.swfwire.utils.Debug;
+	import com.swfwire.decompiler.data.swf3.tags.*;
 
 	public class SWF3Writer extends SWFWriter
 	{
@@ -41,6 +29,69 @@ package com.swfwire.decompiler
 		{
 			version = FILE_VERSION;
 			registerTags(TAG_IDS);
+		}
+		
+		override protected function writeTag(context:SWFWriterContext, tag:SWFTag):void
+		{
+			switch(Object(tag).constructor)
+			{
+				case PlaceObject2Tag:
+					writePlaceObject2Tag(context, PlaceObject2Tag(tag));
+					break;
+				default:
+					super.writeTag(context, tag);
+					break;
+			}
+		}
+		
+		protected function writePlaceObject2Tag(context:SWFWriterContext, tag:PlaceObject2Tag):void
+		{
+			context.bytes.writeFlag(tag.clipActions != null);
+			context.bytes.writeFlag(tag.clipDepth != null);
+			context.bytes.writeFlag(tag.name != null);
+			context.bytes.writeFlag(tag.ratio != null);
+			context.bytes.writeFlag(tag.colorTransform != null);
+			context.bytes.writeFlag(tag.matrix != null);
+			context.bytes.writeFlag(tag.characterId != null);
+			
+			context.bytes.writeFlag(tag.move);
+			
+			context.bytes.writeUI16(tag.depth);
+			
+			if(tag.characterId)
+			{
+				context.bytes.writeUI16(uint(tag.characterId));
+			}
+			
+			if(tag.matrix)
+			{
+				writeMatrixRecord(context, tag.matrix);
+			}
+			
+			if(tag.colorTransform)
+			{
+				//tag.colorTransform = readCXFormWithAlphaRecord(context);
+			}
+			
+			if(tag.ratio)
+			{
+				context.bytes.writeUI16(uint(tag.ratio));
+			}
+			
+			if(tag.name)
+			{
+				context.bytes.writeString(tag.name);
+			}
+			
+			if(tag.clipDepth)
+			{
+				context.bytes.writeUI16(uint(tag.clipDepth));
+			}
+			
+			if(tag.clipActions)
+			{
+				//tag.clipActions = readClipActionsRecord(context);
+			}
 		}
 		
 		protected function writeGradientControlPointRecord2(context:SWFWriterContext, record:GradientControlPointRecord2):void

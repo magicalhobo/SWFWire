@@ -7,7 +7,7 @@ package com.swfwire.decompiler.data.swf.records
 		public var deltaX:int;
 		public var deltaY:int;
 
-		public function StraightEdgeRecord(numBits:uint = 0, generalLineFlag:Boolean = false, vertLineFlag:Boolean = false, deltaX:int = 0, deltaY:int = 0)
+		public function StraightEdgeRecord(generalLineFlag:Boolean = false, vertLineFlag:Boolean = false, deltaX:int = 0, deltaY:int = 0)
 		{
 			this.generalLineFlag = generalLineFlag;
 			this.vertLineFlag = vertLineFlag;

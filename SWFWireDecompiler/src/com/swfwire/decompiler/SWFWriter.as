@@ -4,8 +4,6 @@ package com.swfwire.decompiler
 	import com.swfwire.decompiler.data.swf.SWFHeader;
 	import com.swfwire.decompiler.data.swf.records.*;
 	import com.swfwire.decompiler.data.swf.tags.*;
-	import com.swfwire.decompiler.data.swf3.tags.PlaceObject2Tag;
-	import com.swfwire.decompiler.data.swf8.tags.FileAttributesTag;
 	
 	import flash.events.EventDispatcher;
 	import flash.utils.ByteArray;
@@ -133,12 +131,6 @@ package com.swfwire.decompiler
 				case SetBackgroundColorTag:
 					writeSetBackgroundColorTag(context, SetBackgroundColorTag(tag));
 					break;
-				case FileAttributesTag:
-					writeFileAttributesTag(context, FileAttributesTag(tag));
-					break;
-				case PlaceObject2Tag:
-					writePlaceObject2Tag(context, PlaceObject2Tag(tag));
-					break;
 				case UnknownTag:
 					writeUnknownTag(context, UnknownTag(tag));
 					break;
@@ -175,68 +167,6 @@ package com.swfwire.decompiler
 			writeRGBRecord(context, tag.backgroundColor);
 		}
 		
-		protected function writeFileAttributesTag(context:SWFWriterContext, tag:FileAttributesTag):void
-		{
-			context.bytes.writeUB(1, 0);
-			context.bytes.writeFlag(tag.useDirectBlit);
-			context.bytes.writeFlag(tag.useGPU);
-			context.bytes.writeFlag(tag.hasMetadata);
-			context.bytes.writeFlag(tag.actionScript3);
-			context.bytes.writeUB(2, 0);
-			context.bytes.writeFlag(tag.useNetwork);
-			context.bytes.writeUB(24, 0);
-		}
-		
-		protected function writePlaceObject2Tag(context:SWFWriterContext, tag:PlaceObject2Tag):void
-		{
-			context.bytes.writeFlag(tag.clipActions != null);
-			context.bytes.writeFlag(tag.clipDepth != null);
-			context.bytes.writeFlag(tag.name != null);
-			context.bytes.writeFlag(tag.ratio != null);
-			context.bytes.writeFlag(tag.colorTransform != null);
-			context.bytes.writeFlag(tag.matrix != null);
-			context.bytes.writeFlag(tag.characterId != null);
-			
-			context.bytes.writeFlag(tag.move);
-			
-			context.bytes.writeUI16(tag.depth);
-			
-			if(tag.characterId)
-			{
-				context.bytes.writeUI16(uint(tag.characterId));
-			}
-			
-			if(tag.matrix)
-			{
-				writeMatrixRecord(context, tag.matrix);
-			}
-			
-			if(tag.colorTransform)
-			{
-				//tag.colorTransform = readCXFormWithAlphaRecord(context);
-			}
-			
-			if(tag.ratio)
-			{
-				context.bytes.writeUI16(uint(tag.ratio));
-			}
-			
-			if(tag.name)
-			{
-				context.bytes.writeString(tag.name);
-			}
-			
-			if(tag.clipDepth)
-			{
-				context.bytes.writeUI16(uint(tag.clipDepth));
-			}
-			
-			if(tag.clipActions)
-			{
-				//tag.clipActions = readClipActionsRecord(context);
-			}
-		}
-		
 		protected function writeRGBRecord(context:SWFWriterContext, record:RGBRecord):void
 		{
 			context.bytes.writeUI8(record.red);
@@ -255,7 +185,13 @@ package com.swfwire.decompiler
 		protected function writeRectangleRecord(context:SWFWriterContext, record:RectangleRecord):void
 		{
 			context.bytes.alignBytes();
-			var nBits:uint = record.nBits;
+			var nBits:uint = Math.max(
+				SWFByteArray.calculateSBBits(record.xMin),
+				SWFByteArray.calculateSBBits(record.xMax),
+				SWFByteArray.calculateSBBits(record.yMin),
+				SWFByteArray.calculateSBBits(record.yMax));
+				
+				//record.nBits;
 			context.bytes.writeUB(5, nBits);
 			context.bytes.writeSB(nBits, record.xMin);
 			context.bytes.writeSB(nBits, record.xMax);
@@ -271,7 +207,9 @@ package com.swfwire.decompiler
 			context.bytes.writeFlag(hasScale);
 			if(hasScale)
 			{
-				var nScaleBits:uint = SWFByteArray.calculateUBBits(Math.max(record.scale.x, record.scale.y));
+				var nScaleBits:uint = Math.max(
+					SWFByteArray.calculateFBBits(record.scale.x),
+					SWFByteArray.calculateFBBits(record.scale.y));
 				context.bytes.writeUB(5, nScaleBits);
 				context.bytes.writeFB(nScaleBits, record.scale.x);
 				context.bytes.writeFB(nScaleBits, record.scale.y);
@@ -281,13 +219,17 @@ package com.swfwire.decompiler
 			context.bytes.writeFlag(hasRotate);
 			if(hasRotate)
 			{
-				var nRotateBits:uint = SWFByteArray.calculateUBBits(Math.max(record.rotate.skew0, record.rotate.skew1));
+				var nRotateBits:uint = Math.max(
+					SWFByteArray.calculateFBBits(record.rotate.skew0),
+					SWFByteArray.calculateFBBits(record.rotate.skew1));
 				context.bytes.writeUB(5, nRotateBits);
 				context.bytes.writeFB(nRotateBits, record.rotate.skew0);
 				context.bytes.writeFB(nRotateBits, record.rotate.skew1);
 			}
 			
-			var nTranslateBits:uint = SWFByteArray.calculateUBBits(Math.max(record.translate.x, record.translate.y));
+			var nTranslateBits:uint = Math.max(
+				SWFByteArray.calculateSBBits(record.translate.x),
+				SWFByteArray.calculateSBBits(record.translate.y));
 			context.bytes.writeUB(5, nTranslateBits);
 			context.bytes.writeSB(nTranslateBits, record.translate.x);
 			context.bytes.writeSB(nTranslateBits, record.translate.y);
@@ -295,8 +237,11 @@ package com.swfwire.decompiler
 		
 		protected function writeStraightEdgeRecord(context:SWFWriterContext, record:StraightEdgeRecord):void
 		{
-			var numBits:uint = Math.max(SWFByteArray.calculateUBBits(Math.max(record.deltaX, record.deltaY)) - 2, 1);
-			context.bytes.writeUB(4, numBits);
+			var numBits:uint = Math.max(
+				SWFByteArray.calculateSBBits(record.deltaX),
+				SWFByteArray.calculateSBBits(record.deltaY),
+				2);
+			context.bytes.writeUB(4, numBits - 2);
 			context.bytes.writeFlag(record.generalLineFlag);
 			if(record.generalLineFlag)
 			{

@@ -34,6 +34,9 @@ package com.swfwire.decompiler
 		{
 			switch(Object(tag).constructor)
 			{
+				case FileAttributesTag:
+					writeFileAttributesTag(context, FileAttributesTag(tag));
+					break;
 				case DefineShape4Tag:
 					writeDefineShape4Tag(context, DefineShape4Tag(tag));
 					break;
@@ -41,6 +44,18 @@ package com.swfwire.decompiler
 					super.writeTag(context, tag);
 					break;
 			}
+		}
+		
+		protected function writeFileAttributesTag(context:SWFWriterContext, tag:FileAttributesTag):void
+		{
+			context.bytes.writeUB(1, 0);
+			context.bytes.writeFlag(tag.useDirectBlit);
+			context.bytes.writeFlag(tag.useGPU);
+			context.bytes.writeFlag(tag.hasMetadata);
+			context.bytes.writeFlag(tag.actionScript3);
+			context.bytes.writeUB(2, 0);
+			context.bytes.writeFlag(tag.useNetwork);
+			context.bytes.writeUB(24, 0);
 		}
 		
 		protected function writeDefineShape4Tag(context:SWFWriterContext, tag:DefineShape4Tag):void
@@ -152,8 +167,8 @@ package com.swfwire.decompiler
 				writeStyleChangeRecord4(context,
 					styleChangeRecord.stateNewStyles,
 					styleChangeRecord.stateLineStyle,
-					styleChangeRecord.stateFillStyle1, 
-					styleChangeRecord.stateFillStyle0, 
+					styleChangeRecord.stateFillStyle1,
+					styleChangeRecord.stateFillStyle0,
 					styleChangeRecord.stateMoveTo,
 					numFillBits,
 					numLineBits,
