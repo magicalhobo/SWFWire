@@ -16,21 +16,14 @@ package com.swfwire.decompiler
 		
 		public static function calculateUBBits(number:uint):uint
 		{
-			return number == 0 ? 1 : Math.floor(Math.log(number) * Math.LOG2E) + 1;
+			var bits:uint = 0;
+			while(number >>>= 1) bits++;
+			return bits + 1;
 		}
 		
 		public static function calculateSBBits(number:int):uint
 		{
-			var bits:uint;
-			if(number == 0)
-			{
-				bits = 1;
-			}
-			else
-			{
-				bits = calculateUBBits(number < 0 ? ~number : number) + 1;
-			}
-			return bits;
+			return number == 0 ? 1 : calculateUBBits(number < 0 ? ~number : number) + 1;
 		}
 		
 		public static function calculateFBBits(number:Number):uint

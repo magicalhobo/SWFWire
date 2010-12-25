@@ -566,11 +566,11 @@ package com.swfwire.decompiler
 		protected function readCurvedEdgeRecord(context:SWFReaderContext):CurvedEdgeRecord
 		{
 			var record:CurvedEdgeRecord = new CurvedEdgeRecord();
-			record.numBits = context.bytes.readUB(4);
-			record.controlDeltaX = context.bytes.readSB(record.numBits + 2);
-			record.controlDeltaY = context.bytes.readSB(record.numBits + 2);
-			record.anchorDeltaX = context.bytes.readSB(record.numBits + 2);
-			record.anchorDeltaY = context.bytes.readSB(record.numBits + 2);
+			var numBits:uint = context.bytes.readUB(4) + 2;
+			record.controlDeltaX = context.bytes.readSB(numBits);
+			record.controlDeltaY = context.bytes.readSB(numBits);
+			record.anchorDeltaX = context.bytes.readSB(numBits);
+			record.anchorDeltaY = context.bytes.readSB(numBits);
 			return record;
 		}
 		

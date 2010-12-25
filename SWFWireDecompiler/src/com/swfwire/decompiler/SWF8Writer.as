@@ -151,11 +151,7 @@ package com.swfwire.decompiler
 		
 		protected function writeShapeRecord4(context:SWFWriterContext, numFillBits:uint, numLineBits:uint, record:IShapeRecord):void
 		{
-			if(record is EndShapeRecord)
-			{
-				context.bytes.writeUB(6, 0);
-			}
-			else if(record is StyleChangeRecord4)
+			if(record is StyleChangeRecord4)
 			{
 				context.bytes.writeFlag(false);
 				var styleChangeRecord:StyleChangeRecord4 = StyleChangeRecord4(record);
@@ -185,6 +181,10 @@ package com.swfwire.decompiler
 				context.bytes.writeFlag(true);
 				context.bytes.writeFlag(false);
 				writeCurvedEdgeRecord(context, CurvedEdgeRecord(record));
+			}
+			else if(record is EndShapeRecord)
+			{
+				context.bytes.writeUB(6, 0);
 			}
 			else
 			{
