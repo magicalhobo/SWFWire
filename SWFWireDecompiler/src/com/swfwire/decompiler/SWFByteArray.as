@@ -138,6 +138,11 @@ package com.swfwire.decompiler
 			alignBytes();
 			return bytes.readShort();
 		}
+		public function writeSI16(value:int):void
+		{
+			alignBytes();
+			bytes.writeShort(value);
+		}
 		public function readSI32():int
 		{
 			alignBytes();
@@ -340,6 +345,8 @@ package com.swfwire.decompiler
 		 */
 		public function readUB(length:uint):uint
 		{
+			if(!length) return 0;
+			
 			var totalBytes:uint = Math.ceil((bitPosition + length) / 8);
 			
 			var iter:uint = 0;
@@ -368,6 +375,8 @@ package com.swfwire.decompiler
 		}
 		public function writeUB(length:uint, value:uint):void
 		{
+			if(!length) return;
+			
 			var totalBytes:uint = Math.ceil((bitPosition + length) / 8);
 			var iter:int = 0;
 			var currentByte:uint = 0;
@@ -388,8 +397,12 @@ package com.swfwire.decompiler
 			result = result << length;
 			result = result | (value & (~0 >>> -length));
 			var excessBits:uint = (totalBytes * 8 - (bitPosition + length));
-			result = result << excessBits;
-			result = result | (existing & (~0 >>> -excessBits));
+			
+			if(excessBits > 0)
+			{
+				result = result << excessBits;
+				result = result | (existing & (~0 >>> -excessBits));
+			}
 			
 			bytes.position = startPosition;
 			
@@ -413,6 +426,8 @@ package com.swfwire.decompiler
 		
 		public function readSB(length:uint):int
 		{
+			if(!length) return 0;
+			
 			var result:int = readUB(length);
 			var leadingDigit:uint = result >>> (length - 1);
 			if(leadingDigit == 1)
@@ -423,6 +438,8 @@ package com.swfwire.decompiler
 		}
 		public function writeSB(length:uint, value:int):void
 		{
+			if(!length) return;
+			
 			if(value < 0)
 			{
 				writeUB(length, ~Math.abs(value) + 1);
@@ -436,18 +453,25 @@ package com.swfwire.decompiler
 
 		public function readFB(length:uint):Number
 		{
-			var integer:int = readSB(length - 16);
-			var decimal:Number = readUB(16) / 0xFFFF;
-			if(integer < 0)
-			{
-				decimal *= -1;
-			}
+			if(!length) return 0;
+			
+			var raw:int = readSB(length);
+			
+			var integer:int = raw >> 16;
+			var decimal:Number = (raw & (~0 >>> -16))/0xFFFF; 
+			
 			return integer + decimal;
 		}
 		public function writeFB(length:uint, value:Number):void
 		{
-			writeSB(length - 16, int(value));
-			writeUB(16, Math.round(Math.abs(value - int(value)) * 0xFFFF));
+			if(!length) return;
+			
+			var integer:int = Math.floor(value);
+			var decimal:uint = (Math.round(Math.abs(value - integer) * 0xFFFF)) & (~0 >>> -16);
+			
+			var raw:int = (integer << 16) | decimal;
+			
+			writeSB(length, raw);
 		}
 		
 		/**

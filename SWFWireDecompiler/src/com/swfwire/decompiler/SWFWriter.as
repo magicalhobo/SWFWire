@@ -63,7 +63,7 @@ package com.swfwire.decompiler
 			}
 			
 			var tagCount:uint = swf.tags.length;
-			var tagBytes:Vector.<ByteArray> = new Vector.<ByteArray>();
+			var tagBytes:Vector.<ByteArray> = new Vector.<ByteArray>(tagCount);
 			
 			var iter:uint;
 			
@@ -94,7 +94,10 @@ package com.swfwire.decompiler
 			{
 				bytes.alignBytes();
 				var header:TagHeaderRecord = swf.tags[iter].header;
-				header.type = registeredTags[Object(swf.tags[iter]).constructor];
+				if(registeredTags.hasOwnProperty(Object(swf.tags[iter]).constructor))
+				{
+					header.type = registeredTags[Object(swf.tags[iter]).constructor];
+				}
 				writeTagHeaderRecord(context, header);
 				bytes.writeBytes(tagBytes[iter]);
 			}
@@ -132,6 +135,9 @@ package com.swfwire.decompiler
 					break;
 				case SetBackgroundColorTag:
 					writeSetBackgroundColorTag(context, SetBackgroundColorTag(tag));
+					break;
+				case DefineTextTag:
+					writeDefineTextTag(context, DefineTextTag(tag));
 					break;
 				case UnknownTag:
 					writeUnknownTag(context, UnknownTag(tag));
@@ -174,6 +180,64 @@ package com.swfwire.decompiler
 		protected function writeSetBackgroundColorTag(context:SWFWriterContext, tag:SetBackgroundColorTag):void
 		{
 			writeRGBRecord(context, tag.backgroundColor);
+		}
+		
+		protected function writeDefineTextTag(context:SWFWriterContext, tag:DefineTextTag):void
+		{
+			context.bytes.writeUI16(tag.characterId);
+			writeRectangleRecord(context, tag.textBounds);
+			writeMatrixRecord(context, tag.textMatrix);
+			
+			context.bytes.writeUI8(tag.glyphBits);
+			context.bytes.writeUI8(tag.advanceBits);
+			
+			for(var iter:uint = 0; iter < tag.textRecords.length; iter++)
+			{
+				context.bytes.writeUB(1, 1);
+				writeTextRecord(context, tag.glyphBits, tag.advanceBits, tag.textRecords[iter]);
+			}
+			
+			context.bytes.writeUB(8, 0);
+		}
+		
+		protected function writeGlyphEntryRecord(context:SWFWriterContext, glyphBits:uint, advanceBits:uint, record:GlyphEntryRecord):void
+		{
+			context.bytes.writeUB(glyphBits, record.glyphIndex);
+			context.bytes.writeSB(advanceBits, record.glyphAdvance);
+		}
+		
+		protected function writeTextRecord(context:SWFWriterContext, glyphBits:uint, advanceBits:uint, record:TextRecord):void
+		{
+			context.bytes.writeUB(3, record.styleFlagsReserved);
+			context.bytes.writeFlag(record.styleFlagsHasFont);
+			context.bytes.writeFlag(record.styleFlagsHasColor);
+			context.bytes.writeFlag(record.styleFlagsHasYOffset);
+			context.bytes.writeFlag(record.styleFlagsHasXOffset);
+			if(record.styleFlagsHasFont)
+			{
+				context.bytes.writeUI16(record.fontId);
+			}
+			if(record.styleFlagsHasColor)
+			{
+				writeRGBRecord(context, record.textColor);
+			}
+			if(record.styleFlagsHasXOffset)
+			{
+				context.bytes.writeSI16(record.xOffset);
+			}
+			if(record.styleFlagsHasYOffset)
+			{
+				context.bytes.writeSI16(record.yOffset);
+			}
+			if(record.styleFlagsHasFont)
+			{
+				context.bytes.writeUI16(record.textHeight);
+			}
+			context.bytes.writeUI8(record.glyphCount);
+			for(var iter:uint = 0; iter < record.glyphCount; iter++)
+			{
+				writeGlyphEntryRecord(context, glyphBits, advanceBits, record.glyphEntries[iter]);
+			}
 		}
 		
 		protected function writeRGBRecord(context:SWFWriterContext, record:RGBRecord):void
