@@ -235,12 +235,12 @@
     <classEntry path="com.swfwire.decompiler.abc.tokens.traits.TraitSlotToken"/>
     <classEntry path="com.swfwire.decompiler.data.swf.SWF"/>
     <classEntry path="com.swfwire.decompiler.data.swf.SWFHeader"/>
-    <classEntry path="com.swfwire.decompiler.data.swf.records.ARGBRecord"/>
+    <classEntry path="com.swfwire.decompiler.data.swf3.records.ARGBRecord"/>
     <classEntry path="com.swfwire.decompiler.data.swf.records.BevelFilterRecord"/>
     <classEntry path="com.swfwire.decompiler.data.swf.records.BlurFilterRecord"/>
     <classEntry path="com.swfwire.decompiler.data.swf.records.ButtonRecord"/>
     <classEntry path="com.swfwire.decompiler.data.swf.records.CXFormRecord"/>
-    <classEntry path="com.swfwire.decompiler.data.swf.records.CXFormWithAlphaRecord"/>
+    <classEntry path="com.swfwire.decompiler.data.swf3.records.CXFormWithAlphaRecord"/>
     <classEntry path="com.swfwire.decompiler.data.swf.records.ClipActionRecord"/>
     <classEntry path="com.swfwire.decompiler.data.swf.records.ClipActionsRecord"/>
     <classEntry path="com.swfwire.decompiler.data.swf.records.ClipEventFlagsRecord"/>
@@ -390,6 +390,7 @@
     <classEntry path="com.swfwire.decompiler.SWFTagIdentifier"/>
     <classEntry path="com.swfwire.decompiler.data.swf3.SWF3"/>
     <classEntry path="com.swfwire.decompiler.data.swf.SWFTags"/>
+    <classEntry path="com.swfwire.decompiler.SWF2Writer"/>
   </includeClasses>
   <includeResources/>
   <namespaceManifests/>

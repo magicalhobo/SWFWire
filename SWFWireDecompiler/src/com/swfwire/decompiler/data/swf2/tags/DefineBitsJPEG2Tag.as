@@ -16,30 +16,8 @@ package com.swfwire.decompiler.data.swf2.tags
 
 		public function DefineBitsJPEG2Tag(characterID:uint = 0, imageData:ByteArray = null)
 		{
-			if(imageData == null)
-			{
-				imageData = new ByteArray();
-			}
-
 			this.characterID = characterID;
 			this.imageData = imageData;
 		}
-		/*
-		override public function read(swf:SWF, swfBytes:SWFByteArray):void
-		{
-			super.read(swf, swfBytes);
-
-			characterID = swfcontext.bytes.readUI16();
-			imageData.clear();
-			swfcontext.bytes.readBytes(imageData, 0, header.length - 2);
-		}
-		override public function write(swf:SWF, swfBytes:SWFByteArray):void
-		{
-			super.write(swf, swfBytes);
-
-			swfBytes.writeUI16(characterID);
-			swfBytes.writeBytes(imageData);
-		}
-		*/
 	}
 }

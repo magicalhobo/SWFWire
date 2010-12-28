@@ -40,9 +40,6 @@ package com.swfwire.decompiler
 					case 74: tag = readCSMTextSettingsTag(context, header);
 					case 84: tag = readDefineMorphShape2Tag(context, header);
 					*/
-					case 21: 
-						tag = readDefineBitsJPEG2Tag(context, header);
-						break;
 					case 69:
 						tag = readFileAttributesTag(context, header);
 						break;
@@ -62,18 +59,6 @@ package com.swfwire.decompiler
 						tag = super.readTag(context, header);
 						break;
 				}
-			}
-			return tag;
-		}
-		
-		protected function readDefineBitsJPEG2Tag(context:SWFReaderContext, header:TagHeaderRecord):DefineBitsJPEG2Tag
-		{
-			var tag:DefineBitsJPEG2Tag = new DefineBitsJPEG2Tag();
-			tag.characterID = context.bytes.readUI16();
-			var length:int = header.length - 2;
-			if(length > 0)
-			{
-				context.bytes.readBytes(tag.imageData, 0, length);
 			}
 			return tag;
 		}

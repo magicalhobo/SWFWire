@@ -139,11 +139,17 @@ package com.swfwire.decompiler
 				case DefineTextTag:
 					writeDefineTextTag(context, DefineTextTag(tag));
 					break;
+				case MetadataTag:
+					writeMetadataTag(context, MetadataTag(tag));
+					break;
+				case DefineSceneAndFrameLabelDataTag: 
+					writeDefineSceneAndFrameLabelDataTag(context, DefineSceneAndFrameLabelDataTag(tag));
+					break;
 				case UnknownTag:
 					writeUnknownTag(context, UnknownTag(tag));
 					break;
 				default:
-					throw new Error('Unsupported tag encountered.');
+					throw new Error('Unsupported tag ('+Object(tag).constructor+') encountered.');
 					break;
 			}
 		}
@@ -198,6 +204,41 @@ package com.swfwire.decompiler
 			}
 			
 			context.bytes.writeUB(8, 0);
+		}
+		
+		protected function writeMetadataTag(context:SWFWriterContext, tag:MetadataTag):void
+		{
+			context.bytes.writeString(tag.metadata);
+		}
+		
+		protected function writeDefineSceneAndFrameLabelDataTag(context:SWFWriterContext, tag:DefineSceneAndFrameLabelDataTag):void
+		{
+			var iter:uint;
+			
+			var sceneCount:uint = tag.scenes.length;
+			context.bytes.writeEncodedUI32(sceneCount);
+			for(iter = 0; iter < sceneCount; iter++)
+			{
+				writeSceneRecord(context, tag.scenes[iter]);
+			}
+			var frameLabelCount:uint = tag.frameLabels.length;
+			context.bytes.writeEncodedUI32(frameLabelCount);
+			for(iter = 0; iter < frameLabelCount; iter++)
+			{
+				writeFrameLabelRecord(context, tag.frameLabels[iter]);
+			}
+		}
+		
+		protected function writeSceneRecord(context:SWFWriterContext, record:SceneRecord):void
+		{
+			context.bytes.writeEncodedUI32(record.offset);
+			context.bytes.writeString(record.name);
+		}
+		
+		protected function writeFrameLabelRecord(context:SWFWriterContext, record:FrameLabelRecord):void
+		{
+			context.bytes.writeEncodedUI32(record.frameNum);
+			context.bytes.writeString(record.frameLabel);
 		}
 		
 		protected function writeGlyphEntryRecord(context:SWFWriterContext, glyphBits:uint, advanceBits:uint, record:GlyphEntryRecord):void

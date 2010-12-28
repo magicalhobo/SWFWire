@@ -1,7 +1,8 @@
-package com.swfwire.decompiler.data.swf.records
+package com.swfwire.decompiler.data.swf3.records
 {
 	import com.swfwire.decompiler.SWFReader;
 	import com.swfwire.decompiler.SWFByteArray;
+	import com.swfwire.decompiler.data.swf.records.IRecord;
 	
 	public class CXFormWithAlphaRecord implements IRecord
 	{
