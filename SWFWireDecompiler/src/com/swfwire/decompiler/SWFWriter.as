@@ -70,13 +70,14 @@ package com.swfwire.decompiler
 			for(iter = 0; iter < tagCount; iter++)
 			{
 				var tag:SWFTag = swf.tags[iter];
-				tagBytes[iter] = new ByteArray();
+				var currentTagBytes:ByteArray = new ByteArray();
 				try
 				{
 					context.tagId = iter;
-					context.bytes = new SWFByteArray(tagBytes[iter]);
+					context.bytes = new SWFByteArray(currentTagBytes);
 					writeTag(context, tag);
-					tag.header.length = tagBytes[iter].length;
+					tag.header.length = currentTagBytes.length;
+					tagBytes[iter] = currentTagBytes;
 				}
 				catch(e:Error)
 				{
@@ -92,6 +93,10 @@ package com.swfwire.decompiler
 			
 			for(iter = 0; iter < tagCount; iter++)
 			{
+				if(!tagBytes[iter])
+				{
+					continue;
+				}
 				bytes.alignBytes();
 				var header:TagHeaderRecord = swf.tags[iter].header;
 				if(registeredTags.hasOwnProperty(Object(swf.tags[iter]).constructor))
@@ -132,6 +137,12 @@ package com.swfwire.decompiler
 					break;
 				case DefineShapeTag:
 					writeDefineShapeTag(context, DefineShapeTag(tag));
+					break;
+				case DefineBitsTag:
+					writeDefineBitsTag(context, DefineBitsTag(tag));
+					break;
+				case JPEGTablesTag:
+					writeJPEGTablesTag(context, JPEGTablesTag(tag));
 					break;
 				case SetBackgroundColorTag:
 					writeSetBackgroundColorTag(context, SetBackgroundColorTag(tag));
@@ -181,6 +192,23 @@ package com.swfwire.decompiler
 			context.bytes.writeUI16(tag.shapeId);
 			writeRectangleRecord(context, tag.shapeBounds);
 			writeShapeWithStyleRecord(context, tag.shapes);
+		}
+		
+		protected function writeDefineBitsTag(context:SWFWriterContext, tag:DefineBitsTag):void
+		{
+			context.bytes.writeUI16(tag.characterId);
+			if(tag.jpegData.length > 0)
+			{
+				context.bytes.writeBytes(tag.jpegData);
+			}
+		}
+		
+		protected function writeJPEGTablesTag(context:SWFWriterContext, tag:JPEGTablesTag):void
+		{
+			if(tag.jpegData.length > 0)
+			{
+				context.bytes.writeBytes(tag.jpegData);
+			}
 		}
 		
 		protected function writeSetBackgroundColorTag(context:SWFWriterContext, tag:SetBackgroundColorTag):void

@@ -39,9 +39,6 @@ package com.swfwire.decompiler
 					/*
 					case 89: tag = readStartSound2Tag(context, header);
 					*/
-					case 74:
-						tag = readCSMTextSettings(context, header);
-						break;
 					case 76:
 						tag = readSymbolClassTag(context, header);
 						break;
@@ -61,19 +58,6 @@ package com.swfwire.decompiler
 				}
 			}
 
-			return tag;
-		}
-		
-		protected function readCSMTextSettings(context:SWFReaderContext, header:TagHeaderRecord):CSMTextSettingsTag
-		{
-			var tag:CSMTextSettingsTag = new CSMTextSettingsTag();
-			tag.textId = context.bytes.readUI16();
-			tag.useFlashType = context.bytes.readUB(2);
-			tag.gridFit = context.bytes.readUB(3);
-			tag.reserved = context.bytes.readUB(3);
-			tag.thickness = context.bytes.readFloat();
-			tag.sharpness = context.bytes.readFloat();
-			tag.reserved2 = context.bytes.readUI8();
 			return tag;
 		}
 		

@@ -12,6 +12,7 @@ package com.swfwire.decompiler
 		public var tagBytes:Vector.<ByteArray>;
 		public var result:SWFWriteResult;
 		
+		public var fontGlyphCounts:Object;
 		public var tagId:int;
 		public var tagStack:Vector.<SWFTag>;
 		

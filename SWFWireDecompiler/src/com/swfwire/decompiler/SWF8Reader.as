@@ -37,7 +37,6 @@ package com.swfwire.decompiler
 					case 60: tag = readDefineVideoStreamTag(context, header);
 					case 70: tag = readPlaceObject3Tag(context, header);
 					case 71: tag = readImportAssets2Tag(context, header);
-					case 74: tag = readCSMTextSettingsTag(context, header);
 					case 84: tag = readDefineMorphShape2Tag(context, header);
 					*/
 					case 69:
@@ -45,6 +44,9 @@ package com.swfwire.decompiler
 						break;
 					case 73: 
 						tag = readDefineFontAlignZonesTag(context, header);
+						break;
+					case 74:
+						tag = readCSMTextSettingsTag(context, header);
 						break;
 					case 75:
 						tag = readDefineFont3Tag(context, header);
@@ -198,6 +200,19 @@ package com.swfwire.decompiler
 			{
 				tag.zoneTable[iter] = readZoneRecord(context);
 			}
+			return tag;
+		}
+		
+		protected function readCSMTextSettingsTag(context:SWFReaderContext, header:TagHeaderRecord):CSMTextSettingsTag
+		{
+			var tag:CSMTextSettingsTag = new CSMTextSettingsTag();
+			tag.textId = context.bytes.readUI16();
+			tag.useFlashType = context.bytes.readUB(2);
+			tag.gridFit = context.bytes.readUB(3);
+			tag.reserved = context.bytes.readUB(3);
+			tag.thickness = context.bytes.readFloat();
+			tag.sharpness = context.bytes.readFloat();
+			tag.reserved2 = context.bytes.readUI8();
 			return tag;
 		}
 		

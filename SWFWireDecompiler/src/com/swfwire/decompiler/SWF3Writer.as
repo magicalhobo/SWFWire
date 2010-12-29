@@ -1,5 +1,7 @@
 package com.swfwire.decompiler
 {
+	import com.swfwire.decompiler.data.swf.records.TagHeaderRecord;
+	import com.swfwire.decompiler.data.swf.tags.EndTag;
 	import com.swfwire.decompiler.data.swf.tags.SWFTag;
 	import com.swfwire.decompiler.data.swf3.records.*;
 	import com.swfwire.decompiler.data.swf3.tags.*;
@@ -42,11 +44,15 @@ package com.swfwire.decompiler
 				case DefineBitsJPEG3Tag:
 					writeDefineBitsJPEG3Tag(context, DefineBitsJPEG3Tag(tag));
 					break;
-				/*
-				case DefineBitsLossless2Tag:
-					writeDefineBitsLossless2Tag(context);
+				case DefineSpriteTag:
+					writeDefineSpriteTag(context, DefineSpriteTag(tag));
 					break;
-				*/
+				case FrameLabelTag:
+					writeFrameLabelTag(context, FrameLabelTag(tag));
+					break;
+				case DefineBitsLossless2Tag:
+					writeDefineBitsLossless2Tag(context, DefineBitsLossless2Tag(tag));
+					break;
 				default:
 					super.writeTag(context, tag);
 					break;
@@ -117,6 +123,32 @@ package com.swfwire.decompiler
 			{
 				context.bytes.writeBytes(tag.bitmapAlphaData);
 			}
+		}
+		
+		protected function writeDefineSpriteTag(context:SWFWriterContext, tag:DefineSpriteTag):void
+		{
+			context.bytes.writeUI16(tag.spriteId);
+			context.bytes.writeUI16(tag.frameCount);
+			writeControlTags(context, tag.controlTags);
+		}
+		
+		protected function writeControlTags(context:SWFWriterContext, tags:Vector.<SWFTag>):void
+		{
+			for(var iter:uint = 0; iter < tags.length; iter++)
+			{
+				var tag:SWFTag = tags[iter];
+				writeTagHeaderRecord(context, tag.header);
+				writeTag(context, tag);
+				if(tag is EndTag)
+				{
+					break;
+				}
+			}
+		}
+		
+		protected function writeFrameLabelTag(context:SWFWriterContext, tag:FrameLabelTag):void
+		{
+			context.bytes.writeString(tag.name);
 		}
 		
 		protected function writeDefineBitsLossless2Tag(context:SWFWriterContext, tag:DefineBitsLossless2Tag):void

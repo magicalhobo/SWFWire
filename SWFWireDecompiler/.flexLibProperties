@@ -391,6 +391,7 @@
     <classEntry path="com.swfwire.decompiler.data.swf3.SWF3"/>
     <classEntry path="com.swfwire.decompiler.data.swf.SWFTags"/>
     <classEntry path="com.swfwire.decompiler.SWF2Writer"/>
+    <classEntry path="com.swfwire.decompiler.SWF4Writer"/>
   </includeClasses>
   <includeResources/>
   <namespaceManifests/>

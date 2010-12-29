@@ -287,18 +287,44 @@ package com.swfwire.decompiler
 		public function readFloat16():Number
 		{
 			alignBytes();
+			
+			var sign:uint = readUB(1);
+			var exponent:int = readUB(5) - 16;
+			var mantissa:uint = readUB(10);
+			
+			var result:Number = mantissa * Math.pow(2, exponent);
+			if(sign == 1)
+			{
+				result *= -1;
+			}
+			
+			return result;
+		}
+		public function writeFloat16(value:Number):void
+		{
+			alignBytes();
+			
 			var sign:uint = readUB(1);
 			var exponent:uint = readUB(5);
 			var mantissa:uint = readUB(10);
-			return 0;
+			
+			writeUI16(0);
 		}
 		public function readFloat():Number
 		{
 			return bytes.readFloat();
 		}
+		public function writeFloat(value:Number):void
+		{
+			bytes.writeFloat(value);
+		}
 		public function readDouble():Number
 		{
 			return bytes.readDouble();
+		}
+		public function writeDouble(value:Number):void
+		{
+			bytes.writeDouble(value);
 		}
 		
 		/**

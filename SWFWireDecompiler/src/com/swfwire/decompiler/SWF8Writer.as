@@ -6,7 +6,7 @@ package com.swfwire.decompiler
 	import com.swfwire.decompiler.data.swf8.records.*;
 	import com.swfwire.decompiler.data.swf8.tags.*;
 
-	public class SWF8Writer extends SWF3Writer
+	public class SWF8Writer extends SWF4Writer
 	{
 		public static const TAG_IDS:Object = {
 			21: DefineBitsJPEG2Tag2,
@@ -40,6 +40,12 @@ package com.swfwire.decompiler
 				case DefineShape4Tag:
 					writeDefineShape4Tag(context, DefineShape4Tag(tag));
 					break;
+				case CSMTextSettingsTag:
+					writeCSMTextSettingsTag(context, CSMTextSettingsTag(tag));
+					break;
+				case DefineScalingGridTag:
+					writeDefineScalingGridTag(context, DefineScalingGridTag(tag));
+					break;
 				default:
 					super.writeTag(context, tag);
 					break;
@@ -68,6 +74,55 @@ package com.swfwire.decompiler
 			context.bytes.writeFlag(tag.usesNonScalingStrokes);
 			context.bytes.writeFlag(tag.usesScalingStrokes);
 			writeShapeWithStyleRecord4(context, tag.shapes);
+		}
+		
+		protected function writeDefineFontAlignZonesTag(context:SWFWriterContext, tag:DefineFontAlignZonesTag):void
+		{
+			context.bytes.writeUI16(tag.fontId);
+			context.bytes.writeUB(2, tag.csmTableHint);
+			context.bytes.writeUB(6, tag.reserved);
+
+			var numGlyphs:uint = context.fontGlyphCounts[tag.fontId];
+			
+			for(var iter:uint = 0; iter < numGlyphs; iter++)
+			{
+				writeZoneRecord(context, tag.zoneTable[iter]);
+			}
+		}
+		
+		protected function writeZoneDataRecord(context:SWFWriterContext, record:ZoneDataRecord):void
+		{
+			context.bytes.writeFloat16(record.alignmentCoordinate);
+			context.bytes.writeFloat16(record.range);
+		}
+		
+		protected function writeZoneRecord(context:SWFWriterContext, record:ZoneRecord):void
+		{
+			context.bytes.writeUI8(record.numZoneData);
+			for(var iter:uint = 0; iter < record.numZoneData; iter++)
+			{
+				writeZoneDataRecord(context, record.zoneData[iter]);
+			}
+			context.bytes.writeUB(6, record.reserved);
+			context.bytes.writeUB(1, record.zoneMaskY);
+			context.bytes.writeUB(1, record.zoneMaskX);
+		}
+		
+		protected function writeCSMTextSettingsTag(context:SWFWriterContext, tag:CSMTextSettingsTag):void
+		{
+			context.bytes.writeUI16(tag.textId);
+			context.bytes.writeUB(2, tag.useFlashType);
+			context.bytes.writeUB(3, tag.gridFit);
+			context.bytes.writeUB(3, tag.reserved);
+			context.bytes.writeFloat(tag.thickness);
+			context.bytes.writeFloat(tag.sharpness);
+			context.bytes.writeUI8(tag.reserved2);
+		}
+		
+		protected function writeDefineScalingGridTag(context:SWFWriterContext, tag:DefineScalingGridTag):void
+		{
+			context.bytes.writeUI16(tag.characterId);
+			writeRectangleRecord(context, tag.splitter);
 		}
 		
 		protected function writeShapeWithStyleRecord4(context:SWFWriterContext, record:ShapeWithStyleRecord4):void
