@@ -286,6 +286,9 @@ package com.swfwire.decompiler
 		 */
 		public function readFloat16():Number
 		{
+			var tempResult:uint = readUI16();
+			return tempResult;
+			
 			alignBytes();
 			
 			var sign:uint = readUB(1);
@@ -302,13 +305,11 @@ package com.swfwire.decompiler
 		}
 		public function writeFloat16(value:Number):void
 		{
+			writeUI16(value);
+			
+			return;
+			
 			alignBytes();
-			
-			var sign:uint = readUB(1);
-			var exponent:uint = readUB(5);
-			var mantissa:uint = readUB(10);
-			
-			writeUI16(0);
 		}
 		public function readFloat():Number
 		{

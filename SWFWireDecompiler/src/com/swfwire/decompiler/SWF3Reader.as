@@ -443,7 +443,7 @@ package com.swfwire.decompiler
 		
 		protected function readBlendModeRecord(context:SWFReaderContext):*
 		{
-			
+			throw new Error('readBlendModeRecord not implemented');
 		}
 		
 		protected function readDefineSpriteTag(context:SWFReaderContext, header:TagHeaderRecord):DefineSpriteTag

@@ -23,6 +23,7 @@ package com.swfwire.decompiler
 			this.result = result;
 			
 			this.tagStack = new Vector.<SWFTag>;
+			fontGlyphCounts = {};
 		}
 	}
 }

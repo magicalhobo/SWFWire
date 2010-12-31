@@ -257,6 +257,11 @@ package com.swfwire.decompiler
 			}
 		}
 		
+		protected function writeLanguageCodeRecord(context:SWFWriterContext, record:LanguageCodeRecord):void
+		{
+			context.bytes.writeUI8(record.languageCode);
+		}
+		
 		protected function writeSceneRecord(context:SWFWriterContext, record:SceneRecord):void
 		{
 			context.bytes.writeEncodedUI32(record.offset);

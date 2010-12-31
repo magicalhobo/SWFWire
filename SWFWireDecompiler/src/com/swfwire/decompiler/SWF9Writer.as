@@ -4,6 +4,7 @@ package com.swfwire.decompiler
 	import com.swfwire.decompiler.abc.ABCWriter;
 	import com.swfwire.decompiler.data.swf.records.SymbolClassRecord;
 	import com.swfwire.decompiler.data.swf.tags.SWFTag;
+	import com.swfwire.decompiler.data.swf9.tags.DefineFontNameTag;
 	import com.swfwire.decompiler.data.swf9.tags.DoABCTag;
 	import com.swfwire.decompiler.data.swf9.tags.SymbolClassTag;
 	
@@ -27,6 +28,9 @@ package com.swfwire.decompiler
 					break;
 				case SymbolClassTag:
 					writeSymbolClassTag(context, SymbolClassTag(tag));
+					break;
+				case DefineFontNameTag:
+					writeDefineFontNameTag(context, DefineFontNameTag(tag));
 					break;
 				default:
 					super.writeTag(context, tag);
@@ -59,6 +63,13 @@ package com.swfwire.decompiler
 		{
 			context.bytes.writeUI16(record.characterId);
 			context.bytes.writeString(record.className);
+		}
+		
+		protected function writeDefineFontNameTag(context:SWFWriterContext, tag:DefineFontNameTag):void
+		{
+			context.bytes.writeUI16(tag.fontId);
+			context.bytes.writeString(tag.fontName);
+			context.bytes.writeString(tag.fontCopyright);
 		}
 	}
 }

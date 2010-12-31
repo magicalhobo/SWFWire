@@ -1,5 +1,9 @@
 package com.swfwire.decompiler
 {
+	import com.swfwire.decompiler.data.swf.records.CurvedEdgeRecord;
+	import com.swfwire.decompiler.data.swf.records.EndShapeRecord;
+	import com.swfwire.decompiler.data.swf.records.IShapeRecord;
+	import com.swfwire.decompiler.data.swf.records.StraightEdgeRecord;
 	import com.swfwire.decompiler.data.swf.records.TagHeaderRecord;
 	import com.swfwire.decompiler.data.swf.tags.EndTag;
 	import com.swfwire.decompiler.data.swf.tags.SWFTag;
@@ -40,6 +44,9 @@ package com.swfwire.decompiler
 			{
 				case PlaceObject2Tag:
 					writePlaceObject2Tag(context, PlaceObject2Tag(tag));
+					break;
+				case DefineShape3Tag:
+					writeDefineShape3Tag(context, DefineShape3Tag(tag));
 					break;
 				case DefineBitsJPEG3Tag:
 					writeDefineBitsJPEG3Tag(context, DefineBitsJPEG3Tag(tag));
@@ -110,6 +117,13 @@ package com.swfwire.decompiler
 			}
 		}
 
+		protected function writeDefineShape3Tag(context:SWFWriterContext, tag:DefineShape3Tag):void
+		{
+			context.bytes.writeUI16(tag.shapeId);
+			writeRectangleRecord(context, tag.shapeBounds);
+			writeShapeWithStyleRecord3(context, tag.shapes);
+		}
+		
 		protected function writeDefineBitsJPEG3Tag(context:SWFWriterContext, tag:DefineBitsJPEG3Tag):void
 		{
 			var startPosition:uint = context.bytes.getBytePosition();
@@ -185,6 +199,179 @@ package com.swfwire.decompiler
 
 					context.bytes.writeBytes(unzippedData);
 				}
+			}
+		}
+		
+		protected function writeShapeWithStyleRecord3(context:SWFWriterContext, record:ShapeWithStyleRecord3):void
+		{
+			writeFillStyleArrayRecord3(context, record.fillStyles);
+			writeLineStyleArrayRecord2(context, record.lineStyles);
+			
+			var numFillBits:uint = record.numFillBits;
+			var numLineBits:uint = record.numLineBits;
+			
+			context.bytes.writeUB(4, numFillBits);
+			context.bytes.writeUB(4, numLineBits);
+			
+			for(var iter:uint = 0; iter < record.shapeRecords.length; iter++) 
+			{
+				var shapeRecord:IShapeRecord = record.shapeRecords[iter];
+				writeShapeRecord3(context, numFillBits, numLineBits, shapeRecord);
+				
+				if(shapeRecord is StyleChangeRecord3)
+				{
+					if(StyleChangeRecord3(shapeRecord).stateNewStyles)
+					{
+						numFillBits = StyleChangeRecord3(shapeRecord).numFillBits;
+						numLineBits = StyleChangeRecord3(shapeRecord).numLineBits;
+					}
+				}
+				if(shapeRecord is EndShapeRecord)
+				{
+					break;
+				}
+			}
+		}
+		
+		protected function writeFillStyleArrayRecord3(context:SWFWriterContext, record:FillStyleArrayRecord3):void
+		{
+			var count:uint = record.fillStyles.length;
+			
+			if(count < 0xFF)
+			{
+				context.bytes.writeUI8(count);
+			}
+			else
+			{
+				context.bytes.writeUI8(0xFF);
+				context.bytes.writeUI16(count);
+			}
+
+			for(var iter:uint = 0; iter < count; iter++)
+			{
+				writeFillStyleRecord2(context, record.fillStyles[iter]);
+			}
+		}
+		
+		protected function writeFillStyleRecord2(context:SWFWriterContext, record:FillStyleRecord2):void
+		{
+			var type:uint = record.type;
+			
+			context.bytes.writeUI8(type);
+			if(type == 0x00)
+			{
+				writeRGBARecord(context, record.color);
+			}
+			if(type == 0x10 || type == 0x12)
+			{
+				writeMatrixRecord(context, record.gradientMatrix);
+				writeGradientRecord2(context, GradientRecord2(record.gradient));
+			}
+			if(type == 0x40 || type == 0x41 || type == 0x42 || type == 0x43)
+			{
+				context.bytes.writeUI16(record.bitmapId);
+				writeMatrixRecord(context, record.bitmapMatrix);
+			}
+		}
+		
+		protected function writeLineStyleArrayRecord2(context:SWFWriterContext, record:LineStyleArrayRecord2):void
+		{
+			var count:uint = record.lineStyles.length;
+			
+			if(count < 0xFF)
+			{
+				context.bytes.writeUI8(count);
+			}
+			else
+			{
+				context.bytes.writeUI8(0xFF);
+				context.bytes.writeUI16(count);
+			}
+			
+			for(var iter:uint = 0; iter < count; iter++)
+			{
+				writeLineStyleRecord2(context, record.lineStyles[iter]);
+			}
+		}
+		
+		protected function writeLineStyleRecord2(context:SWFWriterContext, record:LineStyleRecord2):void
+		{
+			context.bytes.writeUI16(record.width);
+			writeRGBARecord(context, record.color);
+		}
+		
+		protected function writeShapeRecord3(context:SWFWriterContext, numFillBits:uint, numLineBits:uint, record:IShapeRecord):void
+		{
+			if(record is StyleChangeRecord3)
+			{
+				context.bytes.writeFlag(false);
+				var styleChangeRecord:StyleChangeRecord3 = StyleChangeRecord3(record);
+				context.bytes.writeFlag(styleChangeRecord.stateNewStyles);
+				context.bytes.writeFlag(styleChangeRecord.stateLineStyle);
+				context.bytes.writeFlag(styleChangeRecord.stateFillStyle1);
+				context.bytes.writeFlag(styleChangeRecord.stateFillStyle0);
+				context.bytes.writeFlag(styleChangeRecord.stateMoveTo);
+				writeStyleChangeRecord3(context,
+					styleChangeRecord.stateNewStyles,
+					styleChangeRecord.stateLineStyle,
+					styleChangeRecord.stateFillStyle1,
+					styleChangeRecord.stateFillStyle0,
+					styleChangeRecord.stateMoveTo,
+					numFillBits,
+					numLineBits,
+					styleChangeRecord);
+			}
+			else if(record is StraightEdgeRecord)
+			{
+				context.bytes.writeFlag(true);
+				context.bytes.writeFlag(true);
+				writeStraightEdgeRecord(context, StraightEdgeRecord(record));
+			}
+			else if(record is CurvedEdgeRecord)
+			{
+				context.bytes.writeFlag(true);
+				context.bytes.writeFlag(false);
+				writeCurvedEdgeRecord(context, CurvedEdgeRecord(record));
+			}
+			else if(record is EndShapeRecord)
+			{
+				context.bytes.writeUB(6, 0);
+			}
+			else
+			{
+				throw new Error('Unknown record.');
+			}
+		}
+		
+		protected function writeStyleChangeRecord3(context:SWFWriterContext, stateNewStyles:Boolean,
+												  stateLineStyle:Boolean, stateFillStyle1:Boolean,
+												  stateFillStyle0:Boolean, stateMoveTo:Boolean, 
+												  numFillBits:uint, numLineBits:uint, record:StyleChangeRecord3):void
+		{
+			if(stateMoveTo)
+			{
+				context.bytes.writeUB(5, record.moveBits);
+				context.bytes.writeSB(record.moveBits, record.moveDeltaX);
+				context.bytes.writeSB(record.moveBits, record.moveDeltaY);
+			}
+			if(stateFillStyle0)
+			{
+				context.bytes.writeUB(numFillBits, record.fillStyle0);
+			}
+			if(stateFillStyle1)
+			{
+				context.bytes.writeUB(numFillBits, record.fillStyle1);
+			}
+			if(stateLineStyle)
+			{
+				context.bytes.writeUB(numLineBits, record.lineStyle);
+			}
+			if(stateNewStyles)
+			{
+				writeFillStyleArrayRecord3(context, record.fillStyles);
+				writeLineStyleArrayRecord2(context, record.lineStyles);
+				context.bytes.writeUB(4, record.numFillBits);
+				context.bytes.writeUB(4, record.numLineBits);
 			}
 		}
 		

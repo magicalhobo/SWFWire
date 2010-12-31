@@ -37,11 +37,17 @@ package com.swfwire.decompiler
 				case FileAttributesTag:
 					writeFileAttributesTag(context, FileAttributesTag(tag));
 					break;
+				case DefineFontAlignZonesTag:
+					writeDefineFontAlignZonesTag(context, DefineFontAlignZonesTag(tag));
+					break;
 				case DefineShape4Tag:
 					writeDefineShape4Tag(context, DefineShape4Tag(tag));
 					break;
 				case CSMTextSettingsTag:
 					writeCSMTextSettingsTag(context, CSMTextSettingsTag(tag));
+					break;
+				case DefineFont3Tag:
+					writeDefineFont3Tag(context, DefineFont3Tag(tag));
 					break;
 				case DefineScalingGridTag:
 					writeDefineScalingGridTag(context, DefineScalingGridTag(tag));
@@ -119,6 +125,80 @@ package com.swfwire.decompiler
 			context.bytes.writeUI8(tag.reserved2);
 		}
 		
+		protected function writeDefineFont3Tag(context:SWFWriterContext, tag:DefineFont3Tag):void
+		{
+			var iter:uint;
+			
+			context.bytes.writeUI16(tag.fontId);
+			context.bytes.writeFlag(tag.fontFlagsHasLayout);
+			context.bytes.writeFlag(tag.fontFlagsShiftJIS);
+			context.bytes.writeFlag(tag.fontFlagsSmallText);
+			context.bytes.writeFlag(tag.fontFlagsANSI);
+			context.bytes.writeFlag(tag.fontFlagsWideOffsets);
+			context.bytes.writeFlag(tag.fontFlagsWideCodes);
+			context.bytes.writeFlag(tag.fontFlagsItalic);
+			context.bytes.writeFlag(tag.fontFlagsBold);
+			writeLanguageCodeRecord(context, tag.languageCode);
+			context.bytes.writeUI8(tag.fontNameLen);
+			for(iter = 0; iter < tag.fontNameLen; iter++)
+			{
+				context.bytes.writeUI8(tag.fontName[iter]);
+			}
+			context.bytes.writeUI16(tag.numGlyphs);
+			
+			context.fontGlyphCounts[tag.fontId] = tag.numGlyphs;
+			
+			if(tag.fontFlagsWideOffsets)
+			{
+				for(iter = 0; iter < tag.numGlyphs; iter++)
+				{
+					context.bytes.writeUI32(tag.offsetTable[iter]);
+				}
+			}
+			else
+			{
+				for(iter = 0; iter < tag.numGlyphs; iter++)
+				{
+					context.bytes.writeUI16(tag.offsetTable[iter]);
+				}
+			}
+			if(tag.fontFlagsWideOffsets)
+			{
+				context.bytes.writeUI32(tag.codeTableOffset);
+			}
+			else
+			{
+				context.bytes.writeUI16(tag.codeTableOffset);
+			}
+			for(iter = 0; iter < tag.numGlyphs; iter++)
+			{
+				writeFontShapeRecord(context, tag.glyphShapeTable[iter]);
+			}
+			for(iter = 0; iter < tag.numGlyphs; iter++)
+			{
+				context.bytes.writeUI16(tag.codeTable[iter]);
+			}
+			if(tag.fontFlagsHasLayout)
+			{
+				context.bytes.writeSI16(tag.fontAscent);
+				context.bytes.writeSI16(tag.fontDescent);
+				context.bytes.writeSI16(tag.fontLeading);
+				for(iter = 0; iter < tag.numGlyphs; iter++)
+				{
+					context.bytes.writeSI16(tag.fontAdvanceTable[iter]);
+				}
+				for(iter = 0; iter < tag.numGlyphs; iter++)
+				{
+					writeRectangleRecord(context, tag.fontBoundsTable[iter]);
+				}
+				context.bytes.writeUI16(tag.kerningCount);
+				for(iter = 0; iter < tag.kerningCount; iter++)
+				{
+					writeKerningRecord(context, tag.fontFlagsWideCodes, tag.fontKerningTable[iter]);
+				}
+			}
+		}
+		
 		protected function writeDefineScalingGridTag(context:SWFWriterContext, tag:DefineScalingGridTag):void
 		{
 			context.bytes.writeUI16(tag.characterId);
@@ -157,6 +237,48 @@ package com.swfwire.decompiler
 					break;
 				}
 			}
+		}
+		
+		protected function writeFontShapeRecord(context:SWFWriterContext, record:FontShapeRecord):void
+		{
+			context.bytes.alignBytes();
+			
+			var numFillBits:uint = record.numFillBits;
+			var numLineBits:uint = record.numLineBits;
+			context.bytes.writeUB(4, numFillBits);
+			context.bytes.writeUB(4, numLineBits);
+			for(var iter:uint = 0; iter < record.shapeRecords.length; iter++)
+			{
+				var shapeRecord:IShapeRecord = record.shapeRecords[iter];
+				writeShapeRecord4(context, numFillBits, numLineBits, shapeRecord);
+				if(shapeRecord is StyleChangeRecord4)
+				{
+					if(StyleChangeRecord4(shapeRecord).stateNewStyles)
+					{
+						numFillBits = StyleChangeRecord4(shapeRecord).numFillBits;
+						numLineBits = StyleChangeRecord4(shapeRecord).numLineBits;
+					}
+				}
+				if(shapeRecord is EndShapeRecord)
+				{
+					break;
+				}
+			}
+		}
+		
+		protected function writeKerningRecord(context:SWFWriterContext, fontFlagsWideCodes:Boolean, record:KerningRecord):void
+		{
+			if(fontFlagsWideCodes)
+			{
+				context.bytes.writeUI16(record.fontKerningCode1);
+				context.bytes.writeUI16(record.fontKerningCode2);
+			}
+			else
+			{
+				context.bytes.writeUI8(record.fontKerningCode1);
+				context.bytes.writeUI8(record.fontKerningCode2);
+			}
+			context.bytes.writeSI16(record.fontKerningAdjustment);
 		}
 		
 		protected function writeFocalGradientRecord(context:SWFWriterContext, record:FocalGradientRecord):void
