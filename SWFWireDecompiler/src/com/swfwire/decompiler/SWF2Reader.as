@@ -7,6 +7,8 @@ package com.swfwire.decompiler
 	import com.swfwire.decompiler.data.swf2.tags.*;
 	import com.swfwire.utils.ObjectUtil;
 	
+	import flash.utils.ByteArray;
+	
 	public class SWF2Reader extends SWFReader
 	{
 		private static var FILE_VERSION:uint = 2;
@@ -51,6 +53,7 @@ package com.swfwire.decompiler
 		{
 			var tag:DefineBitsJPEG2Tag = new DefineBitsJPEG2Tag();
 			tag.characterID = context.bytes.readUI16();
+			tag.imageData = new ByteArray();
 			var length:int = header.length - 2;
 			if(length > 0)
 			{

@@ -8,14 +8,19 @@ package com.swfwire.decompiler
 	
 	public class SWFByteArray
 	{
+		private static const filter5:uint = (~0 >>> -5);
 		private static const filter7:uint = ~0 >>> -7;
 		private static const filter8:uint = ~0 >>> -8;
+		private static const filter10:uint = (~0 >>> -10);
+		private static const filter13:uint = (~0 >>> -13);
+		private static const filter23:uint = (~0 >>> -23);
 		
 		private var bytes:ByteArray;
 		private var bitPosition:uint = 0;
 		
 		public static function calculateUBBits(number:uint):uint
 		{
+			if(number == 0) return 0;
 			var bits:uint = 0;
 			while(number >>>= 1) bits++;
 			return bits + 1;
@@ -23,12 +28,37 @@ package com.swfwire.decompiler
 		
 		public static function calculateSBBits(number:int):uint
 		{
-			return number == 0 ? 1 : calculateUBBits(number < 0 ? ~number : number) + 1;
+			return number == 0 ? 0 : calculateUBBits(number < 0 ? ~number : number) + 1;
 		}
 		
 		public static function calculateFBBits(number:Number):uint
 		{
-			return calculateSBBits(int(number)) + 16;
+			return number == 0 ? 1 : calculateSBBits(int(number)) + 16;
+			
+			var integer:int = Math.floor(number);
+			var decimal:uint = (Math.round(Math.abs(number - integer) * 0xFFFF)) & (~0 >>> -16);
+
+			var sbVersion:int = ((integer & (~0 >>> -16)) << 16) | (decimal);
+			
+			return number == 0 ? 1 : calculateSBBits(sbVersion);
+		}
+		
+		private static const tempByteArray:ByteArray = new ByteArray();
+		
+		private static function float32AsUnsignedInt(value:Number):uint
+		{
+			tempByteArray.position = 0;
+			tempByteArray.writeFloat(value);
+			tempByteArray.position = 0;
+			return tempByteArray.readUnsignedInt();
+		}
+		
+		private static function unsignedIntAsFloat32(value:uint):Number
+		{
+			tempByteArray.position = 0;
+			tempByteArray.writeUnsignedInt(value);
+			tempByteArray.position = 0;
+			return tempByteArray.readFloat();
 		}
 		
 		public function SWFByteArray(bytes:ByteArray)
@@ -282,34 +312,66 @@ package com.swfwire.decompiler
 		
 		/**
 		 * Floating point numbers
-		 * TODO: implement this
 		 */
 		public function readFloat16():Number
 		{
-			var tempResult:uint = readUI16();
-			return tempResult;
+			var raw:uint = readUI16();
 			
-			alignBytes();
+			var sign:uint = raw >> 15;
+			var exp:int = (raw >> 10) & filter5;
+			var sig:int = raw & filter10;
 			
-			var sign:uint = readUB(1);
-			var exponent:int = readUB(5) - 16;
-			var mantissa:uint = readUB(10);
-			
-			var result:Number = mantissa * Math.pow(2, exponent);
-			if(sign == 1)
+			//Handle infinity/NaN
+			if(exp == 31)
 			{
-				result *= -1;
+				exp = 255;
+			}
+			//Handle normalized values
+			else if(exp == 0)
+			{
+				exp = 0;
+				sig = 0;
+			}
+			else
+			{
+				exp += 111;
 			}
 			
-			return result;
+			var temp:uint = sign << 31 | exp << 23 | sig << 13;
+			
+			return unsignedIntAsFloat32(temp);
 		}
 		public function writeFloat16(value:Number):void
 		{
-			writeUI16(value);
+			var raw:uint = float32AsUnsignedInt(value);
+
+			var sign:uint = raw >> 31;
+			var exp:int = (raw >> 23) & filter8;
+			var sig:uint = (raw >> 13) & filter10;
 			
-			return;
+			//Handle NaN
+			if(exp == 255)
+			{
+				exp = 31;
+			}
+			//Handle underflow
+			else if(exp < 111)
+			{
+				exp = 0;
+				sig = 0;
+			}
+			//Handle overflow
+			else if(exp > 141)
+			{
+				exp = 31;
+				sig = 0;
+			}
+			else
+			{
+				exp -= 111;
+			}
 			
-			alignBytes();
+			writeUI16(sign << 15 | exp << 10 | sig);
 		}
 		public function readFloat():Number
 		{
@@ -507,19 +569,13 @@ package com.swfwire.decompiler
 		public function readString():String
 		{
 			alignBytes();
-			var result:String = '';
-			while(true)
+			var byteCount:uint = 1;
+			while(bytes.readUnsignedByte())
 			{
-				var character:String = bytes.readUTFBytes(1);
-				if(character)
-				{
-					result += character;
-				}
-				else
-				{
-					break;
-				}
+				byteCount++;
 			}
+			bytes.position -= byteCount;
+			var result:String = bytes.readUTFBytes(byteCount);
 			return result;
 		}
 		public function readStringWithLength(length:uint):String

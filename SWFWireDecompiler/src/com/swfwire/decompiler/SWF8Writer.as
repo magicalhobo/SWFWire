@@ -6,7 +6,7 @@ package com.swfwire.decompiler
 	import com.swfwire.decompiler.data.swf8.records.*;
 	import com.swfwire.decompiler.data.swf8.tags.*;
 
-	public class SWF8Writer extends SWF4Writer
+	public class SWF8Writer extends SWF7Writer
 	{
 		public static const TAG_IDS:Object = {
 			21: DefineBitsJPEG2Tag2,
