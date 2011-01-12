@@ -3,7 +3,7 @@ package com.swfwire.decompiler
 	import com.swfwire.decompiler.data.swf.tags.SWFTag;
 	import com.swfwire.decompiler.data.swf7.tags.*;
 	
-	public class SWF7Writer extends SWF5Writer
+	public class SWF7Writer extends SWF6Writer
 	{
 		public static const TAG_IDS:Object = {
 			60: DefineVideoStreamTag,
