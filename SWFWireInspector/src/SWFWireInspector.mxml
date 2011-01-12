@@ -95,7 +95,7 @@
 								
 				if(Config.TESTING)
 				{
-					load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpse/bin-debug/SWFCorpse.swf').url);
+					load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpseInvalidBranch/bin-debug/SWFCorpseInvalidBranch.swf').url);
 					//load('pool_game.swf');
 				}
 			}
@@ -329,7 +329,6 @@
 				swf.header.frameCount = 1;
 				swf.header.frameRate = 24;
 				swf.header.frameSize = new RectangleRecord();
-				swf.header.frameSize.nBits = 14;
 				swf.header.frameSize.xMin = 0
 				swf.header.frameSize.xMax = 800 * 20;
 				swf.header.frameSize.yMin = 0;
