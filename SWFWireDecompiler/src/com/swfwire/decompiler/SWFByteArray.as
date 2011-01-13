@@ -8,12 +8,13 @@ package com.swfwire.decompiler
 	
 	public class SWFByteArray
 	{
-		private static const filter5:uint = (~0 >>> -5);
+		private static const filter5:uint = ~0 >>> -5;
 		private static const filter7:uint = ~0 >>> -7;
 		private static const filter8:uint = ~0 >>> -8;
-		private static const filter10:uint = (~0 >>> -10);
-		private static const filter13:uint = (~0 >>> -13);
-		private static const filter23:uint = (~0 >>> -23);
+		private static const filter10:uint = ~0 >>> -10;
+		private static const filter13:uint = ~0 >>> -13;
+		private static const filter16:uint = ~0 >>> -16;
+		private static const filter23:uint = ~0 >>> -23;
 		
 		private var bytes:ByteArray;
 		private var bitPosition:uint = 0;
@@ -28,17 +29,15 @@ package com.swfwire.decompiler
 		
 		public static function calculateSBBits(number:int):uint
 		{
-			return number == 0 ? 0 : calculateUBBits(number < 0 ? ~number : number) + 1;
+			return number == 0 ? 1 : calculateUBBits(number < 0 ? ~number : number) + 1;
 		}
 		
 		public static function calculateFBBits(number:Number):uint
 		{
-			return number == 0 ? 1 : calculateSBBits(int(number)) + 16;
-			
 			var integer:int = Math.floor(number);
-			var decimal:uint = (Math.round(Math.abs(number - integer) * 0xFFFF)) & (~0 >>> -16);
+			var decimal:uint = (Math.round(Math.abs(number - integer) * 0xFFFF)) & filter16;
 
-			var sbVersion:int = ((integer & (~0 >>> -16)) << 16) | (decimal);
+			var sbVersion:int = ((integer & filter16) << 16) | (decimal);
 			
 			return number == 0 ? 1 : calculateSBBits(sbVersion);
 		}
@@ -547,7 +546,7 @@ package com.swfwire.decompiler
 			var raw:int = readSB(length);
 			
 			var integer:int = raw >> 16;
-			var decimal:Number = (raw & (~0 >>> -16))/0xFFFF; 
+			var decimal:Number = (raw & filter16)/0xFFFF; 
 			
 			return integer + decimal;
 		}
@@ -556,7 +555,7 @@ package com.swfwire.decompiler
 			if(!length) return;
 			
 			var integer:int = Math.floor(value);
-			var decimal:uint = (Math.round(Math.abs(value - integer) * 0xFFFF)) & (~0 >>> -16);
+			var decimal:uint = (Math.round(Math.abs(value - integer) * 0xFFFF)) & filter16;
 			
 			var raw:int = (integer << 16) | decimal;
 			

@@ -11,6 +11,8 @@ package com.swfwire.decompiler
 
 	public class SWFWriter extends EventDispatcher
 	{
+		private static const filter10:uint = (~0 >>> -10);
+		
 		public static const TAG_IDS:Object = {
 				0: EndTag,
 				1: ShowFrameTag,
@@ -174,7 +176,8 @@ package com.swfwire.decompiler
 				longLength = true;
 				length = 0x3F;
 			}
-			var tagInfo:uint = ((record.type & ((1 << 10) - 1)) << 6) | length;
+			
+			var tagInfo:uint = ((record.type & filter10) << 6) | length;
 			context.bytes.writeUI16(tagInfo);
 			if(longLength)
 			{
