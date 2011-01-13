@@ -88,6 +88,7 @@ package com.swfwire.decompiler.utils
 			if(bodyId >= 0)
 			{
 				r.instructions = abcFile.methodBodies[bodyId].instructions;
+				r.localCount = abcFile.methodBodies[bodyId].localCount;
 			}
 			
 			r.type = new ReadableMultiname(); 
@@ -408,6 +409,11 @@ package com.swfwire.decompiler.utils
 							isWhile = true;
 							r2.flow = {};
 						}
+						if(r2.breakOn > 0)
+						{
+							isWhile = true;
+							r1.flow = {};
+						}
 						
 						outer:
 						for(var iter4:int = 0; iter4 < r1.flow.length; iter4++)
@@ -423,7 +429,7 @@ package com.swfwire.decompiler.utils
 								}
 							}
 						}
-						if(showByteCode)
+						if(!isWhile && showByteCode)
 						{
 							if(a1 >= 0)
 							{
@@ -466,13 +472,17 @@ package com.swfwire.decompiler.utils
 						return {flow1: r1.flow, flow2: r2.flow, source1: tempStr1, source2: tempStr2, merge: a1, isWhile: isWhile};
 					}
 					
-					function conditional(sign:String):String
+					function conditional(condition:String, inequality:Boolean):String
 					{
-						tempStr4 = stack.pop();
-						tempStr3 = stack.pop();
-						
 						tempInt = positionLookup[Object(op).reference];
-						b = branch(tempInt, iter + 1);
+						if(inequality)
+						{
+							b = branch(tempInt, iter + 1);
+						}
+						else
+						{
+							b = branch(iter + 1, tempInt);
+						}
 						
 						var cond:String = b.isWhile ? 'while' : 'if';
 						
@@ -481,14 +491,14 @@ package com.swfwire.decompiler.utils
 						{
 							if(b.flow2.length > 0)
 							{
-								tempStr2 = cond+'('+tempStr3+' '+sign+' '+tempStr4+')\n{\n'+b.source2+'\n}\nelse\n{\n'+b.source1+'\n}';
+								tempStr2 = cond+'('+condition+')\n{\n'+b.source2+'\n}\nelse\n{\n'+b.source1+'\n}';
 							}
 						}
 						else
 						{
 							if(b.flow2.length > 0)
 							{
-								tempStr2 = cond+'('+tempStr3+' '+sign+' '+tempStr4+')\n{\n'+b.source2+'\n}';
+								tempStr2 = cond+'('+condition+')\n{\n'+b.source2+'\n}';
 							}
 						}
 						
@@ -555,6 +565,25 @@ package com.swfwire.decompiler.utils
 							break;
 						}
 					}
+					else if(op is Instruction_greaterthan)
+					{
+						tempStr = stack.pop();
+						tempStr2 = stack.pop();
+						stack.push(tempStr2 + ' < '+ tempStr);
+					}
+					else if(op is Instruction_lessthan)
+					{
+						tempStr = stack.pop();
+						tempStr2 = stack.pop();
+						stack.push(tempStr2 + ' < '+ tempStr);
+					}
+					else if(op is Instruction_ifstrictne)
+					{
+						tempStr = stack.pop();
+						tempStr2 = stack.pop();
+						conditional(tempStr2+' !== '+tempStr, false);
+					}
+					/*
 					else if(op is Instruction_ifstrictne)
 					{
 						trace('strictne jump!');
@@ -583,6 +612,7 @@ package com.swfwire.decompiler.utils
 						
 						source = tempStr2;
 					}
+					*/
 					else if(op is Instruction_iftrue)
 					{
 						tempStr4 = stack.pop();
@@ -657,52 +687,53 @@ package com.swfwire.decompiler.utils
 							iter = b.merge - 1;
 						}
 					}
+					else if(op is Instruction_ifgt)
+					{
+						tempStr = stack.pop();
+						tempStr2 = stack.pop();
+						conditional(tempStr2+' > '+tempStr, false);
+					}
 					else if(op is Instruction_iflt)
 					{
-						tempStr4 = stack.pop();
-						tempStr3 = stack.pop();
-						
-						tempInt = positionLookup[Instruction_iflt(op).reference];
-						b = branch(tempInt, iter + 1);
-						
-						tempStr2 = '';
-						if(b.flow1.length > 0)
-						{
-							if(b.flow2.length > 0)
-							{
-								tempStr2 = 'if('+tempStr3+' < '+tempStr4+')\n{\n'+b.source1+'\n}\nelse\n{\n'+b.source2+'\n}';
-							}
-						}
-						else
-						{
-							if(b.flow2.length > 0)
-							{
-								tempStr2 = 'if('+tempStr3+' < '+tempStr4+')\n{\n'+b.source1+'\n}';
-							}
-						}
-						
-						source = tempStr2;
-
-						if(b.merge > 0)
-						{
-							iter = b.merge - 1;
-						}
+						tempStr = stack.pop();
+						tempStr2 = stack.pop();
+						conditional(tempStr2+' < '+tempStr, false);
+					}
+					else if(op is Instruction_ifge)
+					{
+						tempStr = stack.pop();
+						tempStr2 = stack.pop();
+						conditional(tempStr2+' >= '+tempStr, false);
+					}
+					else if(op is Instruction_ifle)
+					{
+						tempStr = stack.pop();
+						tempStr2 = stack.pop();
+						conditional(tempStr2+' <= '+tempStr, false);
 					}
 					else if(op is Instruction_ifnge)
 					{
-						conditional('>=');
+						tempStr = stack.pop();
+						tempStr2 = stack.pop();
+						conditional(tempStr2+' >= '+tempStr, true);
 					}
 					else if(op is Instruction_ifnle)
 					{
-						conditional('<=');
+						tempStr = stack.pop();
+						tempStr2 = stack.pop();
+						conditional(tempStr2+' <= '+tempStr, true);
 					}
 					else if(op is Instruction_ifnlt)
 					{
-						conditional('<');
+						tempStr = stack.pop();
+						tempStr2 = stack.pop();
+						conditional(tempStr2+' < '+tempStr, true);
 					}
 					else if(op is Instruction_ifngt)
 					{
-						conditional('>');
+						tempStr = stack.pop();
+						tempStr2 = stack.pop();
+						conditional(tempStr2+' > '+tempStr, true);
 					}
 					else if(op is Instruction_getlocal0)
 					{
@@ -726,7 +757,7 @@ package com.swfwire.decompiler.utils
 					}
 					else if(op is Instruction_setlocal0)
 					{
-						locals.setName(0, stack.pop());
+						source = locals.getName(0)+' = '+stack.pop()+';';
 					}
 					else if(op is Instruction_setlocal1)
 					{
@@ -742,11 +773,11 @@ package com.swfwire.decompiler.utils
 					}
 					else if(op is Instruction_setlocal)
 					{
-						locals.setName(Instruction_setlocal(op).index, stack.pop());
+						source = locals.getName(Instruction_setlocal(op).index)+' = '+stack.pop()+';';
 					}
 					else if(op is Instruction_kill)
 					{
-						locals.setName(Instruction_kill(op).index, 'undefined');
+						source = locals.getName(Instruction_kill(op).index)+' = undefined;';
 					}
 					else if(op is Instruction_throw)
 					{
