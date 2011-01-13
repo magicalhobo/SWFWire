@@ -21,6 +21,11 @@ package com.swfwire.decompiler.utils
 		private var abcFile:ABCFile;
 		private var offsetLookup:Object;
 		
+		public var showByteCode:Boolean = true;
+		public var showActionScript:Boolean = true;
+		public var showStack:Boolean = true;
+		public var showDebug:Boolean = false;
+		
 		private var methodLookupCache:Array;
 		private var customNamespaces:Object;
 		
@@ -302,11 +307,8 @@ package com.swfwire.decompiler.utils
 				var rmn:ReadableMultiname;
 				var source:String = '';
 				var exit:Boolean = false;
-				
-				const showByteCode:Boolean = true;
-				const showActionScript:Boolean = true;
-				const showStack:Boolean = true;
-				const showDebug:Boolean = false;
+				var tempStr4:String;
+				var b:Object;
 				
 				if(showByteCode)
 				{
@@ -382,6 +384,123 @@ package com.swfwire.decompiler.utils
 				
 				if(showActionScript)
 				{
+					function branch(target1:int, target2:int):Object
+					{
+						var tempStr1:String = '';
+						var tempStr2:String = '';
+						
+						var hitmapCopy1:Object = {};
+						var hitmapCopy2:Object = {};
+						for(var iterHit1:String in hitmap)
+						{
+							hitmapCopy1[iterHit1] = hitmap[iterHit1];
+							hitmapCopy2[iterHit1] = hitmap[iterHit1];
+						}
+						var r1:Object = instructionsToString(instructions, argumentCount, localCount, target1, hitmapCopy1, positionLookup, true, scope, locals, stack);
+						var r2:Object = instructionsToString(instructions, argumentCount, localCount, target2, hitmapCopy2, positionLookup, true, scope, locals, stack);
+						
+						var isWhile:Boolean = false;
+						
+						var a1:int = -1;
+						
+						if(r1.breakOn > 0)
+						{
+							isWhile = true;
+							r2.flow = {};
+						}
+						
+						outer:
+						for(var iter4:int = 0; iter4 < r1.flow.length; iter4++)
+						{
+							for(var iter5:int = 0; iter5 < r2.flow.length; iter5++)
+							{
+								if(r1.flow[iter4] == r2.flow[iter5])
+								{
+									a1 = r1.flow[iter4];
+									r1.flow.splice(iter4);
+									r2.flow.splice(iter5);
+									break outer;
+								}
+							}
+						}
+						if(showByteCode)
+						{
+							if(a1 >= 0)
+							{
+								lines.push('		MERGE @'+a1);
+							}
+							else
+							{
+								lines.push('		NO MERGE');
+							}
+						}
+						
+						Debug.dump(r1.flow);
+						Debug.dump(r2.flow);
+						
+						for(var iterHit2:uint = 0; iterHit2 < r1.flow.length; iterHit2++)
+						{
+							hitmap[r1.flow[iterHit2]] = 1;
+						}
+						
+						for(var iterHit3:uint = 0; iterHit3 < r2.flow.length; iterHit3++)
+						{
+							hitmap[r2.flow[iterHit3]] = 1;
+						}
+						
+						if(a1 >= 0)
+						{
+							tempStr1 = r1.sourceUntil[a1];
+							tempStr2 = r2.sourceUntil[a1];
+						}
+						else
+						{
+							tempStr1 = r1.result;
+							tempStr2 = r2.result;
+						}
+						
+						trace(tempStr1);
+						tempStr1 = StringUtil.indent(tempStr1, '	');
+						tempStr2 = StringUtil.indent(tempStr2, '	');
+						
+						return {flow1: r1.flow, flow2: r2.flow, source1: tempStr1, source2: tempStr2, merge: a1, isWhile: isWhile};
+					}
+					
+					function conditional(sign:String):String
+					{
+						tempStr4 = stack.pop();
+						tempStr3 = stack.pop();
+						
+						tempInt = positionLookup[Object(op).reference];
+						b = branch(tempInt, iter + 1);
+						
+						var cond:String = b.isWhile ? 'while' : 'if';
+						
+						tempStr2 = '';
+						if(b.flow1.length > 0)
+						{
+							if(b.flow2.length > 0)
+							{
+								tempStr2 = cond+'('+tempStr3+' '+sign+' '+tempStr4+')\n{\n'+b.source2+'\n}\nelse\n{\n'+b.source1+'\n}';
+							}
+						}
+						else
+						{
+							if(b.flow2.length > 0)
+							{
+								tempStr2 = cond+'('+tempStr3+' '+sign+' '+tempStr4+')\n{\n'+b.source2+'\n}';
+							}
+						}
+						
+						source = tempStr2;
+						
+						if(b.merge > 0)
+						{
+							iter = b.merge - 1;
+						}
+						return source;
+					}
+
 					if(op is EndInstruction)
 					{
 					}
@@ -466,87 +585,27 @@ package com.swfwire.decompiler.utils
 					}
 					else if(op is Instruction_iftrue)
 					{
-						var tempStr4:String;
 						tempStr4 = stack.pop();
 						
-						var hitmapCopy1:Object = {};
-						var hitmapCopy2:Object = {};
-						for(var iterHit1:String in hitmap)
-						{
-							hitmapCopy1[iterHit1] = hitmap[iterHit1];
-							hitmapCopy2[iterHit1] = hitmap[iterHit1];
-						}
-						trace('iftrue jump!');
 						tempInt = positionLookup[Instruction_iftrue(op).reference];
-						var r1:Object = instructionsToString(instructions, argumentCount, localCount, tempInt, hitmapCopy1, positionLookup, true, scope, locals, stack);
-						tempStr = r1.result;
-						var r2:Object = instructionsToString(instructions, argumentCount, localCount, iter + 1, hitmapCopy2, positionLookup, true, scope, locals, stack);
-						tempStr3 = r2.result;
+						b = branch(tempInt, iter + 1);
 						
-						var isWhile:Boolean = false;
-						
-						trace(r1.breakOn+', '+r2.breakOn);
-						
-						if(r1.breakOn > 0)
+						if(b.flow1.length > 0)
 						{
-							if(hitmap[r1.breakOn])
+							if(b.flow2.length > 0)
 							{
-								isWhile = true;
-								r2.flow = {};
-							}
-						}
-						
-						var a1:int = -1;
-						outert:
-						for(var iter4:int = 0; iter4 < r1.flow.length; iter4++)
-						{
-							for(var iter5:int = 0; iter5 < r2.flow.length; iter5++)
-							{
-								if(r1.flow[iter4] == r2.flow[iter5])
-								{
-									a1 = r1.flow[iter4];
-									r1.flow.splice(iter4);
-									r2.flow.splice(iter5);
-									break outert;
-								}
-							}
-						}
-						
-						Debug.dump(r1.flow);
-						Debug.dump(r2.flow);
-						
-						for(var iterHit2:uint = 0; iterHit2 < r1.flow.length; iterHit2++)
-						{
-							hitmap[r1.flow[iterHit2]] = 1;
-						}
-						
-						for(var iterHit3:uint = 0; iterHit3 < r2.flow.length; iterHit3++)
-						{
-							hitmap[r2.flow[iterHit3]] = 1;
-						}
-						
-						trace(tempStr);
-						tempStr = StringUtil.indent(tempStr, '	');
-						tempStr3 = StringUtil.indent(tempStr3, '	');
-						
-						var cond:String = isWhile ? 'while' : 'if';
-						
-						if(r1.flow.length > 0)
-						{
-							if(r2.flow.length > 0)
-							{
-								tempStr2 = 'if('+tempStr4 + ')\n{\n'+tempStr+'\n}\nelse\n{\n'+tempStr3+'\n}';
+								tempStr2 = 'if('+tempStr4+')\n{\n'+b.source1+'\n}\nelse\n{\n'+b.source2+'\n}';
 							}
 							else
 							{
-								tempStr2 = cond+'('+tempStr4 + ')\n{\n'+tempStr+'\n}';
+								tempStr2 = 'if(!'+tempStr4+')\n{\n'+b.source2+'\n}';
 							}
 						}
 						else
 						{
-							if(r2.flow.length > 0)
+							if(b.flow2.length > 0)
 							{
-								tempStr2 = cond+'(!'+tempStr4 + ')\n{\n'+tempStr3+'\n}';
+								tempStr2 = 'if('+tempStr4+')\n{\n'+b.source1+'\n}';
 							}
 							else
 							{
@@ -554,119 +613,36 @@ package com.swfwire.decompiler.utils
 							}
 						}
 						
-						if(tempStr2)
-						{
-							source = tempStr2;
-						}
-						
-						if(a1 > 0)
-						{
-							iter = a1 - 1;
-						}
+						source = tempStr2;
 
-						/*						
-						trace('iftrue jump!');
-						tempStr2 = stack.pop();
-						tempInt = positionLookup[Instruction_iftrue(op).reference];
-						tempStr = instructionsToString(instructions, argumentCount, localCount, tempInt, hitmap, positionLookup, true, scope, locals, stack).result;
-						tempStr3 = instructionsToString(instructions, argumentCount, localCount, iter + 1, hitmap, positionLookup, true, scope, locals, stack).result;
-						trace(tempStr);
-						tempStr = StringUtil.indent(tempStr, '	');
-						tempStr3 = StringUtil.indent(tempStr3, '	');
-						/*
-						//this is stupid
-						if(tempInt > iter)
+						if(b.merge > 0)
 						{
-							tempStr2 = 'if('+stack.pop() + ' == true)\n{\n'+tempStr+'\n}\nelse\n{\n'+tempStr3+'\n}';
+							iter = b.merge - 1;
 						}
-						else
-						{
-							tempStr2 = 'while('+stack.pop() + ' == true)\n{\n'+tempStr+'\n}\n'+tempStr3+'\n';
-						}
-						* /
-						tempStr2 = 'if('+tempStr2+' == true)\n{\n'+tempStr+'\n}\nelse\n{\n'+tempStr3+'\n}';
-						
-						lines.push(tempStr2);
-						*/
 					}
 					else if(op is Instruction_iffalse)
 					{
-						var tempStr4:String;
 						tempStr4 = stack.pop();
-
-						var hitmapCopy1:Object = {};
-						var hitmapCopy2:Object = {};
-						for(var iterHit1:String in hitmap)
-						{
-							hitmapCopy1[iterHit1] = hitmap[iterHit1];
-							hitmapCopy2[iterHit1] = hitmap[iterHit1];
-						}
-						trace('iffalse jump!');
+						
 						tempInt = positionLookup[Instruction_iffalse(op).reference];
-						var r1:Object = instructionsToString(instructions, argumentCount, localCount, tempInt, hitmapCopy1, positionLookup, true, scope, locals, stack);
-						tempStr = r1.result;
-						var r2:Object = instructionsToString(instructions, argumentCount, localCount, iter + 1, hitmapCopy2, positionLookup, true, scope, locals, stack);
-						tempStr3 = r2.result;
+						b = branch(tempInt, iter + 1);
 						
-						var a1:int = -1;
-						outer:
-						for(var iter4:int = 0; iter4 < r1.flow.length; iter4++)
+						if(b.flow1.length > 0)
 						{
-							for(var iter5:int = 0; iter5 < r2.flow.length; iter5++)
+							if(b.flow2.length > 0)
 							{
-								if(r1.flow[iter4] == r2.flow[iter5])
-								{
-									a1 = r1.flow[iter4];
-									if(showByteCode)
-									{
-										lines.push('				MERGE @'+a1);
-									}
-									r1.flow.splice(iter4);
-									r2.flow.splice(iter5);
-									break outer;
-								}
-							}
-						}
-						
-						Debug.dump(r1.flow);
-						Debug.dump(r2.flow);
-						
-						for(var iterHit2:uint = 0; iterHit2 < r1.flow.length; iterHit2++)
-						{
-							hitmap[r1.flow[iterHit2]] = 1;
-						}
-						
-						for(var iterHit3:uint = 0; iterHit3 < r2.flow.length; iterHit3++)
-						{
-							hitmap[r2.flow[iterHit3]] = 1;
-						}
-						
-						if(a1 >= 0)
-						{
-							tempStr = r1.sourceUntil[a1];
-							tempStr3 = r2.sourceUntil[a1];
-						}
-						
-						trace(tempStr);
-						tempStr = StringUtil.indent(tempStr, '	');
-						tempStr3 = StringUtil.indent(tempStr3, '	');
-						
-						if(r1.flow.length > 0)
-						{
-							if(r2.flow.length > 0)
-							{
-								tempStr2 = 'if('+tempStr4+')\n{\n'+tempStr3+'\n}\nelse\n{\n'+tempStr+'\n}';
+								tempStr2 = 'if('+tempStr4+')\n{\n'+b.source2+'\n}\nelse\n{\n'+b.source1+'\n}';
 							}
 							else
 							{
-								tempStr2 = 'if(!'+tempStr4+')\n{\n'+tempStr+'\n}';
+								tempStr2 = 'if(!'+tempStr4+')\n{\n'+b.source1+'\n}';
 							}
 						}
 						else
 						{
-							if(r2.flow.length > 0)
+							if(b.flow2.length > 0)
 							{
-								tempStr2 = 'if('+tempStr4+')\n{\n'+tempStr3+'\n}';
+								tempStr2 = 'if('+tempStr4+')\n{\n'+b.source2+'\n}';
 							}
 							else
 							{
@@ -674,15 +650,59 @@ package com.swfwire.decompiler.utils
 							}
 						}
 						
-						if(tempStr2)
-						{
-							source = tempStr2;
-						}
+						source = tempStr2;
 
-						if(a1 > 0)
+						if(b.merge > 0)
 						{
-							iter = a1 - 1;
+							iter = b.merge - 1;
 						}
+					}
+					else if(op is Instruction_iflt)
+					{
+						tempStr4 = stack.pop();
+						tempStr3 = stack.pop();
+						
+						tempInt = positionLookup[Instruction_iflt(op).reference];
+						b = branch(tempInt, iter + 1);
+						
+						tempStr2 = '';
+						if(b.flow1.length > 0)
+						{
+							if(b.flow2.length > 0)
+							{
+								tempStr2 = 'if('+tempStr3+' < '+tempStr4+')\n{\n'+b.source1+'\n}\nelse\n{\n'+b.source2+'\n}';
+							}
+						}
+						else
+						{
+							if(b.flow2.length > 0)
+							{
+								tempStr2 = 'if('+tempStr3+' < '+tempStr4+')\n{\n'+b.source1+'\n}';
+							}
+						}
+						
+						source = tempStr2;
+
+						if(b.merge > 0)
+						{
+							iter = b.merge - 1;
+						}
+					}
+					else if(op is Instruction_ifnge)
+					{
+						conditional('>=');
+					}
+					else if(op is Instruction_ifnle)
+					{
+						conditional('<=');
+					}
+					else if(op is Instruction_ifnlt)
+					{
+						conditional('<');
+					}
+					else if(op is Instruction_ifngt)
+					{
+						conditional('>');
 					}
 					else if(op is Instruction_getlocal0)
 					{
@@ -771,6 +791,19 @@ package com.swfwire.decompiler.utils
 						tempStr = stack.pop();
 						
 						stack.push('-'+tempStr);
+					}
+					else if(op is Instruction_equals)
+					{
+						tempStr = stack.pop();
+						tempStr2 = stack.pop();
+						
+						stack.push('('+tempStr+') == ('+tempStr2+')');
+					}
+					else if(op is Instruction_not)
+					{
+						tempStr = stack.pop();
+						
+						stack.push('!('+tempStr+')');
 					}
 					else if(op is Instruction_findpropstrict)
 					{

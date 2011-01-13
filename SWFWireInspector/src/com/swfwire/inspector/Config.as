@@ -2,7 +2,7 @@ package com.swfwire.inspector
 {
 	public class Config
 	{
-		public static const TESTING:Boolean = false;
+		public static const TESTING:Boolean = true;
 		public static const VERSION:String = '1.6';
 	}
 }

@@ -88,16 +88,22 @@
 				
 				detailsPanel.preview.addChild(loader);
 				
-				detailsPanel.actionScript.classesList.addEventListener(ListEvent.CHANGE, function(ev:ListEvent):void
-				{
-					updateClasses();
-				});
-								
+				detailsPanel.actionScript.classesList.addEventListener(ListEvent.CHANGE, actionScriptPanelChangedHandler);
+				detailsPanel.actionScript.showActionScript.addEventListener(Event.CHANGE, actionScriptPanelChangedHandler);
+				detailsPanel.actionScript.showByteCode.addEventListener(Event.CHANGE, actionScriptPanelChangedHandler);
+				detailsPanel.actionScript.showDebug.addEventListener(Event.CHANGE, actionScriptPanelChangedHandler);
+				detailsPanel.actionScript.showStack.addEventListener(Event.CHANGE, actionScriptPanelChangedHandler);
+				
 				if(Config.TESTING)
 				{
 					load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpseInvalidBranch/bin-debug/SWFCorpseInvalidBranch.swf').url);
 					//load('pool_game.swf');
 				}
+			}
+			
+			private function actionScriptPanelChangedHandler(ev:*):void
+			{
+				updateClasses();
 			}
 			
 			private function dragEnterHandler(ev:NativeDragEvent):void
@@ -538,6 +544,11 @@
 			
 			private function updateClasses():void
 			{
+				translator.showActionScript = detailsPanel.actionScript.showActionScript.selected;
+				translator.showByteCode = detailsPanel.actionScript.showByteCode.selected;
+				translator.showDebug = detailsPanel.actionScript.showDebug.selected;
+				translator.showStack = detailsPanel.actionScript.showStack.selected;
+
 				var item:Object = detailsPanel.actionScript.classesList.selectedItem;
 				var index:uint = item.id;
 				var tag:DoABCTag = lastResult.swf.tags[detailsPanel.tagList.selectedItem.id] as DoABCTag;
