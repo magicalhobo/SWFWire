@@ -71,6 +71,7 @@ package com.swfwire.decompiler.utils
 		public function getMethodBody(name:uint, methodId:uint, r:ReadableTrait):void
 		{
 			r.arguments = new Vector.<ReadableMultiname>();
+			r.argumentNames = new Vector.<String>();
 			r.declaration = new ReadableMultiname();
 			r.traitType = ReadableTrait.TYPE_METHOD;
 			multinameTraitToString(name, r.declaration);
@@ -82,6 +83,8 @@ package com.swfwire.decompiler.utils
 				var readableArg:ReadableMultiname = new ReadableMultiname();
 				getReadableMultiname(paramType, readableArg);
 				r.arguments[iter] = readableArg;
+				
+				r.argumentNames[iter] = abcFile.cpool.strings[methodInfo.paramNames[iter].value].utf8;
 				//args.push('arg'+iter+':'+multinameTypeToString(cpool, paramType));
 			}
 			var bodyId:int = getBodyIdFromMethodId(methodId);
@@ -98,6 +101,7 @@ package com.swfwire.decompiler.utils
 		public function getReadableTrait(traitInfo:TraitsInfoToken, r:ReadableTrait):void
 		{
 			r.arguments = new Vector.<ReadableMultiname>();
+			r.argumentNames = new Vector.<String>();
 			
 			var args:Array = [];
 			var cpool:ConstantPoolToken = abcFile.cpool;
@@ -124,6 +128,7 @@ package com.swfwire.decompiler.utils
 					getReadableMultiname(paramType, readableArg);
 					r.arguments[iter] = readableArg;
 					
+					r.argumentNames[iter] = abcFile.cpool.strings[methodInfo.paramNames[iter].value].utf8;
 					//args.push('arg'+iter+':'+multinameTypeToString(cpool, paramType));
 				}
 				var bodyId:int = getBodyIdFromMethodId(traitMethod.methodId);
@@ -219,7 +224,7 @@ package com.swfwire.decompiler.utils
 		}
 		
 		private function instructionsToString(instructions:Vector.<IInstruction>,
-											  argumentCount:uint,
+											  argumentNames:Vector.<String>,
 											  localCount:uint,
 											  start:uint = 0,
 											  hitmap:Object = null, 
@@ -241,9 +246,10 @@ package com.swfwire.decompiler.utils
 				locals = new LocalRegisters();
 				locals.setName(0, 'this');
 				var iter:uint;
+				var argumentCount:uint = argumentNames.length;
 				for(iter = 0; iter < argumentCount; iter++)
 				{
-					locals.setName(iter + 1, 'arg'+iter);
+					locals.setName(iter + 1, argumentNames[iter]);
 				}
 				for(; iter < localCount; iter++)
 				{
@@ -397,8 +403,8 @@ package com.swfwire.decompiler.utils
 							hitmapCopy1[iterHit1] = hitmap[iterHit1];
 							hitmapCopy2[iterHit1] = hitmap[iterHit1];
 						}
-						var r1:Object = instructionsToString(instructions, argumentCount, localCount, target1, hitmapCopy1, positionLookup, true, scope, locals, stack);
-						var r2:Object = instructionsToString(instructions, argumentCount, localCount, target2, hitmapCopy2, positionLookup, true, scope, locals, stack);
+						var r1:Object = instructionsToString(instructions, argumentNames, localCount, target1, hitmapCopy1, positionLookup, true, scope, locals, stack);
+						var r2:Object = instructionsToString(instructions, argumentNames, localCount, target2, hitmapCopy2, positionLookup, true, scope, locals, stack);
 						
 						var isWhile:Boolean = false;
 						
@@ -1037,6 +1043,10 @@ package com.swfwire.decompiler.utils
 					{
 						locals.setName(Instruction_kill(op).index, 'undefined');
 					}
+					else if(op is Instruction_increment)
+					{
+						stack.push(stack.pop()+' + 1');
+					}
 					else if(op is Instruction_pushscope)
 					{
 						scope.push(stack.pop());
@@ -1052,6 +1062,14 @@ package com.swfwire.decompiler.utils
 					else if(op is Instruction_pushshort)
 					{
 						stack.push(Instruction_pushshort(op).value);
+					}
+					else if(op is Instruction_pushint)
+					{
+						stack.push(abcFile.cpool.integers[Instruction_pushint(op).index]);
+					}
+					else if(op is Instruction_pushuint)
+					{
+						stack.push(abcFile.cpool.uintegers[Instruction_pushuint(op).index]);
 					}
 					else if(op is Instruction_pushdouble)
 					{
@@ -1170,7 +1188,7 @@ package com.swfwire.decompiler.utils
 				var args:Array = [];
 				for(var iter:uint = 0; iter < r.arguments.length; iter++)
 				{
-					args.push('arg' + iter + ':' + multinameTypeToString(r.arguments[iter]));
+					args.push(r.argumentNames[iter] + ':' + multinameTypeToString(r.arguments[iter]));
 				}
 				pieces.push(r.declaration.name);
 				pieces.push('('+args.join(', ')+')');
@@ -1178,7 +1196,7 @@ package com.swfwire.decompiler.utils
 				
 				if(r.instructions && r.instructions.length > 0)
 				{
-					pieces.push('\n		{\n'+StringUtil.indent(instructionsToString(r.instructions, r.arguments.length, r.localCount).result, '			')+'\n		}');
+					pieces.push('\n		{\n'+StringUtil.indent(instructionsToString(r.instructions, r.argumentNames, r.localCount).result, '			')+'\n		}');
 				}
 				else
 				{

@@ -14,6 +14,7 @@ package com.swfwire.decompiler.utils
 		public var isConst:Boolean;
 		public var declaration:ReadableMultiname;
 		public var arguments:Vector.<ReadableMultiname>;
+		public var argumentNames:Vector.<String>;
 		public var instructions:Vector.<IInstruction>;
 		public var type:ReadableMultiname;
 		public var localCount:uint;
