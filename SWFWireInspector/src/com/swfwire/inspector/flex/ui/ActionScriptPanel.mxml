@@ -24,6 +24,7 @@
 			<mx:CheckBox label="ByteCode" id="showByteCode"/>
 			<mx:CheckBox label="Debug" id="showDebug"/>
 			<mx:CheckBox label="Stack" id="showStack"/>
+			<mx:CheckBox label="Branch Info" id="showBranchInfo"/>
 			<!--<mx:Button id="exportLabel" label="Export as SWC"/>-->
 		</mx:HBox>
 		<mx:TextArea id="cpool" width="100%" height="100%" editable="false" wordWrap="false" fontFamily="Courier New" fontSize="12"/>

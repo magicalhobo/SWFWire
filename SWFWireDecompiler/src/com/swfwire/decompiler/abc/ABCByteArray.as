@@ -5,8 +5,8 @@ package com.swfwire.decompiler.abc
 
 	public class ABCByteArray
 	{
-		private static const filter7:uint = (1 << 7) - 1;
-		private static const filter30:uint = (1 << 30) - 1;
+		private static const filter7:uint = ~0 >>> -7;
+		private static const filter30:uint = ~0 >>> -30;
 		
 		private var bytes:ByteArray;
 		

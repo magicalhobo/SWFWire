@@ -49,6 +49,8 @@
 			{
 				Debug.enabled = true;
 				
+				contextMenu.items.push(new ContextMenuItem('SWFWire Inspector '+Config.VERSION));
+				
 				appUpdater = new ApplicationUpdaterUI();
 				appUpdater.configurationFile = new File('app:/updateConfig.xml');
 				if(Config.TESTING)
@@ -93,11 +95,11 @@
 				detailsPanel.actionScript.showByteCode.addEventListener(Event.CHANGE, actionScriptPanelChangedHandler);
 				detailsPanel.actionScript.showDebug.addEventListener(Event.CHANGE, actionScriptPanelChangedHandler);
 				detailsPanel.actionScript.showStack.addEventListener(Event.CHANGE, actionScriptPanelChangedHandler);
+				detailsPanel.actionScript.showBranchInfo.addEventListener(Event.CHANGE, actionScriptPanelChangedHandler);
 				
 				if(Config.TESTING)
 				{
 					load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpseBranching/bin-debug/SWFCorpseBranching.swf').url);
-					//load('pool_game.swf');
 				}
 			}
 			
@@ -548,6 +550,7 @@
 				translator.showByteCode = detailsPanel.actionScript.showByteCode.selected;
 				translator.showDebug = detailsPanel.actionScript.showDebug.selected;
 				translator.showStack = detailsPanel.actionScript.showStack.selected;
+				translator.showBranchInfo = detailsPanel.actionScript.showBranchInfo.selected;
 
 				var item:Object = detailsPanel.actionScript.classesList.selectedItem;
 				var index:uint = item.id;

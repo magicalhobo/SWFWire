@@ -9,6 +9,8 @@ package com.swfwire.decompiler.abc
 
 	public class ABCReader
 	{
+		private static const filter8:uint = ~0 >>> -8;
+		
 		public function read(bytes:ABCByteArray):ABCReadResult
 		{
 			var result:ABCReadResult = new ABCReadResult();
@@ -1733,7 +1735,14 @@ package com.swfwire.decompiler.abc
 		{
 			var op:Instruction_pushbyte = new Instruction_pushbyte();
 			
-			op.byteValue = int(abc.readU8());
+			var value:int = abc.readU8();
+			
+			if(value & (1 << 7))
+			{
+				value = value | ~filter8;
+			}
+			
+			op.byteValue = value;
 			
 			return op;
 		}

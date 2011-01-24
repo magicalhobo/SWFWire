@@ -25,6 +25,7 @@ package com.swfwire.decompiler.utils
 		public var showActionScript:Boolean = true;
 		public var showStack:Boolean = true;
 		public var showDebug:Boolean = false;
+		public var showBranchInfo:Boolean = false;
 		
 		private var methodLookupCache:Array;
 		private var customNamespaces:Object;
@@ -128,7 +129,14 @@ package com.swfwire.decompiler.utils
 					getReadableMultiname(paramType, readableArg);
 					r.arguments[iter] = readableArg;
 					
-					r.argumentNames[iter] = abcFile.cpool.strings[methodInfo.paramNames[iter].value].utf8;
+					if(methodInfo.paramNames[iter])
+					{
+						r.argumentNames[iter] = abcFile.cpool.strings[methodInfo.paramNames[iter].value].utf8;
+					}
+					else
+					{
+						r.argumentNames[iter] = 'arg'+iter;
+					}
 					//args.push('arg'+iter+':'+multinameTypeToString(cpool, paramType));
 				}
 				var bodyId:int = getBodyIdFromMethodId(traitMethod.methodId);
@@ -246,20 +254,20 @@ package com.swfwire.decompiler.utils
 			{
 				locals = new LocalRegisters();
 				locals.setName(0, 'this');
-				var iter:uint;
+				var iterArg:uint;
 				var argumentCount:uint = argumentNames.length;
-				for(iter = 0; iter < argumentCount; iter++)
+				for(iterArg = 0; iterArg < argumentCount; iterArg++)
 				{
-					locals.setName(iter + 1, argumentNames[iter]);
+					locals.setName(iterArg + 1, argumentNames[iterArg]);
 				}
-				for(; iter < localCount; iter++)
+				for(; iterArg < localCount; iterArg++)
 				{
-					locals.setName(iter + 1, 'local'+(iter - argumentCount));
+					locals.setName(iterArg + 1, 'local'+(iterArg - argumentCount));
 				}
 			}
 			if(!stack)
 			{
-				stack = new OperandStack(0);
+				stack = new OperandStack();
 			}
 			var localCount:uint = 0;
 			
@@ -293,14 +301,14 @@ package com.swfwire.decompiler.utils
 				if(hitmap[iter])
 				{
 					trace('hitmap hit: '+iter);
-					lines.push('HITMAP HIT');
+					//lines.push('HITMAP HIT');
 					breakOn = iter;
 					break;
 				}
 				if(hitmapWithStack[key])
 				{
 					trace('hitmapWithStack hit: '+key);
-					lines.push('HITMAPSTACK HIT');
+					//lines.push('HITMAPSTACK HIT');
 					break;
 				}
 				if(iter == target)
@@ -426,13 +434,21 @@ package com.swfwire.decompiler.utils
 							hitmapCopy3[iterHitmap] = hitmap[iterHitmap];
 							hitmapCopy4[iterHitmap] = hitmap[iterHitmap];
 						}
-						var r1:Object = instructionsToString(instructions, argumentNames, localCount, target1, hitmapCopy3, hitmapCopy1, positionLookup, true, scope, locals, stack);
-						var r2:Object = instructionsToString(instructions, argumentNames, localCount, target2, hitmapCopy4, hitmapCopy2, positionLookup, true, scope, locals, stack);
+						
+						var stackCopy1:OperandStack = new OperandStack();
+						stackCopy1.values = stack.values.slice();
+						var stackCopy2:OperandStack = new OperandStack();
+						stackCopy2.values = stack.values.slice();
+						
+						var r1:Object = instructionsToString(instructions, argumentNames, localCount, target1, hitmapCopy3, hitmapCopy1, positionLookup, true, scope, locals, stackCopy1);
+						var r2:Object = instructionsToString(instructions, argumentNames, localCount, target2, hitmapCopy4, hitmapCopy2, positionLookup, true, scope, locals, stackCopy2);
 						
 						var isWhile:Boolean = false;
 						
 						var a1:int = -1;
 						var a2:String = '';
+						
+						Debug.dump({flow1: r1.flow, flow2: r2.flow});
 						
 						outer:
 						for(var iter4:int = 0; iter4 < r1.flow.length; iter4++)
@@ -455,10 +471,6 @@ package com.swfwire.decompiler.utils
 							}
 						}
 						
-						lines.push('		MERGE @'+a1);
-						lines.push('		FLOW1: '+r1.flow.length+', BREAK @'+r1.breakOn);
-						lines.push('		FLOW2: '+r2.flow.length+', BREAK @'+r2.breakOn);
-						
 						if(a1 == -1)
 						{
 							//if(r1.breakOn >= 0 && (r1.breakOn == a1 || a1 == -1))
@@ -475,15 +487,19 @@ package com.swfwire.decompiler.utils
 							}
 						}
 						
-						if(!isWhile && showByteCode)
+						if(!isWhile && showBranchInfo)
 						{
 							if(a1 >= 0)
 							{
 								lines.push('		MERGE @'+a1);
+								lines.push('		FLOW1 LENGTH: '+r1.flow.length+', BREAK @'+r1.breakOn);
+								lines.push('		FLOW2 LENGTH: '+r2.flow.length+', BREAK @'+r2.breakOn);
 							}
 							else
 							{
 								lines.push('		NO MERGE');
+								lines.push('		FLOW1 LENGTH: '+r1.flow.length+', BREAK @'+r1.breakOn);
+								lines.push('		FLOW2 LENGTH: '+r2.flow.length+', BREAK @'+r2.breakOn);
 							}
 						}
 						
@@ -749,7 +765,7 @@ package com.swfwire.decompiler.utils
 					}
 					else if(op is Instruction_dup)
 					{
-						var tempStr = stack.pop();
+						tempStr = stack.pop();
 						stack.push(tempStr);
 						stack.push(tempStr);
 					}
@@ -871,7 +887,7 @@ package com.swfwire.decompiler.utils
 						{
 							case MultinameToken.KIND_QName:
 								tempStr2 = stack.pop();
-								var obj:String = stack.pop();
+								//var obj2:String = stack.pop();
 								
 								rmn = new ReadableMultiname();
 								getReadableMultiname(tempInt, rmn);
