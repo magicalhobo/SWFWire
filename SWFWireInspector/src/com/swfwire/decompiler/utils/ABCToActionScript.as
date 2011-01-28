@@ -85,7 +85,15 @@ package com.swfwire.decompiler.utils
 				getReadableMultiname(paramType, readableArg);
 				r.arguments[iter] = readableArg;
 				
-				r.argumentNames[iter] = abcFile.cpool.strings[methodInfo.paramNames[iter].value].utf8;
+				if(methodInfo.paramNames[iter])
+				{
+					r.argumentNames[iter] = abcFile.cpool.strings[methodInfo.paramNames[iter].value].utf8;
+				}
+				else
+				{
+					r.argumentNames[iter] = 'arg'+iter;
+				}
+
 				//args.push('arg'+iter+':'+multinameTypeToString(cpool, paramType));
 			}
 			var bodyId:int = getBodyIdFromMethodId(methodId);
@@ -374,7 +382,8 @@ package com.swfwire.decompiler.utils
 								op is Instruction_callpropvoid ||
 								op is Instruction_coerce ||
 								op is Instruction_findpropstrict ||
-								op is Instruction_getproperty
+								op is Instruction_getproperty ||
+								op is Instruction_setproperty
 							))
 						{
 							var r:ReadableMultiname = new ReadableMultiname();
@@ -1087,6 +1096,10 @@ package com.swfwire.decompiler.utils
 						stack.push(stack.pop()+' + 1');
 					}
 					else if(op is Instruction_pushscope)
+					{
+						scope.push(stack.pop());
+					}
+					else if(op is Instruction_popscope)
 					{
 						scope.push(stack.pop());
 					}
