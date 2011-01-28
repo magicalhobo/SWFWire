@@ -296,6 +296,7 @@ package com.swfwire.decompiler.utils
 				}
 			}
 			
+			var subflow:Object = {};
 			var flow:Array = [];
 			var sourceUntil:Object = {};
 			var breakOn:int = -1;
@@ -329,6 +330,7 @@ package com.swfwire.decompiler.utils
 				{
 					continue;
 				}
+				subflow[iter] = 1;
 				hitmap[iter] = 1;
 				hitmapWithStack[key] = 1;
 				flow.push(key);
@@ -480,23 +482,7 @@ package com.swfwire.decompiler.utils
 							}
 						}
 						
-						if(a1 == -1)
-						{
-							//if(r1.breakOn >= 0 && (r1.breakOn == a1 || a1 == -1))
-							if(r1.breakOn >= 0)
-							{
-								isWhile = true;
-								r2.flow = {};
-							}
-							//if(r2.breakOn >= 0 && (r2.breakOn == a1 || a1 == -1))
-							if(r2.breakOn >= 0)
-							{
-								isWhile = true;
-								r1.flow = {};
-							}
-						}
-						
-						if(!isWhile && showBranchInfo)
+						if(showBranchInfo)
 						{
 							if(a1 >= 0)
 							{
@@ -512,16 +498,54 @@ package com.swfwire.decompiler.utils
 							}
 						}
 						
+						if(a1 == -1)
+						{
+							//if(r1.breakOn >= 0 && (r1.breakOn == a1 || a1 == -1))
+							if(r1.breakOn >= 0)
+							{
+								for(var iterFlow1:String in subflow)
+								{
+									if(iterFlow1 == r1.breakOn)
+									{
+										isWhile = true;
+										r2.flow = [];
+										break;
+									}
+								}
+							}
+							//if(r2.breakOn >= 0 && (r2.breakOn == a1 || a1 == -1))
+							if(r2.breakOn >= 0)
+							{
+								for(var iterFlow2:String in subflow)
+								{
+									if(iterFlow2 == r2.breakOn)
+									{
+										isWhile = true;
+										r1.flow = [];
+										break;
+									}
+								}
+							}
+						}
+						
 						//Debug.dump(r1.flow);
 						//Debug.dump(r2.flow);
 						
 						for(var iterHit2:uint = 0; iterHit2 < r1.flow.length; iterHit2++)
 						{
+							if(r1.flow[iterHit2] == a1)
+							{
+								break;
+							}
 							hitmapWithStack[r1.flow[iterHit2]] = 1;
 						}
 						
 						for(var iterHit3:uint = 0; iterHit3 < r2.flow.length; iterHit3++)
 						{
+							if(r2.flow[iterHit3] == a1)
+							{
+								break;
+							}
 							hitmapWithStack[r2.flow[iterHit3]] = 1;
 						}
 						

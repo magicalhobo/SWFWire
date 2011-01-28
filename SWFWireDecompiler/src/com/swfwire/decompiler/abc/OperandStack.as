@@ -4,7 +4,7 @@ package com.swfwire.decompiler.abc
 	{
 		public var values:Vector.<Object>;
 		
-		public function OperandStack(maxStack:uint)
+		public function OperandStack()
 		{
 			values = new Vector.<Object>();
 		}
