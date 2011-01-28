@@ -250,9 +250,12 @@ package com.swfwire.decompiler.utils
 											  scope:ScopeStack = null,
 											  locals:LocalRegisters = null,
 											  stack:OperandStack = null,
-											  target:int = -1):Object
+											  target:int = -1,
+											  depth:int = 0):Object
 		{
 			var lines:Array = [];
+			
+			trace('depth: '+depth+'	'+start);
 			
 			if(!scope)
 			{
@@ -309,20 +312,20 @@ package com.swfwire.decompiler.utils
 				
 				if(hitmap[iter])
 				{
-					trace('hitmap hit: '+iter);
+					//trace('hitmap hit: '+iter);
 					//lines.push('HITMAP HIT');
 					breakOn = iter;
 					break;
 				}
 				if(hitmapWithStack[key])
 				{
-					trace('hitmapWithStack hit: '+key);
+					//trace('hitmapWithStack hit: '+key);
 					//lines.push('HITMAPSTACK HIT');
 					break;
 				}
 				if(iter == target)
 				{
-					trace('target hit: '+iter);
+					//trace('target hit: '+iter);
 					breakOn = iter;
 					break;
 				}
@@ -385,12 +388,18 @@ package com.swfwire.decompiler.utils
 								op is Instruction_coerce ||
 								op is Instruction_findpropstrict ||
 								op is Instruction_getproperty ||
-								op is Instruction_setproperty
+								op is Instruction_setproperty ||
+								op is Instruction_initproperty
 							))
 						{
 							var r:ReadableMultiname = new ReadableMultiname();
 							this.getReadableMultiname(op['index'], r);
-							params.push(this.multinameTypeToString(r));
+							var mnString:String = this.multinameTypeToString(r);
+							if(mnString == '?')
+							{
+								mnString = '(#'+op['index']+')';
+							}
+							params.push(mnString);
 						}
 						//string index
 						else if(name == 'index' && (op is Instruction_pushstring))
@@ -451,15 +460,15 @@ package com.swfwire.decompiler.utils
 						var stackCopy2:OperandStack = new OperandStack();
 						stackCopy2.values = stack.values.slice();
 						
-						var r1:Object = instructionsToString(instructions, argumentNames, localCount, target1, hitmapCopy3, hitmapCopy1, positionLookup, true, scope, locals, stackCopy1);
-						var r2:Object = instructionsToString(instructions, argumentNames, localCount, target2, hitmapCopy4, hitmapCopy2, positionLookup, true, scope, locals, stackCopy2);
+						var r1:Object = instructionsToString(instructions, argumentNames, localCount, target1, hitmapCopy3, hitmapCopy1, positionLookup, true, scope, locals, stackCopy1, -1, depth++);
+						var r2:Object = instructionsToString(instructions, argumentNames, localCount, target2, hitmapCopy4, hitmapCopy2, positionLookup, true, scope, locals, stackCopy2, -1, depth++);
 						
 						var isWhile:Boolean = false;
 						
 						var a1:int = -1;
 						var a2:String = '';
 						
-						Debug.dump({flow1: r1.flow, flow2: r2.flow});
+						//Debug.dump({flow1: r1.flow, flow2: r2.flow});
 						
 						outer:
 						for(var iter4:int = 0; iter4 < r1.flow.length; iter4++)
@@ -812,6 +821,14 @@ package com.swfwire.decompiler.utils
 						source = 'throw '+stack.pop()+';';
 					}
 					*/
+					else if(op is Instruction_increment)
+					{
+						stack.push(stack.pop()+'++');
+					}
+					else if(op is Instruction_increment_i)
+					{
+						stack.push('int('+stack.pop()+')++');
+					}
 					else if(op is Instruction_add)
 					{
 						tempStr = stack.pop();
@@ -919,19 +936,42 @@ package com.swfwire.decompiler.utils
 						switch(mn.kind)
 						{
 							case MultinameToken.KIND_QName:
+								var value3:String = stack.pop();
 								tempStr2 = stack.pop();
-								//var obj2:String = stack.pop();
 								
 								rmn = new ReadableMultiname();
 								getReadableMultiname(tempInt, rmn);
 								tempStr = this.multinameTypeToString(rmn);
 								
-								if(obj != tempStr)
+								if(tempStr2 != tempStr)
 								{
-									tempStr = obj+'.'+tempStr;
+									tempStr = tempStr2+'.'+tempStr;
 								}
 								tempStr = tempStr;
-								source = tempStr+' = '+tempStr2+';';
+								source = tempStr+' = '+value3+';';
+								break;
+						}
+					}
+					else if(op is Instruction_initproperty)
+					{
+						tempInt = Instruction_initproperty(op).index;
+						mn = abcFile.cpool.multinames[tempInt];
+						switch(mn.kind)
+						{
+							case MultinameToken.KIND_QName:
+								var value2:String = stack.pop();
+								tempStr2 = stack.pop();
+								
+								rmn = new ReadableMultiname();
+								getReadableMultiname(tempInt, rmn);
+								tempStr = this.multinameTypeToString(rmn);
+								
+								if(tempStr2 != tempStr)
+								{
+									tempStr = tempStr2+'.'+tempStr;
+								}
+								tempStr = tempStr;
+								source = tempStr+' = '+value2+';';
 								break;
 						}
 					}
@@ -1107,6 +1147,10 @@ package com.swfwire.decompiler.utils
 					{
 						stack.push('Number('+stack.pop()+')');
 					}
+					else if(op is Instruction_convert_i)
+					{
+						stack.push('int('+stack.pop()+')');
+					}
 					else if(op is Instruction_convert_u)
 					{
 						stack.push('uint('+stack.pop()+')');
@@ -1175,17 +1219,31 @@ package com.swfwire.decompiler.utils
 						tempStr = stack.pop();
 						source = tempStr+';';
 					}
+					else if(op is Instruction_newarray)
+					{
+						var argCountA:uint = Instruction_newarray(op).argCount;
+						var props2A:Array = [];
+						for(var iter2A:int = 0; iter2A < argCountA; iter2A++)
+						{
+							var valNA:* = stack.pop();
+							props2A.push(valNA);
+						}
+						props2A.reverse();
+						line += '['+props2A.join(', ')+']';
+						stack.push(line);
+					}
 					else if(op is Instruction_newobject)
 					{
 						var argCount:uint = Instruction_newobject(op).argCount;
-						line += '{';
+						var props2:Array = [];
 						for(var iter2:int = 0; iter2 < argCount; iter2++)
 						{
 							var valN:* = stack.pop();
 							var nameN:* = stack.pop();
-							line += nameN+': '+valN;
+							props2.push(nameN+': '+valN);
 						}
-						line += '}';
+						props2.reverse();
+						line += '{'+props2.join(', ')+'}';
 						stack.push(line);
 					}
 					else if(op is Instruction_returnvalue)
@@ -1314,7 +1372,7 @@ package com.swfwire.decompiler.utils
 			{
 				r.namespace = customNamespaces[r.namespace];
 			}
-			if(r.namespace == '' || r.namespace == 'http://adobe.com/AS3/2006/builtin')
+			if(r.namespace == '' || r.namespace == 'http://adobe.com/AS3/2006/builtin' || r.namespace == 'private')
 			{
 				result = r.name;
 			}
