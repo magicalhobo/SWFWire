@@ -82,11 +82,19 @@
 					detailsPanel.preview.validateDisplayList();
 				});
 				
-				loaderInfo.uncaughtErrorEvents.addEventListener(UncaughtErrorEvent.UNCAUGHT_ERROR, function(ev:UncaughtErrorEvent):void
+				try
 				{
-					log('Uncaught Error.');
-					log(ev.error);
-				});
+					loaderInfo['uncaughtErrorEvents'].addEventListener('uncaughtError', function(ev:*):void
+					{
+						log('Uncaught Error.');
+						try
+						{
+							log(ev.error);
+						}
+						catch(e:*){}
+					});
+				}
+				catch(e:*){}
 				
 				detailsPanel.preview.addChild(loader);
 				

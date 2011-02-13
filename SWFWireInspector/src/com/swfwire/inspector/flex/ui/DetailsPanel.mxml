@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml" currentState="swf" xmlns:ns1="*" width="100%" height="100%" xmlns:display="com.swfwire.inspector.display.*">
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml"
+		   xmlns:display="com.swfwire.inspector.display.*"
+		   currentState="swf" width="100%" height="100%">
 	<mx:states>
 		<mx:State name="swf">
 			<mx:RemoveChild target="{actionScript}"/>

@@ -49,7 +49,7 @@ mx|Button
 	font-size: 12;
 	corner-radius: 0;
 }
-
+/*
 mx|List
 {
 	content-background-color: #383733;
@@ -57,7 +57,7 @@ mx|List
 	text-roll-over-color: #000000;
 	selection-color: #a4da0a;
 }
-
+*/
 .bigText
 {
 	font-family: MyriadEmbedded;
