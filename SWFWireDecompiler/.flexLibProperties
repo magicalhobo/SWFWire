@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<flexLibProperties includeAllClasses="true" version="3">
+<flexLibProperties includeAllClasses="true" useMultiPlatformConfig="false" version="3">
   <includeClasses>
     <classEntry path="com.swfwire.decompiler.AsyncSWFReader"/>
     <classEntry path="com.swfwire.decompiler.ImageEncoding"/>
@@ -387,14 +387,13 @@
     <classEntry path="com.swfwire.decompiler.abc.instructions.UnknownInstruction"/>
     <classEntry path="com.swfwire.decompiler.SWF8Writer"/>
     <classEntry path="com.swfwire.decompiler.SWF3Writer"/>
-    <classEntry path="com.swfwire.decompiler.SWFTagIdentifier"/>
     <classEntry path="com.swfwire.decompiler.data.swf3.SWF3"/>
-    <classEntry path="com.swfwire.decompiler.data.swf.SWFTags"/>
     <classEntry path="com.swfwire.decompiler.SWF2Writer"/>
     <classEntry path="com.swfwire.decompiler.SWF4Writer"/>
     <classEntry path="com.swfwire.decompiler.SWF7Writer"/>
     <classEntry path="com.swfwire.decompiler.SWF5Writer"/>
     <classEntry path="com.swfwire.decompiler.SWF6Writer"/>
+    <classEntry path="com.swfwire.decompiler.SWFWireDecompilerConfig"/>
   </includeClasses>
   <includeResources/>
   <namespaceManifests/>
