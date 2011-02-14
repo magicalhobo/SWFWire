@@ -12,6 +12,7 @@
 	<mx:Script>
 		<![CDATA[
 			import air.update.ApplicationUpdaterUI;
+			import air.update.events.UpdateEvent;
 			
 			import com.swfwire.debugger.DebuggerAsyncModifier;
 			import com.swfwire.debugger.events.AsyncSWFModifierEvent;
@@ -68,7 +69,7 @@
 			
 			private function main():void
 			{
-				log('SWFWireDebugger Version '+Config.VERSION);
+				contextMenu.items.push(new ContextMenuItem('SWFWireDebugger Version '+Config.VERSION));
 				
 				stage.addEventListener(Event.ENTER_FRAME, function(ev:Event):void
 				{
@@ -78,19 +79,36 @@
 					}
 				});
 				
+				addEventListener(Event.CLOSE, function(ev:Event):void
+				{
+					preview.visible = true;
+					preview.close();
+				});
+				
 				preview.visible = false;
 				preview.addEventListener(Event.CLOSING, function(ev:Event):void
 				{
-					ev.preventDefault();
-					preview.unload();
-					preview.visible = false;
-					currentState = 'waiting';
+					if(!nativeWindow.closed)
+					{
+						ev.preventDefault();
+						preview.unload();
+						preview.visible = false;
+						currentState = 'waiting';
+					}
 				});
 				preview.alwaysInFront = true;
 				preview.open();
 				
 				appUpdater = new ApplicationUpdaterUI();
 				appUpdater.configurationFile = new File('app:/updateConfig.xml');
+				if(Config.TESTING)
+				{
+					appUpdater.addEventListener(UpdateEvent.INITIALIZED, function(ev:Event):void
+					{
+						appUpdater.checkNow();
+					});
+				}
+
 				appUpdater.initialize();
 				
 				windowTracker = new WindowTracker(SharedObject.getLocal('preferences'), nativeWindow);

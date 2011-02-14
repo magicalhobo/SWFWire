@@ -49,7 +49,7 @@
 			{
 				Debug.enabled = true;
 				
-				contextMenu.items.push(new ContextMenuItem('SWFWire Inspector '+Config.VERSION));
+				contextMenu.items.push(new ContextMenuItem('SWFWireInspector '+Config.VERSION));
 				
 				appUpdater = new ApplicationUpdaterUI();
 				appUpdater.configurationFile = new File('app:/updateConfig.xml');
