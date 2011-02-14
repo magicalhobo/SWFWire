@@ -99,7 +99,7 @@
 				
 				if(Config.TESTING)
 				{
-					load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpseBranching/bin-debug/SWFCorpseBranching.swf').url);
+					load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpseInvalidBranch/bin-debug/SWFCorpseInvalidBranch.swf').url);
 				}
 			}
 			

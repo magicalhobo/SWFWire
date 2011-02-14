@@ -7,6 +7,7 @@ package com.swfwire.decompiler.utils
 	import com.swfwire.decompiler.abc.ScopeStack;
 	import com.swfwire.decompiler.abc.instructions.*;
 	import com.swfwire.decompiler.abc.tokens.*;
+	import com.swfwire.decompiler.abc.tokens.cpool.CPoolIndex;
 	import com.swfwire.decompiler.abc.tokens.multinames.*;
 	import com.swfwire.decompiler.abc.tokens.traits.*;
 	import com.swfwire.utils.Debug;
@@ -96,11 +97,23 @@ package com.swfwire.decompiler.utils
 
 				//args.push('arg'+iter+':'+multinameTypeToString(cpool, paramType));
 			}
+			
 			var bodyId:int = getBodyIdFromMethodId(methodId);
 			if(bodyId >= 0)
 			{
-				r.instructions = abcFile.methodBodies[bodyId].instructions;
-				r.localCount = abcFile.methodBodies[bodyId].localCount;
+				var methodBody:MethodBodyInfoToken = abcFile.methodBodies[bodyId];
+				r.instructions = methodBody.instructions;
+				r.localCount = methodBody.localCount;
+				r.slots = {};
+				for(var iterTraits:uint = 0; iterTraits < methodBody.traits.length; iterTraits++)
+				{
+					var trait:TraitsInfoToken = methodBody.traits[iterTraits];
+					if(trait.kind == TraitsInfoToken.KIND_TRAIT_SLOT)
+					{
+						var slotToken:TraitSlotToken = trait.data as TraitSlotToken;
+						r.slots[slotToken.slotId] = abcFile.cpool.strings[MultinameQNameToken(abcFile.cpool.multinames[trait.name].data).name].utf8;
+					}
+				}
 			}
 			
 			r.type = new ReadableMultiname(); 
@@ -128,6 +141,8 @@ package com.swfwire.decompiler.utils
 			else if(traitInfo.kind == TraitsInfoToken.KIND_TRAIT_METHOD || traitInfo.kind == TraitsInfoToken.KIND_TRAIT_GETTER || traitInfo.kind == TraitsInfoToken.KIND_TRAIT_SETTER)
 			{
 				r.traitType = ReadableTrait.TYPE_METHOD;
+				r.slots = {};
+				
 				var traitMethod:TraitMethodToken = TraitMethodToken(traitInfo.data);
 				var methodInfo:MethodInfoToken = abcFile.methods[traitMethod.methodId];
 				for(var iter:uint = 0; iter < methodInfo.paramCount; iter++)
@@ -150,8 +165,18 @@ package com.swfwire.decompiler.utils
 				var bodyId:int = getBodyIdFromMethodId(traitMethod.methodId);
 				if(bodyId >= 0)
 				{
-					r.instructions = abcFile.methodBodies[bodyId].instructions;
-					r.localCount = abcFile.methodBodies[bodyId].localCount;
+					var methodBody:MethodBodyInfoToken = abcFile.methodBodies[bodyId];
+					r.instructions = methodBody.instructions;
+					r.localCount = methodBody.localCount;
+					for(var iterTraits:uint = 0; iterTraits < methodBody.traits.length; iterTraits++)
+					{
+						var trait:TraitsInfoToken = methodBody.traits[iterTraits];
+						if(trait.kind == TraitsInfoToken.KIND_TRAIT_SLOT)
+						{
+							var slotToken:TraitSlotToken = trait.data as TraitSlotToken;
+							r.slots[slotToken.slotId] = abcFile.cpool.strings[MultinameQNameToken(abcFile.cpool.multinames[trait.name].data).name].utf8;
+						}
+					}
 				}
 
 				r.type = new ReadableMultiname(); 
@@ -241,6 +266,7 @@ package com.swfwire.decompiler.utils
 		
 		private function instructionsToString(instructions:Vector.<IInstruction>,
 											  argumentNames:Vector.<String>,
+											  slotNames:Object,
 											  localCount:uint,
 											  start:uint = 0,
 											  hitmap:Object = null, 
@@ -389,6 +415,7 @@ package com.swfwire.decompiler.utils
 								op is Instruction_findpropstrict ||
 								op is Instruction_getproperty ||
 								op is Instruction_setproperty ||
+								op is Instruction_findproperty ||
 								op is Instruction_initproperty
 							))
 						{
@@ -460,8 +487,12 @@ package com.swfwire.decompiler.utils
 						var stackCopy2:OperandStack = new OperandStack();
 						stackCopy2.values = stack.values.slice();
 						
-						var r1:Object = instructionsToString(instructions, argumentNames, localCount, target1, hitmapCopy3, hitmapCopy1, positionLookup, true, scope, locals, stackCopy1, -1, depth++);
-						var r2:Object = instructionsToString(instructions, argumentNames, localCount, target2, hitmapCopy4, hitmapCopy2, positionLookup, true, scope, locals, stackCopy2, -1, depth++);
+						trace('			start branch from: '+target1);
+						var r1:Object = instructionsToString(instructions, argumentNames, slotNames, localCount, target1, hitmapCopy3, hitmapCopy1, positionLookup, true, scope, locals, stackCopy1, -1, depth + 1);
+						trace('			end branch from: '+target1);
+						trace('			start branch from: '+target2);
+						var r2:Object = instructionsToString(instructions, argumentNames, slotNames, localCount, target2, hitmapCopy4, hitmapCopy2, positionLookup, true, scope, locals, stackCopy2, -1, depth + 1);
+						trace('			end branch from: '+target2);
 						
 						var isWhile:Boolean = false;
 						
@@ -490,6 +521,8 @@ package com.swfwire.decompiler.utils
 								}
 							}
 						}
+						
+						trace('		merge: '+a1);
 						
 						if(showBranchInfo)
 						{
@@ -780,6 +813,10 @@ package com.swfwire.decompiler.utils
 					{
 						stack.push(locals.getName(Instruction_getlocal(op).index));
 					}
+					else if(op is Instruction_getslot)
+					{
+						stack.push(slotNames[Instruction_getslot(op).slotIndex]);
+					}
 					else if(op is Instruction_setlocal0)
 					{
 						source = locals.getName(0)+' = '+stack.pop()+';';
@@ -800,10 +837,13 @@ package com.swfwire.decompiler.utils
 					{
 						source = locals.getName(Instruction_setlocal(op).index)+' = '+stack.pop()+';';
 					}
+					else if(op is Instruction_setslot)
+					{
+						source = slotNames[Instruction_setslot(op).slotIndex]+' = '+stack.pop()+';';
+					}
 					else if(op is Instruction_kill)
 					{
 						locals.setValue(Instruction_kill(op).index, 'undefined');
-						//source = locals.getName(Instruction_kill(op).index)+' = undefined;';
 					}
 					else if(op is Instruction_dup)
 					{
@@ -821,13 +861,9 @@ package com.swfwire.decompiler.utils
 						source = 'throw '+stack.pop()+';';
 					}
 					*/
-					else if(op is Instruction_increment)
-					{
-						stack.push(stack.pop()+'++');
-					}
 					else if(op is Instruction_increment_i)
 					{
-						stack.push('int('+stack.pop()+')++');
+						stack.push('int('+stack.pop()+') + 1');
 					}
 					else if(op is Instruction_add)
 					{
@@ -877,12 +913,12 @@ package com.swfwire.decompiler.utils
 						
 						stack.push('('+tempStr+') == ('+tempStr2+')');
 					}
-					else if(op is Instruction_equals)
+					else if(op is Instruction_strictequals)
 					{
 						tempStr = stack.pop();
 						tempStr2 = stack.pop();
 						
-						stack.push('('+tempStr+') == ('+tempStr2+')');
+						stack.push('('+tempStr+') === ('+tempStr2+')');
 					}
 					else if(op is Instruction_not)
 					{
@@ -903,6 +939,22 @@ package com.swfwire.decompiler.utils
 								stack.push(tempStr);
 								//stack.push(tempStr);
 								//source = 'findprop - '+tempStr;
+								break;
+						}
+					}
+					else if(op is Instruction_findproperty)
+					{
+						tempInt = Instruction_findproperty(op).index;
+						mn = abcFile.cpool.multinames[tempInt];
+						switch(mn.kind)
+						{
+							case MultinameToken.KIND_QName:
+								rmn = new ReadableMultiname();
+								getReadableMultiname(tempInt, rmn);
+								tempStr = this.multinameTypeToString(rmn);
+								
+								stack.push(tempStr);
+								//source = 'getprop - '+tempStr;
 								break;
 						}
 					}
@@ -1155,9 +1207,9 @@ package com.swfwire.decompiler.utils
 					{
 						stack.push('uint('+stack.pop()+')');
 					}
-					else if(op is Instruction_kill)
+					else if(op is Instruction_typeof)
 					{
-						locals.setName(Instruction_kill(op).index, 'undefined');
+						stack.push('typeof('+stack.pop()+')');
 					}
 					else if(op is Instruction_increment)
 					{
@@ -1171,6 +1223,10 @@ package com.swfwire.decompiler.utils
 					{
 						scope.push(stack.pop());
 					}
+					else if(op is Instruction_getscopeobject)
+					{
+						stack.push(scope.values[scope.values.length - 1 - Instruction_getscopeobject(op).index]);
+					}
 					else if(op is Instruction_pushnull)
 					{
 						stack.push('null');
@@ -1178,6 +1234,10 @@ package com.swfwire.decompiler.utils
 					else if(op is Instruction_pushundefined)
 					{
 						stack.push('undefined');
+					}
+					else if(op is Instruction_pushnan)
+					{
+						stack.push('NaN');
 					}
 					else if(op is Instruction_pushbyte)
 					{
@@ -1254,7 +1314,10 @@ package com.swfwire.decompiler.utils
 					}
 					else if(op is Instruction_returnvoid)
 					{
-						source = 'return;';
+						if(!(instructions[iter + 1] is EndInstruction))
+						{
+							source = 'return;';
+						}
 						exit = true;
 					}
 					else
@@ -1342,7 +1405,7 @@ package com.swfwire.decompiler.utils
 				
 				if(r.instructions && r.instructions.length > 0)
 				{
-					pieces.push('\n		{\n'+StringUtil.indent(instructionsToString(r.instructions, r.argumentNames, r.localCount).result, '			')+'\n		}');
+					pieces.push('\n		{\n'+StringUtil.indent(instructionsToString(r.instructions, r.argumentNames, r.slots, r.localCount).result, '			')+'\n		}');
 				}
 				else
 				{
