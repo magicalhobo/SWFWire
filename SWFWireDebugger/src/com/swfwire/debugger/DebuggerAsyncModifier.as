@@ -286,7 +286,7 @@ package com.swfwire.debugger
 						var netConnectionQName:MultinameQNameToken = abcTag.abcFile.cpool.multinames[netConnectionIndex].data as MultinameQNameToken;
 						netConnectionQName.ns = injectedNamespace;
 					}
-					
+					/*
 					update(wrapper, abcTag, 'flash.display', 'Loader', injectedNamespace, -1);
 					update(wrapper, abcTag, 'flash.display', 'Sprite', injectedNamespace, wrapper.addString('SWFWire_Sprite'));
 					update(wrapper, abcTag, 'flash.display', 'MovieClip', injectedNamespace, wrapper.addString('SWFWire_MovieClip'));
@@ -299,7 +299,7 @@ package com.swfwire.debugger
 
 					updatePublic(wrapper, abcTag, 'loaderInfo', wrapper.addString('swfWire_loaderInfo'));
 					updatePublic(wrapper, abcTag, 'stage', wrapper.addString('swfWire_stage'));
-					
+					*/
 					var mainIndex:int = wrapper.getMultinameIndex(mainClassPackage, mainClassName);
 					var mainInst:InstanceToken = null;
 					
@@ -342,7 +342,7 @@ package com.swfwire.debugger
 						
 						mainInst.iinit = defcmi;
 					}
-					
+					/*
 					for(var iterInstance:int = 0; iterInstance < abcTag.abcFile.instances.length; iterInstance++)
 					{
 						var enumerateMethodsInstructions:Vector.<IInstruction> = new Vector.<IInstruction>();
@@ -389,7 +389,7 @@ package com.swfwire.debugger
 							getPropertyInstructions.length,
 							Vector.<String>([':String']));
 					}
-					
+					*/
 					//Debug.log('test', 'after', mainInst.traits);
 					
 					//mainInst.iinit--;

@@ -15,6 +15,7 @@ package com.swfwire.decompiler.utils
 		public var declaration:ReadableMultiname;
 		public var arguments:Vector.<ReadableMultiname>;
 		public var argumentNames:Vector.<String>;
+		public var slots:Object;
 		public var instructions:Vector.<IInstruction>;
 		public var type:ReadableMultiname;
 		public var localCount:uint;
