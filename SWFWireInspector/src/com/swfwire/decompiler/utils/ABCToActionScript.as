@@ -66,6 +66,11 @@ package com.swfwire.decompiler.utils
 						readable.namespace = namespaceToString(mq.ns);
 						readable.name = cpool.strings[mq.name].utf8;
 						break;
+					case MultinameToken.KIND_RTQName:
+					case MultinameToken.KIND_RTQNameA:
+						var rtqn:MultinameRTQNameToken = multiname.data as MultinameRTQNameToken;
+						readable.name = cpool.strings[rtqn.name].utf8;
+						break;
 				}
 			}
 		}
@@ -409,6 +414,7 @@ package com.swfwire.decompiler.utils
 						//multiname index
 						if(name == 'index' && 
 							(
+								op is Instruction_getlex ||
 								op is Instruction_callproperty ||
 								op is Instruction_callpropvoid ||
 								op is Instruction_coerce ||
@@ -487,6 +493,7 @@ package com.swfwire.decompiler.utils
 						var stackCopy2:OperandStack = new OperandStack();
 						stackCopy2.values = stack.values.slice();
 						
+						trace('			branch point: '+iter);
 						trace('			start branch from: '+target1);
 						var r1:Object = instructionsToString(instructions, argumentNames, slotNames, localCount, target1, hitmapCopy3, hitmapCopy1, positionLookup, true, scope, locals, stackCopy1, -1, depth + 1);
 						trace('			end branch from: '+target1);
@@ -940,6 +947,9 @@ package com.swfwire.decompiler.utils
 								//stack.push(tempStr);
 								//source = 'findprop - '+tempStr;
 								break;
+							default:
+								stack.push('<runtime multiname (kind: '+mn.kind+')>');
+								break;
 						}
 					}
 					else if(op is Instruction_findproperty)
@@ -962,24 +972,26 @@ package com.swfwire.decompiler.utils
 					{
 						tempInt = Instruction_getproperty(op).index;
 						mn = abcFile.cpool.multinames[tempInt];
+						var obj:String = stack.pop();
 						switch(mn.kind)
 						{
 							case MultinameToken.KIND_QName:
-								var obj:String = stack.pop();
-								
+							case MultinameToken.KIND_QNameA:
+							case MultinameToken.KIND_RTQName:
+							case MultinameToken.KIND_RTQNameA:
 								rmn = new ReadableMultiname();
 								getReadableMultiname(tempInt, rmn);
 								tempStr = this.multinameTypeToString(rmn);
-								
-								if(obj != tempStr)
-								{
-									tempStr = obj+'.'+tempStr;
-								}
-								tempStr = tempStr;
-								stack.push(tempStr);
-								//source = 'getprop - '+tempStr;
+								break;
+							default:
+								tempStr = '<runtime multiname (kind: '+mn.kind+')>';
 								break;
 						}
+						if(obj != tempStr)
+						{
+							tempStr = obj+'.'+tempStr;
+						}
+						stack.push(tempStr);
 					}
 					else if(op is Instruction_setproperty)
 					{
@@ -988,6 +1000,9 @@ package com.swfwire.decompiler.utils
 						switch(mn.kind)
 						{
 							case MultinameToken.KIND_QName:
+							case MultinameToken.KIND_QNameA:
+							case MultinameToken.KIND_RTQName:
+							case MultinameToken.KIND_RTQNameA:
 								var value3:String = stack.pop();
 								tempStr2 = stack.pop();
 								
