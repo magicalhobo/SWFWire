@@ -3,6 +3,6 @@ package com.swfwire.inspector
 	public class Config
 	{
 		public static const TESTING:Boolean = true;
-		public static const VERSION:String = '1.6';
+		public static const VERSION:String = '2.9';
 	}
 }
