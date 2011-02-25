@@ -1342,7 +1342,7 @@ package com.swfwire.decompiler.utils
 					}
 					else
 					{
-						lines.push('		*UNKNOWN OP: '+op);
+						lines.push('		//UNKNOWN OP: '+op);
 					}
 					
 					if(showStack)
