@@ -41,6 +41,23 @@ package
 			}
 		}
 		
+		public static function testFor():void
+		{
+			for(var i:uint = 0; i < 10; i++)
+			{
+				nothing();
+			}
+		}
+		
+		public static function testForIn():void
+		{
+			var b:Object = {};
+			for(var i:String in b)
+			{
+				nothing();
+			}
+		}
+		
 		public static function testInfiniteFor():void
 		{
 			for(;;)
@@ -183,6 +200,10 @@ package
 			return true;
 		}
 		
+		private static function nothing():void
+		{
+		}
+		
 		public var publicVar:String = 'publicVar';
 		protected var protectedVar:String = 'protectedVar';
 		private var privateVar:String = 'privateVar';
@@ -242,7 +263,7 @@ package
 			var ul:URLLoader = ev.currentTarget as URLLoader;
 			trace('load complete: '+ul.bytesLoaded);
 		}
-
+		
 		public function SWFCorpse(param1:Object = null)
 		{
 			for(var iter:String in loaderInfo.parameters)

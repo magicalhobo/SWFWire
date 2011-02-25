@@ -33,6 +33,8 @@
 			import mx.events.ListEvent;
 			import mx.managers.DragManager;
 			
+			import net.anirudh.as3syntaxhighlight.CodePrettyPrint;
+			
 			private var loader:Loader;
 			private var urlLoader:URLLoader;
 			private var windowTracker:WindowTracker;
@@ -108,6 +110,7 @@
 				if(Config.TESTING)
 				{
 					load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpseInvalidBranch/bin-debug/SWFCorpseInvalidBranch.swf').url);
+					//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpse/bin-debug/SWFCorpse.swf').url);
 				}
 			}
 			
@@ -604,11 +607,78 @@
 						rc.traits.push(r);
 					}
 					
-					detailsPanel.actionScript.classes.text = translator.classToString(rc);
+					var text:String = translator.classToString(rc);
+					var prettyPrint:CodePrettyPrint = new CodePrettyPrint();
+					var codeStyle:StyleSheet = new StyleSheet();
+					codeStyle.parseCSS(as3Styles);
+					text = prettyPrint.prettyPrintOne(text, null, true);
+					
+					detailsPanel.actionScript.classes.setStyle('contentBackgroundColor', 0xFFFFFF);
+					detailsPanel.actionScript.classes.styleSheet = codeStyle;
+					detailsPanel.actionScript.classes.htmlText = text;
+					//detailsPanel.actionScript.classes.text = translator.classToString(rc);
 				}
 			}
 		]]>
 	</mx:Script>
+	<mx:String id="as3Styles">
+		<![CDATA[
+		.var {
+			color: #6699cc;
+			font-weight: bold;
+		}
+		.fnc {
+			color: #339966;
+			font-weight: bold;
+		}
+		.cls {
+			color: #9900cc;
+			font-weight: bold;
+		}
+		.str {
+			color: #990000; 
+			font-weight: bold;
+		}
+		.kwd {
+			color: #0033ff;
+			font-weight: bold;
+		}
+		.com { 
+			color: #009900;
+			font-weight: normal;
+			font-style: italic;
+		}
+		.typ { 
+			color: #000000;
+		}
+		.lit { 
+			color: #000000;
+		}
+		.trc {
+			color: #cc6666;
+			font-weight: bold;
+		}
+		.pun { 
+			color: #666600;
+		}
+		.pln { 
+			color: #222222;
+			font-weight: normal;
+		}
+		.tag { 
+			color: #000088;
+		}
+		.atn { 
+			color: #660066;
+		}
+		.atv { 
+			color: #880000;
+		}
+		.dec { 
+			color: #660066;
+		} 		
+		]]>
+	</mx:String>
 	<mx:states>
 		<mx:State name="loading">
 			<mx:RemoveChild target="{detailsPanel}"/>
