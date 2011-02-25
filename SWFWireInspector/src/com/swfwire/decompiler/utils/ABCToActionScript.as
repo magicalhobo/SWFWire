@@ -529,7 +529,12 @@ package com.swfwire.decompiler.utils
 							}
 						}
 						
-						trace('		merge: '+a1);
+						if(showBranchInfo)
+						{
+							lines.push('		MERGE @'+a1);
+							lines.push('		FLOW1 LENGTH: '+r1.flow.length+', BREAK @'+r1.breakOn);
+							lines.push('		FLOW2 LENGTH: '+r2.flow.length+', BREAK @'+r2.breakOn);
+						}
 						
 						if(showBranchInfo)
 						{
