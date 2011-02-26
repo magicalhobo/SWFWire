@@ -9,7 +9,6 @@
     <classEntry path="com.swfwire.utils.StringUtil"/>
     <classEntry path="com.swfwire.utils.air.WindowTracker"/>
     <classEntry path="net.anirudh.as3syntaxhighlight.CodePrettyPrint"/>
-    <classEntry path="net.anirudh.as3syntaxhighlight.PseudoThread"/>
   </includeClasses>
   <includeResources/>
   <namespaceManifests/>

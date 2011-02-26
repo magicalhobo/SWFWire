@@ -129,6 +129,14 @@ package net.anirudh.as3syntaxhighlight
         private var pr_ampEnt:RegExp = /&amp;/g;
         private var pr_nbspEnt:RegExp = /&nbsp;/g;
         
+		public function CodePrettyPrint()
+		{
+			regexpPrecederPattern();
+			registerLangHandler(decorateSource, ['default-code']);
+			registerLangHandler(decorateMarkup,
+				['default-markup', 'html', 'htm', 'xhtml', 'xml', 'xsl']);
+		}
+		
         /** unescapes html to plain text. */
         private function htmlToText(html:String):String {
             var pos:int = html.indexOf('&');
@@ -161,46 +169,14 @@ package net.anirudh.as3syntaxhighlight
                 .replace(pr_nbspEnt, ' ');
         }
         
-        
-        // Keyword lists for various languages.
-        private static var FLOW_CONTROL_KEYWORDS:String =
-            "break continue do else for if return while ";
-        private static var C_KEYWORDS:String = FLOW_CONTROL_KEYWORDS + "auto case char const default " +
-            "double enum extern float goto int long register short signed sizeof " +
-            "static struct switch typedef union unsigned void volatile ";
-        private static var COMMON_KEYWORDS:String = C_KEYWORDS + "catch class delete false import " +
-            "new operator private protected public this throw true try ";
-        private static var CPP_KEYWORDS:String = COMMON_KEYWORDS + "alignof align_union asm axiom bool " +
-            "concept concept_map const_cast constexpr decltype " +
-            "dynamic_cast explicit export friend inline late_check " +
-            "mutable namespace nullptr reinterpret_cast static_assert static_cast " +
-            "template typeid typename typeof using virtual wchar_t where ";
-        private static var JAVA_KEYWORDS:String = COMMON_KEYWORDS +
-            "boolean byte extends final finally implements import instanceof null " +
-            "native package strictfp super synchronized throws transient ";
-        private static var CSHARP_KEYWORDS:String = JAVA_KEYWORDS +
-            "as base by checked decimal delegate descending event " +
-            "fixed foreach from group implicit in interface internal into is lock " +
-            "object out override orderby params readonly ref sbyte sealed " +
-            "stackalloc string select uint ulong unchecked unsafe ushort var ";
-        private static var JSCRIPT_KEYWORDS:String = COMMON_KEYWORDS +
-            "debugger eval export function get null set undefined var with " +
-            "Infinity NaN ";
-        private static var PERL_KEYWORDS:String = "caller delete die do dump elsif eval exit foreach for " +
-            "goto if import last local my next no our print package redo require " +
-            "sub undef unless until use wantarray while BEGIN END ";
-        private static var PYTHON_KEYWORDS:String = FLOW_CONTROL_KEYWORDS + "and as assert class def del " +
-            "elif except exec finally from global import in is lambda " +
-            "nonlocal not or pass print raise try with yield " +
-            "False True None ";
-        private static var RUBY_KEYWORDS:String = FLOW_CONTROL_KEYWORDS + "alias and begin case class def" +
-            " defined elsif end ensure false in module next nil not or redo rescue " +
-            "retry self super then true undef unless until when yield BEGIN END ";
-        private static var SH_KEYWORDS:String = FLOW_CONTROL_KEYWORDS + "case done elif esac eval fi " +
-            "function in local set then until ";
-        private static var ALL_KEYWORDS:String = (
-            CPP_KEYWORDS + JSCRIPT_KEYWORDS + PERL_KEYWORDS +
-            PYTHON_KEYWORDS + RUBY_KEYWORDS + SH_KEYWORDS);
+        private static var KEYWORDS:String = "import use namespace " +
+			"package class function const var " +
+			"private protected public final dynamic extends implements static override get set " +
+			"typeof instanceof with is as " +
+			"throw try catch finally " +
+			"void null undefined false true this super trace " +
+			"new delete " +
+			"if else do while switch case default for in foreach as continue break return ";
         
         // token style names.  correspond to css classes
         /** token style for a string literal */
@@ -209,6 +185,8 @@ package net.anirudh.as3syntaxhighlight
         private static var PR_KEYWORD:String = 'kwd';
         /** token style for a comment */
         private static var PR_COMMENT:String = 'com';
+        /** token style for a dosctring */
+        private static var PR_DOCSTRING:String = 'docstring';
         /** token style for a type */
         private static var PR_TYPE:String = 'typ';
         /** token style for a literal value.  e.g. 1, null, true. */
@@ -528,17 +506,29 @@ package net.anirudh.as3syntaxhighlight
                                 	
                                 style = patternParts[0];
 								
-                                if (token == "var") {
+								if (token == "class") 
+								{
+			                   		style = "class";
+			                   	}
+								else if (token == "package") 
+								{
+			                   		style = "package";
+			                   	}
+								else if (token == "function")
+								{
+			                   		style = "function";
+			                   	}
+								else if (token == "var") 
+								{
 			                   		style = "var";
 			                   	}
-								else if (token == "function") {
-			                   		style = "fnc";
+								else if (token == "trace") 
+								{
+			                   		style = "trace";
 			                   	}
-								else if (token == "trace") {
-			                   		style = "trc";
-			                   	}
-								else if (token == "class") {
-			                   		style = "cls";
+								else if (token == "undefined") 
+								{
+			                   		style = "undefined";
 			                   	}
                                 break;
                             }
@@ -561,7 +551,7 @@ package net.anirudh.as3syntaxhighlight
             };
         }
         
-        private var PR_MARKUP_LEXER:Function = createSimpleLexer([], [
+        private var PR_MARKUP_LEXER:Function = createSimpleLexer([],[
                                                     [PR_PLAIN,       /^[^<]+/, null],
                                                     [PR_DECLARATION, /^<!\w[^>]*(?:>|$)/, null],
                                                     [PR_COMMENT,     /^<!--[\s\S]*?(?:-->|$)/, null],
@@ -570,11 +560,11 @@ package net.anirudh.as3syntaxhighlight
                                                     [PR_SOURCE,
                                                      // Tags whose content is not escaped, and which contain source code.
                                                      /^<(script|style|xmp|mx\:Script)\b[^>]*>[\s\S]*?<\/\1\b[^>]*>/i, null],
-                                                    [PR_TAG,         /^<\/?\w[^<>]*>/, null]
-                                                     ]);
+                                                    [PR_TAG,         /^<\/?\w[^<>]*>/, null]]);
         // Splits any of the source|style|xmp entries above into a start tag,
         // source content, and end tag.
         private var PR_SOURCE_CHUNK_PARTS:RegExp = /^(<[^>]*>)([\s\S]*)(<\/[^>]*>)$/;
+		
         /** split markup on tags, comments, application directives, and other top
          * level constructs.  Tags are returned as a single token - attributes are
          * not yet broken out.
@@ -671,14 +661,16 @@ package net.anirudh.as3syntaxhighlight
             }
             fallthroughStylePatterns.push(
                 [PR_PLAIN,   /^(?:[^\'\"\`\/\#]+)/, null, ' \r\n']);
-            if (options.hashComments) {
-                shortcutStylePatterns.push([PR_COMMENT, /^#[^\r\n]*/, null, '#']);
-            }
-            if (options.cStyleComments) {
-                fallthroughStylePatterns.push([PR_COMMENT, /^\/\/[^\r\n]*/, null]);
-                fallthroughStylePatterns.push(
-                    [PR_COMMENT, /^\/\*[\s\S]*?(?:\*\/|$)/, null]);
-            }
+			
+			//inline comments
+            fallthroughStylePatterns.push([PR_COMMENT, /^\/\/[^\r\n]*/, null]);
+			
+			//docstrings
+            fallthroughStylePatterns.push([PR_DOCSTRING, /^\/\*\*[\s\S]*?(?:\*\/|$)/, null]);
+			
+			//block comments
+            fallthroughStylePatterns.push([PR_COMMENT, /^\/\*[\s\S]*?(?:\*\/|$)/, null]);
+			
             if (options.regexLiterals) {
                 var REGEX_LITERAL:String = (
                     // A regular expression literal starts with a slash that is
@@ -774,10 +766,11 @@ package net.anirudh.as3syntaxhighlight
         }
         
         private var decorateSource:Function = sourceDecorator({
-              keywords: ALL_KEYWORDS,
-              hashComments: true,
+              keywords: KEYWORDS,
+              hashComments: false,
               cStyleComments: true,
-              multiLineStrings: true,
+			  docStrings: true,
+              multiLineStrings: false,
               //regexLiterals: true
               //Change by Anirudh
               regexLiterals: true
@@ -906,8 +899,6 @@ package net.anirudh.as3syntaxhighlight
         
         //Added by Anirudh
         public var mainDecorations:Array;
-        public var mainHtml:String;
-        public var prettyPrintStopAsyc:Boolean;
         
         /**
          * @param {string} sourceText plain text
@@ -1082,184 +1073,5 @@ package net.anirudh.as3syntaxhighlight
             }
              return null;
         }
-        
-        //Added by Anirudh: For async mode
-        public var asyncRunning:Boolean;        
-        private var pseudoThread:PseudoThread;
-        private var pprintArgs:Array;
-        private var chunksLen:int;
-
-        
-        public function prettyPrintAsync(sourceCodeHtml:String, opt_langExtension:String, completeFn:Function, intFn:Function, systemManagerIn:ISystemManager, buildHTML:Boolean=false):void
-        {
-        	//process 100 chars (to the nearest newline) at a time
-        	var sourceChunks:Array = new Array();
-        	var len:int = sourceCodeHtml.length;
-    		var i:int = 100;        	
-    		var end:int, start:int = 0, foundIndex:int;
-    		//trace("building arr");
-    		do
-    		{
-    			end = ( i >= len ) ? len : i;
-    			foundIndex = sourceCodeHtml.indexOf('\n', end);
-    			if ( foundIndex != -1 )
-    			{
-    				i = foundIndex;
-    			}
-    			else
-    			{
-    				foundIndex = sourceCodeHtml.indexOf('\r', end);
-	    			if ( foundIndex != -1 )
-	    			{
-	    				i = foundIndex;
-	    			}	    			
-    			} 
-    			end = ( i >= len ) ? len : i;
-    			sourceChunks.push(sourceCodeHtml.substring(start, end));
-    			i += 100;
-    			start = end; 			  		
-    		}
-    		while ( i < len );
-        	
-        	if ( start < i && start < len )
-        	{
-        		sourceChunks[sourceChunks.length - 1] = sourceChunks[sourceChunks.length - 1] + sourceCodeHtml.substring(start);	
-        	}
-        	chunksLen = sourceChunks.length;
-        	//trace("total chunks " + sourceChunks.length);
-        	mainDecorations = new Array();
-        	mainHtml = "";
-        	prettyPrintStopAsyc = false;
-        	asyncRunning = true;
-        	//trace("starting code highlight with " + sourceChunks.length);        	
-        	pprintArgs = [sourceChunks, 0, completeFn, intFn, opt_langExtension, buildHTML];
-        	pseudoThread = new PseudoThread(systemManagerIn, prettyPrintAsyncWorker, this, pprintArgs, 1, 1);
-        	
-        	//setTimeout(prettyPrintAsyncWorker, 250, sourceChunks, 0, completeFn, intFn, opt_langExtension, buildHTML);
-        	  
-        }        
-        
-        private function prettyPrintAsyncWorker(sourceCodeArr:Array,  sourceCodeIdx:int, completeFn:Function, intFn:Function, opt_langExtension:String, buildHTML:Boolean=false):Boolean
-        {
-        	if ( prettyPrintStopAsyc )
-        	{
-        		mainDecorations = null;
-        		mainHtml = "";
-        		asyncRunning = false; 
-        		trace("stopping lexing thread");
-        		return false;
-        	}
-            try {
-                // Extract tags, and convert the source code to plain text.
-                
-                mainHtml += sourceCodeArr[sourceCodeIdx];                
-                trace('started async');                
-                //Anirudh: Change not to do HTML extraction
-                var sourceAndExtractedTags:Object = {source: "", tags: (mainDecorations == null) ? [] : mainDecorations };
-                                
-                // Pick a lexer and apply it.
-                if (!langHandlerRegistry.hasOwnProperty(opt_langExtension)) {
-                    // Treat it as markup if the first non whitespace character is a < and
-                    // the last non-whitespace character is a >.
-                    var checkmark:RegExp = /^\s*?</;
-                    opt_langExtension =
-                        checkmark.test(mainHtml) ? 'default-markup' : 'default-code';
-                }
-                
-                /** Even entries are positions in source in ascending order.  Odd enties
-                 * are style markers (e.g., PR_COMMENT) that run from that position until
-                 * the end.
-                 * @type {Array.<number|string>}
-                 */
-                var decorations:Array = langHandlerRegistry[opt_langExtension].call({}, mainHtml);
-                trace('decorated');
-                mainDecorations = decorations;
-                
-                if ( sourceCodeIdx + 1 == chunksLen )
-                {
-  	                //Anirudh: added buildHTML variable, because during live syntax highlighting, I 
-	                //just need the mainDecorations to apply the correct TextRange sections
-	                if ( buildHTML )
-	                {
-	                	/** Even entries are positions in source in ascending order.  Odd entries
-		                 * are tags that were extracted at that position.
-		                 * @type {Array.<number|string>}
-		                 */
-	                	var extractedTags:Array = sourceAndExtractedTags.tags;
-		                // Integrate the decorations and tags back into the source code to produce
-		                // a decorated html string.
-	    	            mainHtml = recombineTagsAndDecorations(mainHtml, extractedTags, decorations);
-	    	            trace('built html');                	
-	                }
-
-                	asyncRunning = false;
-                	completeFn();
-                }
-                else
-                {
-                	trace("async worker " + sourceCodeIdx);
-                	if ( intFn != null )
-                	{
-                		intFn(sourceCodeIdx, chunksLen);
-                	}
-                	return true;
-                	//setTimeout(prettyPrintAsyncWorker, 250, sourceCodeArr, sourceCodeIdx + 1, completeFn, intFn, opt_langExtension, buildHTML);
-                }
-                
-            } catch (e:Error) {
-                asyncRunning = false;
-                completeFn();
-                trace(e);
-                
-            }
-             return false;
-        }
-        
-        public function CodePrettyPrint()
-        {
-            regexpPrecederPattern();
-            registerLangHandler(decorateSource, ['default-code']);
-            registerLangHandler(decorateMarkup,
-                                ['default-markup', 'html', 'htm', 'xhtml', 'xml', 'xsl']);
-            registerLangHandler(sourceDecorator({
-                      keywords: CPP_KEYWORDS,
-                            hashComments: true,
-                            cStyleComments: true
-                            }), ['c', 'cc', 'cpp', 'cs', 'cxx', 'cyc']);
-            registerLangHandler(sourceDecorator({
-                      keywords: JAVA_KEYWORDS,
-                            cStyleComments: true
-                            }), ['java']);
-            registerLangHandler(sourceDecorator({
-                      keywords: SH_KEYWORDS,
-                            hashComments: true,
-                            multiLineStrings: true
-                            }), ['bsh', 'csh', 'sh']);
-            registerLangHandler(sourceDecorator({
-                      keywords: PYTHON_KEYWORDS,
-                            hashComments: true,
-                            multiLineStrings: true,
-                            tripleQuotedStrings: true
-                            }), ['cv', 'py']);
-            registerLangHandler(sourceDecorator({
-                      keywords: PERL_KEYWORDS,
-                            hashComments: true,
-                            multiLineStrings: true,
-                            regexLiterals: true
-                            }), ['perl', 'pl', 'pm']);
-            registerLangHandler(sourceDecorator({
-                      keywords: RUBY_KEYWORDS,
-                            hashComments: true,
-                            multiLineStrings: true,
-                            regexLiterals: true
-                            }), ['rb']);
-            registerLangHandler(sourceDecorator({
-                      keywords: JSCRIPT_KEYWORDS,
-                            cStyleComments: true,
-                            regexLiterals: true
-                            }), ['js']);
-            
-        }
-        
     }
 }

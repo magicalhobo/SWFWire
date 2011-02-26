@@ -29,12 +29,14 @@
 			import com.swfwire.utils.*;
 			import com.swfwire.utils.air.WindowTracker;
 			
+			import flash.utils.getTimer;
+			
 			import mx.controls.Alert;
 			import mx.events.ListEvent;
 			import mx.managers.DragManager;
 			
 			import net.anirudh.as3syntaxhighlight.CodePrettyPrint;
-			
+
 			private var loader:Loader;
 			private var urlLoader:URLLoader;
 			private var windowTracker:WindowTracker;
@@ -46,13 +48,13 @@
 			private var tagDumpCache:Array;
 			private var tagHexCache:Array;
 			private var parseStart:uint;
-			
+
 			private function main():void
 			{
 				Debug.enabled = true;
-				
+
 				contextMenu.items.push(new ContextMenuItem('SWFWireInspector '+Config.VERSION));
-				
+
 				appUpdater = new ApplicationUpdaterUI();
 				appUpdater.configurationFile = new File('app:/updateConfig.xml');
 				if(Config.TESTING)
@@ -62,28 +64,28 @@
 						appUpdater.checkNow();
 					});
 				}
-				
+
 				appUpdater.initialize();
-				
+
 				windowTracker = new WindowTracker(SharedObject.getLocal('preferences'), nativeWindow);
 				windowTracker.restore();
 				windowTracker.startTracking();
-				
+
 				urlLoader = new URLLoader();
 				urlLoader.addEventListener(ProgressEvent.PROGRESS, loadProgressHandler);
 				urlLoader.addEventListener(Event.COMPLETE, completeHandler);
 				urlLoader.dataFormat = URLLoaderDataFormat.BINARY;
-				
+
 				addEventListener(NativeDragEvent.NATIVE_DRAG_ENTER,	 dragEnterHandler);
 				addEventListener(NativeDragEvent.NATIVE_DRAG_DROP,	 dragDropHandler);
-				
+
 				loader = new Loader();
 				loader.contentLoaderInfo.addEventListener(Event.COMPLETE, function(ev:Event):void
 				{
 					detailsPanel.preview.invalidateDisplayList();
 					detailsPanel.preview.validateDisplayList();
 				});
-				
+
 				try
 				{
 					loaderInfo['uncaughtErrorEvents'].addEventListener('uncaughtError', function(ev:*):void
@@ -97,33 +99,33 @@
 					});
 				}
 				catch(e:*){}
-				
+
 				detailsPanel.preview.addChild(loader);
-				
+
 				detailsPanel.actionScript.classesList.addEventListener(ListEvent.CHANGE, actionScriptPanelChangedHandler);
 				detailsPanel.actionScript.showActionScript.addEventListener(Event.CHANGE, actionScriptPanelChangedHandler);
 				detailsPanel.actionScript.showByteCode.addEventListener(Event.CHANGE, actionScriptPanelChangedHandler);
 				detailsPanel.actionScript.showDebug.addEventListener(Event.CHANGE, actionScriptPanelChangedHandler);
 				detailsPanel.actionScript.showStack.addEventListener(Event.CHANGE, actionScriptPanelChangedHandler);
 				detailsPanel.actionScript.showBranchInfo.addEventListener(Event.CHANGE, actionScriptPanelChangedHandler);
-				
+
 				if(Config.TESTING)
 				{
 					//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpseInvalidBranch/bin-debug/SWFCorpseInvalidBranch.swf').url);
 					load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpse/bin-debug/SWFCorpse.swf').url);
 				}
 			}
-			
+
 			private function actionScriptPanelChangedHandler(ev:*):void
 			{
 				updateClasses();
 			}
-			
+
 			private function dragEnterHandler(ev:NativeDragEvent):void
 			{
 				DragManager.acceptDragDrop(this);
 			}
-			
+
 			private function dragDropHandler(ev:NativeDragEvent):void
 			{
 				var clipboard:Clipboard = ev.clipboard;
@@ -155,18 +157,18 @@
 					Alert.show('Could not parse any valid SWF file from the drop.', 'No data');
 				}
 			}
-			
+
 			private function load(url:String):void
 			{
 				log('Loading: '+url);
 				urlLoader.load(new URLRequest(url));
 			}
-			
+
 			private function loadProgressHandler(ev:ProgressEvent):void
 			{
 				loadProgress.setProgress(ev.bytesLoaded, ev.bytesTotal);
 			}
-			
+
 			private function completeHandler(ev:Event):void
 			{
 				log('Done loading.');
@@ -181,7 +183,7 @@
 					log('No data found.');
 				}
 			}
-			
+
 			private function log(str:*):void
 			{
 				var scrollToBottom:Boolean = logPanel.verticalScrollPosition >= logPanel.maxVerticalScrollPosition;
@@ -192,45 +194,45 @@
 					logPanel.verticalScrollPosition = logPanel.maxVerticalScrollPosition;
 				}
 			}
-			
+
 			private function parse(bytes:ByteArray):void
 			{
 				log('Parsing '+bytes.length+' bytes...');
-				
+
 				var context:LoaderContext = new LoaderContext(false, ApplicationDomain.currentDomain);
-				
+
 				lastSource = bytes;
-				
+
 				//ByteArrayUtil.dumpHex(bytes);
-				
+
 				var swfBytes:SWFByteArray = new SWFByteArray(bytes);
 				var swf:AsyncSWFReader = new AsyncSWFReader();
-				
+
 				swf.addEventListener(AsyncSWFReaderEvent.TAG_READ, tagReadHandler);
 				swf.addEventListener(AsyncSWFReaderEvent.READ_COMPLETE, readCompleteHandler);
-				
+
 				loadProgress.setProgress(0, 0);
 				parseStart = getTimer();
 				result = swf.read(swfBytes);
 			}
-			
+
 			private function tagReadHandler(ev:AsyncSWFReaderEvent):void
 			{
 				var current:uint = ev.context.bytes.getBytePosition();
 				var max:uint = ev.context.bytes.getLength();
 				parseProgress.setProgress(current, max);
 			}
-			
+
 			private function readCompleteHandler(ev:AsyncSWFReaderEvent):void
 			{
 				log('Parsing '+result.tagMetadata.length+' tags ('+ev.context.bytes.getLength()+' bytes) took '+(getTimer() - parseStart)+'ms.');
 				doneHandler();
 			}
-			
+
 			private function doneHandler():void
 			{
 				currentState = 'loaded';
-				
+
 				loadProgress.setProgress(1, 1);
 
 				if(result.errors.length > 0)
@@ -242,7 +244,7 @@
 				{
 					log('No errors!');
 				}
-				
+
 				if(result.warnings.length > 0)
 				{
 					log(result.warnings.length+' warnings:');
@@ -252,24 +254,24 @@
 				{
 					log('No warnings!');
 				}
-				
+
 				lastResult = result;
 				tagDumpCache = [];
 				tagHexCache = [];
-				
+
 				var dp:Array = [];
-				
+
 				dp.push({id: -1, displayId: '', name: 'SWFHeader', size: lastResult.tagMetadata[0].start});
-				
+
 				for(var iterTag:uint = 0; iterTag < result.tagMetadata.length; iterTag++)
 				{
 					var metadata:Object = result.tagMetadata[iterTag];
 					var label:String = metadata.name.substr(metadata.name.indexOf('::') + 2);
 					dp.push({name: label, id: iterTag, displayId: iterTag, size: metadata.length});
 				}
-				
+
 				detailsPanel.tagList.addEventListener(ListEvent.CHANGE, tagListChangeHandler);
-				
+
 				detailsPanel.tagList.dataProvider = dp;
 				if(Config.TESTING)
 				{
@@ -280,49 +282,49 @@
 				{
 					detailsPanel.tagList.selectedIndex = 0;
 				}
-				
+
 				detailsPanel.currentState = 'actionScript';
 				detailsPanel.actionScript.currentState = 'classes';
-				
+
 				updateBottomPanel();
 				return;
 			}
-			
+
 			private function tagListChangeHandler(ev:ListEvent):void
 			{
 				updateBottomPanel();
 			}
-			
+
 			private function parseABC(tag:DoABCTag, id:uint):void
 			{
 				translator = new ABCToActionScript(tag.abcFile, result.abcMetadata[id].offsetFromId);
-				
+
 				var cpool:ConstantPoolToken = tag.abcFile.cpool;
-				
+
 				detailsPanel.actionScript.cpool.text = ObjectUtil.objectToString(cpool, 10, 3, 80, 100, '	');
 
 				detailsPanel.actionScript.classesCount = tag.abcFile.classCount;
-				
+
 				var classes:Array = [];
 				var ns:String;
 				var name:String;
-				
+
 				for(var iter:uint = 0; iter < tag.abcFile.classCount; iter++)
 				{
 					var instance:InstanceToken = tag.abcFile.instances[iter];
-					
+
 					var rc:ReadableClass = new ReadableClass();
 					rc.className = new ReadableMultiname();
 					translator.getReadableMultiname(instance.name, rc.className);
-					
+
 					classes.push({id: iter, className: rc.className.name, packageName: rc.className.namespace});
 				}
-				
+
 				detailsPanel.actionScript.classesList.dataProvider = classes;
 				detailsPanel.actionScript.classesList.selectedIndex = 0;
 				updateClasses();
 			}
-			
+
 			private function getTagDump(tagId:uint, object:Object):void
 			{
 				var dump:String;
@@ -337,11 +339,11 @@
 				}
 				detailsPanel.detail.text = dump;
 			}
-			
+
 			private function getShapePreview(characterId:uint, type:uint, metadata:Object):void
 			{
 				var swfWriter:SWFWriter = new SWFWriter();
-				
+
 				var swf:SWF = new SWF();
 				swf.header = new SWFHeader();
 				swf.header.fileVersion = 10;
@@ -354,41 +356,41 @@
 				swf.header.frameSize.yMax = 600 * 20;
 				swf.header.signature = SWFHeader.UNCOMPRESSED_SIGNATURE;
 				swf.tags = new Vector.<SWFTag>();
-				
+
 				var tag:UnknownTag = new UnknownTag();
 				tag.header = new TagHeaderRecord();
 				tag.header.type = type;
 				tag.content = new ByteArray();
 				tag.content.writeBytes(lastSource, metadata.contentStart, metadata.contentLength);
-				
+
 				swf.tags.push(tag);
-				
+
 				var placeTag:PlaceObject2Tag = new PlaceObject2Tag();
 				placeTag.header = new TagHeaderRecord();
 				placeTag.header.type = 26;
 				placeTag.characterId = characterId;
 				placeTag.depth = 1;
-				
+
 				swf.tags.push(placeTag);
-				
+
 				var showTag:ShowFrameTag = new ShowFrameTag();
 				showTag.header = new TagHeaderRecord();
 				showTag.header.type = 1;
 				swf.tags.push(showTag);
-				
+
 				var endTag:EndTag = new EndTag();
 				endTag.header = new TagHeaderRecord();
 				endTag.header.type = 0;
 				swf.tags.push(endTag);
-				
+
 				var result:SWFWriteResult = swfWriter.write(swf);
-				
+
 				var context:LoaderContext = new LoaderContext();
 				context.allowLoadBytesCodeExecution = true;
-				
+
 				loader.loadBytes(result.bytes, context);
 			}
-			
+
 			private function getImagePreview(tag:SWFTag):void
 			{
 				if(tag is DefineBitsJPEG2Tag)
@@ -396,7 +398,7 @@
 					loader.loadBytes(DefineBitsJPEG2Tag(tag).imageData);
 				}
 			}
-			
+
 			private function saveOnClick(bytes:ByteArray):void
 			{
 				stage.addEventListener(MouseEvent.CLICK, function(ev:MouseEvent):void
@@ -405,7 +407,7 @@
 					file.save(bytes);
 				});
 			}
-			
+
 			private function getTagHex(item:Object):void
 			{
 				var hex:String;
@@ -433,6 +435,8 @@
 				}
 				detailsPanel.hex.text = hex;
 			}
+
+			private var currentTagId:int = -1;
 			
 			private function updateBottomPanel():void
 			{
@@ -440,121 +444,125 @@
 				{
 					var item:Object = detailsPanel.tagList.selectedItem;
 					var tagId:int = item.id;
-					var object:Object;
-					if(tagId == -1)
-					{
-						object = lastResult.swf.header;
+					if(tagId != currentTagId)
+						{
+						var object:Object;
+						if(tagId == -1)
+						{
+							object = lastResult.swf.header;
+						}
+						else
+						{
+							object = lastResult.swf.tags[tagId];
+						}
+	
+						var metadata:Object = lastResult.tagMetadata[tagId];
+	
+						var characterId:int = -1;
+						var type:uint = 0;
+						if(object is DefineShapeTag)
+						{
+							characterId = DefineShapeTag(object).shapeId;
+							type = 2;
+						}
+						if(object is DefineShape2Tag)
+						{
+							characterId = DefineShape2Tag(object).shapeId;
+							type = 22;
+						}
+						if(object is DefineShape3Tag)
+						{
+							characterId = DefineShape3Tag(object).shapeId;
+							type = 32;
+						}
+						if(object is DefineShape4Tag)
+						{
+							characterId = DefineShape4Tag(object).shapeId;
+							type = 83;
+						}
+						/*
+						Need to create a DefineShape tag to be able to preview
+						if(object is DefineBitsJPEG2Tag)
+						{
+							characterId = DefineBitsJPEG2Tag(object).characterID;
+							type = 21;
+						}
+						*/
+	
+						var isImage:Boolean = false;
+	
+						if(object is DefineBitsJPEG2Tag)
+						{
+							isImage = true;
+						}
+	
+						var isPreviewable:Boolean = characterId >= 0 || isImage;
+	
+						var isABC:Boolean = false;
+						if(object is DoABCTag)
+						{
+							isABC = true;
+						}
+	
+						var wasABC:Boolean = detailsPanel.isABC;
+						var wasPreviewable:Boolean = detailsPanel.isPreviewable;
+	
+						detailsPanel.isPreviewable = isPreviewable;
+						detailsPanel.isABC = isABC;
+	
+						if(isABC && !wasABC)
+						{
+							detailsPanel.currentState = 'actionScript';
+							detailsPanel.actionScript.currentState = 'classes';
+						}
+	
+						if(isPreviewable && !wasPreviewable)
+						{
+							detailsPanel.currentState = 'preview';
+						}
+	
+						if(detailsPanel.currentState == 'actionScript' && !isABC)
+						{
+							detailsPanel.currentState = 'details';
+						}
+	
+						if(detailsPanel.currentState == 'preview' && !isPreviewable)
+						{
+							detailsPanel.currentState = 'details';
+						}
+	
+						switch(detailsPanel.currentState)
+						{
+							case 'details':
+								getTagDump(tagId, object);
+								break;
+							case 'hex':
+								getTagHex(item);
+								break;
+							case 'actionScript':
+								var tag:DoABCTag = lastResult.swf.tags[tagId] as DoABCTag;
+								if(tag)
+								{
+									parseABC(tag, tagId);
+								}
+								break;
+							case 'preview':
+								if(isImage)
+								{
+									getImagePreview(SWFTag(object));
+								}
+								else
+								{
+									getShapePreview(characterId, type, metadata);
+								}
+								break;
+						}
 					}
-					else
-					{
-						object = lastResult.swf.tags[tagId];
-					}
-					
-					var metadata:Object = lastResult.tagMetadata[tagId];
-					
-					var characterId:int = -1;
-					var type:uint = 0;
-					if(object is DefineShapeTag)
-					{
-						characterId = DefineShapeTag(object).shapeId;
-						type = 2;
-					}
-					if(object is DefineShape2Tag)
-					{
-						characterId = DefineShape2Tag(object).shapeId;
-						type = 22;
-					}
-					if(object is DefineShape3Tag)
-					{
-						characterId = DefineShape3Tag(object).shapeId;
-						type = 32;
-					}
-					if(object is DefineShape4Tag)
-					{
-						characterId = DefineShape4Tag(object).shapeId;
-						type = 83;
-					}
-					/*
-					Need to create a DefineShape tag to be able to preview
-					if(object is DefineBitsJPEG2Tag)
-					{
-						characterId = DefineBitsJPEG2Tag(object).characterID;
-						type = 21;
-					}
-					*/
-					
-					var isImage:Boolean = false;
-					
-					if(object is DefineBitsJPEG2Tag)
-					{
-						isImage = true;
-					}
-					
-					var isPreviewable:Boolean = characterId >= 0 || isImage;
-					
-					var isABC:Boolean = false;
-					if(object is DoABCTag)
-					{
-						isABC = true;
-					}
-					
-					var wasABC:Boolean = detailsPanel.isABC;
-					var wasPreviewable:Boolean = detailsPanel.isPreviewable;
-					
-					detailsPanel.isPreviewable = isPreviewable;
-					detailsPanel.isABC = isABC;
-
-					if(isABC && !wasABC)
-					{
-						detailsPanel.currentState = 'actionScript';
-						detailsPanel.actionScript.currentState = 'classes';
-					}
-					
-					if(isPreviewable && !wasPreviewable)
-					{
-						detailsPanel.currentState = 'preview';
-					}
-					
-					if(detailsPanel.currentState == 'actionScript' && !isABC)
-					{
-						detailsPanel.currentState = 'details';
-					}
-					
-					if(detailsPanel.currentState == 'preview' && !isPreviewable)
-					{
-						detailsPanel.currentState = 'details';
-					}
-					
-					switch(detailsPanel.currentState)
-					{
-						case 'details':
-							getTagDump(tagId, object);
-							break;
-						case 'hex':
-							getTagHex(item);
-							break;
-						case 'actionScript':
-							var tag:DoABCTag = lastResult.swf.tags[item.id] as DoABCTag;
-							if(tag)
-							{
-								parseABC(tag, tagId);
-							}
-							break;
-						case 'preview':
-							if(isImage)
-							{
-								getImagePreview(SWFTag(object));
-							}
-							else
-							{
-								getShapePreview(characterId, type, metadata);
-							}
-							break;
-					}
+					currentTagId = tagId;
 				}
-				
+
 			}
-			
+
 			private function updateClasses():void
 			{
 				translator.showActionScript = detailsPanel.actionScript.showActionScript.selected;
@@ -570,14 +578,14 @@
 				{
 					var classInfo:ClassInfoToken = tag.abcFile.classes[index];
 					var instance:InstanceToken = tag.abcFile.instances[index];
-					
+
 					var rc:ReadableClass = new ReadableClass();
 					rc.className = new ReadableMultiname();
 					translator.getReadableMultiname(instance.name, rc.className);
 					rc.superName = new ReadableMultiname();
 					translator.getReadableMultiname(instance.superName, rc.superName);
 					rc.traits = new Array();
-					
+
 					var iter2:uint;
 					var trait:TraitsInfoToken;
 					var r:ReadableTrait;
@@ -589,7 +597,7 @@
 					r = new ReadableTrait();
 					translator.getMethodBody(instance.name, instance.iinit, r);
 					rc.traits.push(r);
-					
+
 					for(iter2 = 0; iter2 < classInfo.traitCount; iter2++)
 					{
 						trait = classInfo.traits[iter2];
@@ -598,7 +606,7 @@
 						translator.getReadableTrait(trait, r);
 						rc.traits.push(r);
 					}
-					
+
 					for(iter2 = 0; iter2 < instance.traitCount; iter2++)
 					{
 						trait = instance.traits[iter2];
@@ -606,13 +614,14 @@
 						translator.getReadableTrait(trait, r);
 						rc.traits.push(r);
 					}
-					
+
+					var start:uint = getTimer();
 					var text:String = translator.classToString(rc);
 					var prettyPrint:CodePrettyPrint = new CodePrettyPrint();
 					var codeStyle:StyleSheet = new StyleSheet();
 					codeStyle.parseCSS(as3Styles);
 					text = prettyPrint.prettyPrintOne(text, null, true);
-					
+
 					detailsPanel.actionScript.classes.setStyle('contentBackgroundColor', 0xFFFFFF);
 					detailsPanel.actionScript.classes.styleSheet = codeStyle;
 					detailsPanel.actionScript.classes.htmlText = text;
@@ -623,60 +632,65 @@
 	</mx:Script>
 	<mx:String id="as3Styles">
 		<![CDATA[
-		.var {
-			color: #6699cc;
-			font-weight: bold;
-		}
-		.fnc {
-			color: #339966;
-			font-weight: bold;
-		}
-		.cls {
-			color: #9900cc;
-			font-weight: bold;
-		}
-		.str {
-			color: #990000; 
-			font-weight: bold;
-		}
-		.kwd {
-			color: #0033ff;
-			font-weight: bold;
-		}
-		.com { 
-			color: #009900;
-			font-weight: normal;
-			font-style: italic;
-		}
-		.typ { 
-			color: #000000;
-		}
-		.lit { 
-			color: #000000;
-		}
-		.trc {
-			color: #cc6666;
-			font-weight: bold;
-		}
-		.pun { 
-			color: #666600;
-		}
-		.pln { 
-			color: #222222;
-			font-weight: normal;
-		}
-		.tag { 
-			color: #000088;
-		}
-		.atn { 
-			color: #660066;
-		}
-		.atv { 
-			color: #880000;
-		}
-		.dec { 
-			color: #660066;
-		} 		
+			.var {
+				color: #6699cc;
+				font-weight: bold;
+			}
+			.function {
+				color: #339966;
+				font-weight: bold;
+			}
+			.class, .package {
+				color: #9900cc;
+				font-weight: bold;
+			}
+			.str {
+				color: #990000;
+				font-weight: bold;
+			}
+			.kwd {
+				color: #0033ff;
+				font-weight: bold;
+			}
+			.com {
+				color: #009900;
+				font-weight: normal;
+				font-style: italic;
+			}
+			.docstring {
+				color: #3f5fbf;
+			}
+			.typ {
+				color: #000000;
+				font-weight: normal;
+			}
+			.lit {
+				color: #000000;
+			}
+			.trace {
+				color: #cc6666;
+				font-weight: bold;
+			}
+			.pun {
+				color: #000000;
+				font-weight: normal;
+			}
+			.pln {
+				color: #000000;
+				font-weight: normal;
+			}
+			.tag {
+				color: #000088;
+			}
+			.atn {
+				color: #660066;
+			}
+			.atv {
+				color: #880000;
+			}
+			.dec {
+				color: #660066;
+			}
 		]]>
 	</mx:String>
 	<mx:states>
