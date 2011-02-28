@@ -48,6 +48,7 @@
 			private var tagDumpCache:Array;
 			private var tagHexCache:Array;
 			private var parseStart:uint;
+			private var syntaxHighlighting:Boolean = true;
 
 			private function main():void
 			{
@@ -113,6 +114,8 @@
 				{
 					//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpseInvalidBranch/bin-debug/SWFCorpseInvalidBranch.swf').url);
 					load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpse/bin-debug/SWFCorpse.swf').url);
+					//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpseFlex4-1/bin-debug/Main.swf').url);
+					//load(new File('D:\\youtube.swf').url);
 				}
 			}
 
@@ -176,6 +179,7 @@
 				var bytes:ByteArray = urlLoader.data as ByteArray;
 				if(bytes)
 				{
+					currentTagId = -1;
 					parse(bytes);
 				}
 				else
@@ -276,6 +280,8 @@
 				if(Config.TESTING)
 				{
 					detailsPanel.tagList.selectedIndex = 9;
+					//detailsPanel.tagList.selectedIndex = 13;
+					//detailsPanel.tagList.selectedIndex = 149;
 					//detailsPanel.tagList.selectedIndex = 249;
 				}
 				else
@@ -297,32 +303,36 @@
 
 			private function parseABC(tag:DoABCTag, id:uint):void
 			{
-				translator = new ABCToActionScript(tag.abcFile, result.abcMetadata[id].offsetFromId);
-
-				var cpool:ConstantPoolToken = tag.abcFile.cpool;
-
-				detailsPanel.actionScript.cpool.text = ObjectUtil.objectToString(cpool, 10, 3, 80, 100, '	');
-
-				detailsPanel.actionScript.classesCount = tag.abcFile.classCount;
-
-				var classes:Array = [];
-				var ns:String;
-				var name:String;
-
-				for(var iter:uint = 0; iter < tag.abcFile.classCount; iter++)
+				if(id != currentTagId)
 				{
-					var instance:InstanceToken = tag.abcFile.instances[iter];
-
-					var rc:ReadableClass = new ReadableClass();
-					rc.className = new ReadableMultiname();
-					translator.getReadableMultiname(instance.name, rc.className);
-
-					classes.push({id: iter, className: rc.className.name, packageName: rc.className.namespace});
+					currentTagId = id;
+					translator = new ABCToActionScript(tag.abcFile, result.abcMetadata[id].offsetFromId);
+	
+					var cpool:ConstantPoolToken = tag.abcFile.cpool;
+	
+					detailsPanel.actionScript.cpool.text = ObjectUtil.objectToString(cpool, 10, 3, 80, 100, '	');
+	
+					detailsPanel.actionScript.classesCount = tag.abcFile.classCount;
+	
+					var classes:Array = [];
+					var ns:String;
+					var name:String;
+	
+					for(var iter:uint = 0; iter < tag.abcFile.classCount; iter++)
+					{
+						var instance:InstanceToken = tag.abcFile.instances[iter];
+	
+						var rc:ReadableClass = new ReadableClass();
+						rc.className = new ReadableMultiname();
+						translator.getReadableMultiname(instance.name, rc.className);
+	
+						classes.push({id: iter, className: rc.className.name, packageName: rc.className.namespace});
+					}
+	
+					detailsPanel.actionScript.classesList.dataProvider = classes;
+					detailsPanel.actionScript.classesList.selectedIndex = 0;
+					updateClasses();
 				}
-
-				detailsPanel.actionScript.classesList.dataProvider = classes;
-				detailsPanel.actionScript.classesList.selectedIndex = 0;
-				updateClasses();
 			}
 
 			private function getTagDump(tagId:uint, object:Object):void
@@ -342,7 +352,7 @@
 
 			private function getShapePreview(characterId:uint, type:uint, metadata:Object):void
 			{
-				var swfWriter:SWFWriter = new SWFWriter();
+				var swfWriter:SWF10Writer = new SWF10Writer();
 
 				var swf:SWF = new SWF();
 				swf.header = new SWFHeader();
@@ -437,6 +447,7 @@
 			}
 
 			private var currentTagId:int = -1;
+			private var previousDetailsPanelState:String;
 			
 			private function updateBottomPanel():void
 			{
@@ -444,123 +455,118 @@
 				{
 					var item:Object = detailsPanel.tagList.selectedItem;
 					var tagId:int = item.id;
-					if(tagId != currentTagId)
-						{
-						var object:Object;
-						if(tagId == -1)
-						{
-							object = lastResult.swf.header;
-						}
-						else
-						{
-							object = lastResult.swf.tags[tagId];
-						}
-	
-						var metadata:Object = lastResult.tagMetadata[tagId];
-	
-						var characterId:int = -1;
-						var type:uint = 0;
-						if(object is DefineShapeTag)
-						{
-							characterId = DefineShapeTag(object).shapeId;
-							type = 2;
-						}
-						if(object is DefineShape2Tag)
-						{
-							characterId = DefineShape2Tag(object).shapeId;
-							type = 22;
-						}
-						if(object is DefineShape3Tag)
-						{
-							characterId = DefineShape3Tag(object).shapeId;
-							type = 32;
-						}
-						if(object is DefineShape4Tag)
-						{
-							characterId = DefineShape4Tag(object).shapeId;
-							type = 83;
-						}
-						/*
-						Need to create a DefineShape tag to be able to preview
-						if(object is DefineBitsJPEG2Tag)
-						{
-							characterId = DefineBitsJPEG2Tag(object).characterID;
-							type = 21;
-						}
-						*/
-	
-						var isImage:Boolean = false;
-	
-						if(object is DefineBitsJPEG2Tag)
-						{
-							isImage = true;
-						}
-	
-						var isPreviewable:Boolean = characterId >= 0 || isImage;
-	
-						var isABC:Boolean = false;
-						if(object is DoABCTag)
-						{
-							isABC = true;
-						}
-	
-						var wasABC:Boolean = detailsPanel.isABC;
-						var wasPreviewable:Boolean = detailsPanel.isPreviewable;
-	
-						detailsPanel.isPreviewable = isPreviewable;
-						detailsPanel.isABC = isABC;
-	
-						if(isABC && !wasABC)
-						{
-							detailsPanel.currentState = 'actionScript';
-							detailsPanel.actionScript.currentState = 'classes';
-						}
-	
-						if(isPreviewable && !wasPreviewable)
-						{
-							detailsPanel.currentState = 'preview';
-						}
-	
-						if(detailsPanel.currentState == 'actionScript' && !isABC)
-						{
-							detailsPanel.currentState = 'details';
-						}
-	
-						if(detailsPanel.currentState == 'preview' && !isPreviewable)
-						{
-							detailsPanel.currentState = 'details';
-						}
-	
-						switch(detailsPanel.currentState)
-						{
-							case 'details':
-								getTagDump(tagId, object);
-								break;
-							case 'hex':
-								getTagHex(item);
-								break;
-							case 'actionScript':
-								var tag:DoABCTag = lastResult.swf.tags[tagId] as DoABCTag;
-								if(tag)
-								{
-									parseABC(tag, tagId);
-								}
-								break;
-							case 'preview':
-								if(isImage)
-								{
-									getImagePreview(SWFTag(object));
-								}
-								else
-								{
-									getShapePreview(characterId, type, metadata);
-								}
-								break;
-						}
+					var object:Object;
+					if(tagId == -1)
+					{
+						object = lastResult.swf.header;
 					}
-					currentTagId = tagId;
-				}
+					else
+					{
+						object = lastResult.swf.tags[tagId];
+					}
 
+					var metadata:Object = lastResult.tagMetadata[tagId];
+
+					var characterId:int = -1;
+					var type:uint = 0;
+					if(object is DefineShapeTag)
+					{
+						characterId = DefineShapeTag(object).shapeId;
+						type = 2;
+					}
+					if(object is DefineShape2Tag)
+					{
+						characterId = DefineShape2Tag(object).shapeId;
+						type = 22;
+					}
+					if(object is DefineShape3Tag)
+					{
+						characterId = DefineShape3Tag(object).shapeId;
+						type = 32;
+					}
+					if(object is DefineShape4Tag)
+					{
+						characterId = DefineShape4Tag(object).shapeId;
+						type = 83;
+					}
+					/*
+					Need to create a DefineShape tag to be able to preview
+					if(object is DefineBitsJPEG2Tag)
+					{
+						characterId = DefineBitsJPEG2Tag(object).characterID;
+						type = 21;
+					}
+					*/
+
+					var isImage:Boolean = false;
+
+					if(object is DefineBitsJPEG2Tag)
+					{
+						isImage = true;
+					}
+
+					var isPreviewable:Boolean = characterId >= 0 || isImage;
+
+					var isABC:Boolean = false;
+					if(object is DoABCTag)
+					{
+						isABC = true;
+					}
+
+					var wasABC:Boolean = detailsPanel.isABC;
+					var wasPreviewable:Boolean = detailsPanel.isPreviewable;
+
+					detailsPanel.isPreviewable = isPreviewable;
+					detailsPanel.isABC = isABC;
+
+					if(isABC && !wasABC)
+					{
+						detailsPanel.currentState = 'actionScript';
+						detailsPanel.actionScript.currentState = 'classes';
+					}
+
+					if(isPreviewable && !wasPreviewable)
+					{
+						detailsPanel.currentState = 'preview';
+					}
+
+					if(detailsPanel.currentState == 'actionScript' && !isABC)
+					{
+						detailsPanel.currentState = 'details';
+					}
+
+					if(detailsPanel.currentState == 'preview' && !isPreviewable)
+					{
+						detailsPanel.currentState = 'details';
+					}
+
+					switch(detailsPanel.currentState)
+					{
+						case 'details':
+							getTagDump(tagId, object);
+							break;
+						case 'hex':
+							getTagHex(item);
+							break;
+						case 'actionScript':
+							var tag:DoABCTag = lastResult.swf.tags[tagId] as DoABCTag;
+							if(tag)
+							{
+								parseABC(tag, tagId);
+							}
+							break;
+						case 'preview':
+							if(isImage)
+							{
+								getImagePreview(SWFTag(object));
+							}
+							else
+							{
+								getShapePreview(characterId, type, metadata);
+							}
+							break;
+					}
+				}
 			}
 
 			private function updateClasses():void
@@ -617,15 +623,22 @@
 
 					var start:uint = getTimer();
 					var text:String = translator.classToString(rc);
-					var prettyPrint:CodePrettyPrint = new CodePrettyPrint();
-					var codeStyle:StyleSheet = new StyleSheet();
-					codeStyle.parseCSS(as3Styles);
-					text = prettyPrint.prettyPrintOne(text, null, true);
-
-					detailsPanel.actionScript.classes.setStyle('contentBackgroundColor', 0xFFFFFF);
-					detailsPanel.actionScript.classes.styleSheet = codeStyle;
-					detailsPanel.actionScript.classes.htmlText = text;
-					//detailsPanel.actionScript.classes.text = translator.classToString(rc);
+					log('Decompiling class took '+(getTimer() - start)+'ms');
+					if(syntaxHighlighting)
+					{
+						var prettyPrint:CodePrettyPrint = new CodePrettyPrint();
+						var codeStyle:StyleSheet = new StyleSheet();
+						codeStyle.parseCSS(as3Styles);
+						text = prettyPrint.prettyPrintOne(text, null, true);
+	
+						detailsPanel.actionScript.classes.setStyle('contentBackgroundColor', 0xFFFFFF);
+						detailsPanel.actionScript.classes.styleSheet = codeStyle;
+						detailsPanel.actionScript.classes.htmlText = text;
+					}
+					else
+					{
+						detailsPanel.actionScript.classes.text = text;
+					}
 				}
 			}
 		]]>

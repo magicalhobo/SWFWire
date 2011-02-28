@@ -16,6 +16,7 @@ package com.swfwire.decompiler.utils
 	
 	import flash.utils.Dictionary;
 	import flash.utils.describeType;
+	import flash.utils.getTimer;
 
 	public class ABCToActionScript
 	{
@@ -70,6 +71,9 @@ package com.swfwire.decompiler.utils
 					case MultinameToken.KIND_RTQNameA:
 						var rtqn:MultinameRTQNameToken = multiname.data as MultinameRTQNameToken;
 						readable.name = cpool.strings[rtqn.name].utf8;
+						break;
+					default:
+						readable.name = '#'+index+'/'+cpool.multinames.length+'('+multiname.kind+')';
 						break;
 				}
 			}
@@ -269,11 +273,13 @@ package com.swfwire.decompiler.utils
 			return result;
 		}
 		
-		private function instructionsToString(instructions:Vector.<IInstruction>,
+		private function instructionsToString(startTime:int,
+											  instructions:Vector.<IInstruction>,
 											  argumentNames:Vector.<String>,
 											  slotNames:Object,
 											  localCount:uint,
 											  start:uint = 0,
+											  cache2:Object = null,
 											  hitmap:Object = null, 
 											  hitmapWithStack:Object = null, 
 											  positionLookup:Dictionary = null,
@@ -329,17 +335,33 @@ package com.swfwire.decompiler.utils
 					positionLookup[instructions[iter1]] = iter1;
 				}
 			}
+			if(!cache2)
+			{
+				cache2 = {};
+			}
 			
 			var subflow:Object = {};
 			var flow:Array = [];
 			var sourceUntil:Object = {};
 			var breakOn:int = -1;
+			var firstWasNextName:Boolean = false;
+			var resultObj2:Object;
+			var importantFlow:Array = [];
 			
+			/*
+			if(getTimer() - startTime > 10000)
+			{
+				trace('Script timed out.');
+				return {result: '//ERROR: DECOMPILE TIMEOUT', flow: flow, breakOn: breakOn, sourceUntil: sourceUntil, firstWasNextName: firstWasNextName};
+			}
+			*/
+
 			for(var iter:uint = start; iter < instructions.length; iter++)
 			{
 				sourceUntil[iter] = lines.join('\n');
 				
 				var key:String = iter+':'+stack.values.join('|');
+				//trace('for: '+key+' ('+stack.values.length+')');
 				
 				if(hitmap[iter])
 				{
@@ -348,6 +370,22 @@ package com.swfwire.decompiler.utils
 					breakOn = iter;
 					break;
 				}
+				/*
+				if(cache[key])
+				{
+					trace('cache hit 13');
+					resultObj2 = {result: lines.join('\n'), flow: flow, breakOn: breakOn, sourceUntil: sourceUntil, firstWasNextName: firstWasNextName};
+					var cached:Object = cache[key];
+					resultObj2.result += '\n--JOINED FROM '+key+'--\n' + cached.result;
+					resultObj2.flow = resultObj2.flow.concat(cached.flow);
+					for(var iter5:String in cached.sourceUntil)
+					{
+						resultObj2[iter5] = cached.sourceUntil[iter5];
+					}
+					resultObj2.breakOn = cached.breakOn;
+					break;
+				}
+				*/
 				if(hitmapWithStack[key])
 				{
 					//trace('hitmapWithStack hit: '+key);
@@ -430,7 +468,7 @@ package com.swfwire.decompiler.utils
 							var mnString:String = this.multinameTypeToString(r);
 							if(mnString == '?')
 							{
-								mnString = '(#'+op['index']+')';
+								mnString = '(#'+op['index']+'/'+abcFile.cpool.multinames.length+')';
 							}
 							params.push(mnString);
 						}
@@ -495,19 +533,21 @@ package com.swfwire.decompiler.utils
 						
 						trace('			branch point: '+iter);
 						trace('			start branch from: '+target1);
-						var r1:Object = instructionsToString(instructions, argumentNames, slotNames, localCount, target1, hitmapCopy3, hitmapCopy1, positionLookup, true, scope, locals, stackCopy1, -1, depth + 1);
+						var r1:Object = instructionsToString(startTime, instructions, argumentNames, slotNames, localCount, target1, cache2, hitmapCopy3, hitmapCopy1, positionLookup, true, scope, locals, stackCopy1, -1, depth + 1);
 						trace('			end branch from: '+target1);
 						trace('			start branch from: '+target2);
-						var r2:Object = instructionsToString(instructions, argumentNames, slotNames, localCount, target2, hitmapCopy4, hitmapCopy2, positionLookup, true, scope, locals, stackCopy2, -1, depth + 1);
+						var r2:Object = instructionsToString(startTime, instructions, argumentNames, slotNames, localCount, target2, cache2, hitmapCopy4, hitmapCopy2, positionLookup, true, scope, locals, stackCopy2, -1, depth + 1);
 						trace('			end branch from: '+target2);
 						
 						var isWhile:Boolean = false;
+						var isForIn:Boolean = false;
 						
 						var a1:int = -1;
 						var a2:String = '';
 						
-						//Debug.dump({flow1: r1.flow, flow2: r2.flow});
+						var newStack:Vector.<Object> = stack.values;
 						
+						//Debug.dump({flow1: r1.flow, flow2: r2.flow});
 						outer:
 						for(var iter4:int = 0; iter4 < r1.flow.length; iter4++)
 						{
@@ -518,9 +558,15 @@ package com.swfwire.decompiler.utils
 									a2 = r1.flow[iter4];
 									var tempStack:Array = a2.split(':');
 									a1 = tempStack.shift();
-									tempStack = tempStack[0].split('|');
-									
-									stack.values = Vector.<Object>(tempStack);
+									if(tempStack[0])
+									{
+										tempStack = tempStack[0].split('|');
+										newStack = Vector.<Object>(tempStack);
+									}
+									else
+									{
+										newStack = new Vector.<Object>();
+									}
 									
 									r1.flow.splice(iter4);
 									r2.flow.splice(iter5);
@@ -563,6 +609,7 @@ package com.swfwire.decompiler.utils
 									{
 										isWhile = true;
 										r2.flow = [];
+										isForIn = r1.firstWasNextName;
 										break;
 									}
 								}
@@ -576,6 +623,7 @@ package com.swfwire.decompiler.utils
 									{
 										isWhile = true;
 										r1.flow = [];
+										isForIn = r2.firstWasNextName;
 										break;
 									}
 								}
@@ -615,14 +663,30 @@ package com.swfwire.decompiler.utils
 						}
 						
 						//trace(tempStr1);
-						tempStr1 = StringUtil.indent(tempStr1, '	');
-						tempStr2 = StringUtil.indent(tempStr2, '	');
+						tempStr1 = tempStr1 ? StringUtil.indent(tempStr1, '	') : '';
+						tempStr2 = tempStr2 ? StringUtil.indent(tempStr2, '	') : '';
 						
-						return {flow1: r1.flow, flow2: r2.flow, source1: tempStr1, source2: tempStr2, merge: a1, isWhile: isWhile};
+						tempStr1 = tempStr1 ? tempStr1 : '';
+						tempStr2 = tempStr2 ? tempStr2 : '';
+						
+						var localResult:Object = {flow1: r1.flow, flow2: r2.flow, source1: tempStr1, source2: tempStr2, merge: a1, isWhile: isWhile, isForIn: isForIn, newStack: newStack};
+						return localResult;
 					}
 					
 					function conditional(condition:String, inequality:Boolean):String
 					{
+						if(cache2[key])
+						{
+							trace('CACHE HIT!');
+							trace('	key: '+key);
+							var cached:Object = cache2[key];
+							iter = cached.iter;
+							source = cached.source;
+							stack.values = cached.newStack;
+							return 'CACHE @'+key+ '\n' + cached.source;
+						}
+						trace('CACHE MISS! EXECUTING EXPENSIVE BRANCH');
+						trace('	key: '+key);
 						tempInt = positionLookup[Object(op).reference];
 						if(inequality)
 						{
@@ -633,7 +697,13 @@ package com.swfwire.decompiler.utils
 							b = branch(iter + 1, tempInt);
 						}
 						
+						stack.values = b.newStack;
+						
 						var cond:String = b.isWhile ? 'while' : 'if';
+						if(b.isWhile && b.isForIn)
+						{
+							cond = 'forin';
+						}
 						
 						tempStr2 = '';
 						if(b.flow1.length > 0)
@@ -661,6 +731,8 @@ package com.swfwire.decompiler.utils
 						{
 							iter = b.merge - 1;
 						}
+						
+						cache2[key] = {source: source, iter: iter, newStack: b.newStack};
 						return source;
 					}
 
@@ -677,6 +749,16 @@ package com.swfwire.decompiler.utils
 					{
 						tempStr = locals.getName(Instruction_hasnext2(op).objectReg);
 						stack.push(tempStr+'.hasNext()');
+					}
+					else if(op is Instruction_nextname)
+					{
+						if(lines.length == 0)
+						{
+							firstWasNextName = true;
+						}
+						tempStr = stack.pop();
+						tempStr2 = stack.pop();
+						stack.push('nextname('+tempStr+', '+tempStr2+')');
 					}
 					else if(op is Instruction_lookupswitch)
 					{
@@ -944,16 +1026,13 @@ package com.swfwire.decompiler.utils
 						mn = abcFile.cpool.multinames[tempInt];
 						switch(mn.kind)
 						{
-							case MultinameToken.KIND_QName:
+							default:
 								rmn = new ReadableMultiname();
 								getReadableMultiname(tempInt, rmn);
 								tempStr = this.multinameTypeToString(rmn);
 								stack.push(tempStr);
 								//stack.push(tempStr);
 								//source = 'findprop - '+tempStr;
-								break;
-							default:
-								stack.push('<runtime multiname (kind: '+mn.kind+')>');
 								break;
 						}
 					}
@@ -963,7 +1042,7 @@ package com.swfwire.decompiler.utils
 						mn = abcFile.cpool.multinames[tempInt];
 						switch(mn.kind)
 						{
-							case MultinameToken.KIND_QName:
+							default:
 								rmn = new ReadableMultiname();
 								getReadableMultiname(tempInt, rmn);
 								tempStr = this.multinameTypeToString(rmn);
@@ -980,16 +1059,10 @@ package com.swfwire.decompiler.utils
 						var obj:String = stack.pop();
 						switch(mn.kind)
 						{
-							case MultinameToken.KIND_QName:
-							case MultinameToken.KIND_QNameA:
-							case MultinameToken.KIND_RTQName:
-							case MultinameToken.KIND_RTQNameA:
+							default:
 								rmn = new ReadableMultiname();
 								getReadableMultiname(tempInt, rmn);
 								tempStr = this.multinameTypeToString(rmn);
-								break;
-							default:
-								tempStr = '<runtime multiname (kind: '+mn.kind+')>';
 								break;
 						}
 						if(obj != tempStr)
@@ -1004,10 +1077,7 @@ package com.swfwire.decompiler.utils
 						mn = abcFile.cpool.multinames[tempInt];
 						switch(mn.kind)
 						{
-							case MultinameToken.KIND_QName:
-							case MultinameToken.KIND_QNameA:
-							case MultinameToken.KIND_RTQName:
-							case MultinameToken.KIND_RTQNameA:
+							default:
 								var value3:String = stack.pop();
 								tempStr2 = stack.pop();
 								
@@ -1030,7 +1100,7 @@ package com.swfwire.decompiler.utils
 						mn = abcFile.cpool.multinames[tempInt];
 						switch(mn.kind)
 						{
-							case MultinameToken.KIND_QName:
+							default:
 								var value2:String = stack.pop();
 								tempStr2 = stack.pop();
 								
@@ -1053,7 +1123,7 @@ package com.swfwire.decompiler.utils
 						mn = abcFile.cpool.multinames[tempInt];
 						switch(mn.kind)
 						{
-							case MultinameToken.KIND_QName:
+							default:
 								rmn = new ReadableMultiname();
 								getReadableMultiname(tempInt, rmn);
 								tempStr = this.multinameTypeToString(rmn);
@@ -1070,7 +1140,7 @@ package com.swfwire.decompiler.utils
 						mn = abcFile.cpool.multinames[tempInt];
 						switch(mn.kind)
 						{
-							case MultinameToken.KIND_QName:
+							default:
 								args = [];
 								for(tempInt2 = Instruction_callproperty(op).argCount - 1; tempInt2 >= 0; tempInt2--)
 								{
@@ -1104,7 +1174,7 @@ package com.swfwire.decompiler.utils
 						mn = abcFile.cpool.multinames[tempInt];
 						switch(mn.kind)
 						{
-							case MultinameToken.KIND_QName:
+							default:
 								args = [];
 								for(tempInt2 = Instruction_callpropvoid(op).argCount - 1; tempInt2 >= 0; tempInt2--)
 								{
@@ -1133,7 +1203,7 @@ package com.swfwire.decompiler.utils
 						mn = abcFile.cpool.multinames[tempInt];
 						switch(mn.kind)
 						{
-							case MultinameToken.KIND_QName:
+							default:
 								args = [];
 								for(tempInt2 = Instruction_constructprop(op).argCount - 1; tempInt2 >= 0; tempInt2--)
 								{
@@ -1338,6 +1408,10 @@ package com.swfwire.decompiler.utils
 						{
 							source = 'return;';
 						}
+						else
+						{
+							source = '//return;';
+						}
 						exit = true;
 					}
 					else
@@ -1347,7 +1421,7 @@ package com.swfwire.decompiler.utils
 					
 					if(showStack)
 					{
-						lines.push('				stack: ' + stack.values.join(', '));
+						lines.push('				stack: ' + stack.values.join(', ')+'  ('+stack.values.length+')');
 						lines.push('				local: ' + locals.names.join(', '));
 					}
 					
@@ -1356,13 +1430,22 @@ package com.swfwire.decompiler.utils
 						lines.push(source);
 					}
 					
+					
 					if(exit)
 					{
 						break;
 					}
 				}
 			}
-			return {result: lines.join('\n'), flow: flow, breakOn: breakOn, sourceUntil: sourceUntil};
+			var resultObj:Object;
+			resultObj = {result: lines.join('\n'), flow: flow, breakOn: breakOn, sourceUntil: sourceUntil, firstWasNextName: firstWasNextName};
+			/*
+			for(var iter19:String in importantFlow)
+			{
+				cache[importantFlow[iter19]] = resultObj;
+			}
+			*/
+			return resultObj;
 		}
 		
 		public function traitToString(r:ReadableTrait):String
@@ -1425,7 +1508,7 @@ package com.swfwire.decompiler.utils
 				
 				if(r.instructions && r.instructions.length > 0)
 				{
-					pieces.push('\n		{\n'+StringUtil.indent(instructionsToString(r.instructions, r.argumentNames, r.slots, r.localCount).result, '			')+'\n		}');
+					pieces.push('\n		{\n'+StringUtil.indent(instructionsToString(getTimer(), r.instructions, r.argumentNames, r.slots, r.localCount).result, '			')+'\n		}');
 				}
 				else
 				{
@@ -1471,12 +1554,18 @@ package com.swfwire.decompiler.utils
 		{
 			var properties:Array = [];
 			//properties.push(traitToString(c.traits[iter]));
+			var runs:uint = 0;
 			for(var iter:String in c.traits)
 			{
 				var str:String = traitToString(c.traits[iter]);
 				if(str != '')
 				{
 					properties.push(str);
+					runs++;
+					if(runs >= 100)
+					{
+						break;
+					}
 				}
 			}
 			var result:String = 
