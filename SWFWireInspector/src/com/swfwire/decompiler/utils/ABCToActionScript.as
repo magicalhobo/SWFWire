@@ -273,7 +273,8 @@ package com.swfwire.decompiler.utils
 			return result;
 		}
 		
-		private function instructionsToString(startTime:int,
+		private function instructionsToString(methodName:String,
+											  startTime:int,
 											  instructions:Vector.<IInstruction>,
 											  argumentNames:Vector.<String>,
 											  slotNames:Object,
@@ -533,10 +534,10 @@ package com.swfwire.decompiler.utils
 						
 						trace('			branch point: '+iter);
 						trace('			start branch from: '+target1);
-						var r1:Object = instructionsToString(startTime, instructions, argumentNames, slotNames, localCount, target1, cache2, hitmapCopy3, hitmapCopy1, positionLookup, true, scope, locals, stackCopy1, -1, depth + 1);
+						var r1:Object = instructionsToString(methodName, startTime, instructions, argumentNames, slotNames, localCount, target1, cache2, hitmapCopy3, hitmapCopy1, positionLookup, true, scope, locals, stackCopy1, -1, depth + 1);
 						trace('			end branch from: '+target1);
 						trace('			start branch from: '+target2);
-						var r2:Object = instructionsToString(startTime, instructions, argumentNames, slotNames, localCount, target2, cache2, hitmapCopy4, hitmapCopy2, positionLookup, true, scope, locals, stackCopy2, -1, depth + 1);
+						var r2:Object = instructionsToString(methodName, startTime, instructions, argumentNames, slotNames, localCount, target2, cache2, hitmapCopy4, hitmapCopy2, positionLookup, true, scope, locals, stackCopy2, -1, depth + 1);
 						trace('			end branch from: '+target2);
 						
 						var isWhile:Boolean = false;
@@ -675,26 +676,29 @@ package com.swfwire.decompiler.utils
 					
 					function conditional(condition:String, inequality:Boolean):String
 					{
-						if(cache2[key])
+						var key2:String = iter+':'+stack.values.join('|');
+						var cached:Object;
+						if(cache2[key2])
 						{
 							trace('CACHE HIT!');
-							trace('	key: '+key);
-							var cached:Object = cache2[key];
-							iter = cached.iter;
-							source = cached.source;
-							stack.values = cached.newStack;
-							return 'CACHE @'+key+ '\n' + cached.source;
-						}
-						trace('CACHE MISS! EXECUTING EXPENSIVE BRANCH');
-						trace('	key: '+key);
-						tempInt = positionLookup[Object(op).reference];
-						if(inequality)
-						{
-							b = branch(tempInt, iter + 1);
+							trace('	key: '+key2);
+							cached = cache2[key2];
+							//return 'CACHE @'+key2+ '\n' + cached.source;
+							b = cached.b;
 						}
 						else
 						{
-							b = branch(iter + 1, tempInt);
+							trace('CACHE MISS! EXECUTING EXPENSIVE BRANCH');
+							trace('	key: '+key2);
+							tempInt = positionLookup[Object(op).reference];
+							if(inequality)
+							{
+								b = branch(tempInt, iter + 1);
+							}
+							else
+							{
+								b = branch(iter + 1, tempInt);
+							}
 						}
 						
 						stack.values = b.newStack;
@@ -732,7 +736,16 @@ package com.swfwire.decompiler.utils
 							iter = b.merge - 1;
 						}
 						
-						cache2[key] = {source: source, iter: iter, newStack: b.newStack};
+						source = '//'+key2+'\n'+source;
+						
+						if(cached)
+						{
+							source = '[CACHED]\n'+source;
+						}
+						else
+						{
+							cache2[key2] = {b: b};
+						}
 						return source;
 					}
 
@@ -1197,6 +1210,17 @@ package com.swfwire.decompiler.utils
 								break;
 						}
 					}
+					else if(op is Instruction_callsuper)
+					{
+						args = [];
+						for(tempInt2 = Instruction_callsuper(op).argCount - 1; tempInt2 >= 0; tempInt2--)
+						{
+							args.unshift(stack.pop());
+						}
+						
+						tempStr = 'super.'+methodName+'('+args.join(', ')+')';
+						source = tempStr+';';
+					}
 					else if(op is Instruction_constructprop)
 					{
 						tempInt = Instruction_constructprop(op).index;
@@ -1408,10 +1432,6 @@ package com.swfwire.decompiler.utils
 						{
 							source = 'return;';
 						}
-						else
-						{
-							source = '//return;';
-						}
 						exit = true;
 					}
 					else
@@ -1508,7 +1528,7 @@ package com.swfwire.decompiler.utils
 				
 				if(r.instructions && r.instructions.length > 0)
 				{
-					pieces.push('\n		{\n'+StringUtil.indent(instructionsToString(getTimer(), r.instructions, r.argumentNames, r.slots, r.localCount).result, '			')+'\n		}');
+					pieces.push('\n		{\n'+StringUtil.indent(instructionsToString(r.declaration.name, getTimer(), r.instructions, r.argumentNames, r.slots, r.localCount).result, '			')+'\n		}');
 				}
 				else
 				{
