@@ -26,6 +26,7 @@
 			import com.swfwire.decompiler.events.AsyncSWFReaderEvent;
 			import com.swfwire.decompiler.utils.*;
 			import com.swfwire.inspector.Config;
+			import com.swfwire.inspector.debug;
 			import com.swfwire.utils.*;
 			import com.swfwire.utils.air.WindowTracker;
 			
@@ -52,7 +53,8 @@
 
 			private function main():void
 			{
-				Debug.enabled = true;
+				debug = new Debug(true, 'SWFWireInspector');
+				debug.log('main');
 
 				contextMenu.items.push(new ContextMenuItem('SWFWireInspector '+Config.VERSION));
 
@@ -65,7 +67,7 @@
 						appUpdater.checkNow();
 					});
 				}
-
+				
 				appUpdater.initialize();
 
 				windowTracker = new WindowTracker(SharedObject.getLocal('preferences'), nativeWindow);
@@ -190,6 +192,7 @@
 
 			private function log(str:*):void
 			{
+				trace(str);
 				var scrollToBottom:Boolean = logPanel.verticalScrollPosition >= logPanel.maxVerticalScrollPosition;
 				logPanel.text += str+'\n';
 				if(scrollToBottom)

@@ -13,6 +13,7 @@ package
 	import flash.net.URLLoader;
 	import flash.net.URLRequest;
 	import flash.system.Security;
+	import flash.utils.getTimer;
 	
 	import org.osmf.display.ScaleMode;
 	
@@ -20,6 +21,9 @@ package
 	
 	public class SWFCorpse extends Sprite
 	{
+		public static const forceImport:Array = [ClassName];
+		
+		/*
 		internal namespace custom = "http://magicalhobo.com/custom";
 		
 		public static var publicStaticVar:Boolean;
@@ -27,6 +31,12 @@ package
 		private static var privateStaticVar:Boolean;
 		internal static var internalStaticVar:Boolean;
 		custom static var customStaticVar:Boolean;
+		
+		public static function killDecompiler():void
+		{
+			if(0) 0;
+			if(0) 0;
+		}
 		
 		public function playground():*
 		{
@@ -263,13 +273,30 @@ package
 			var ul:URLLoader = ev.currentTarget as URLLoader;
 			trace('load complete: '+ul.bytesLoaded);
 		}
-		
+		*/
 		public function SWFCorpse(param1:Object = null)
 		{
+			/*
 			for(var iter:String in loaderInfo.parameters)
 			{
 				trace(iter+': '+loaderInfo.parameters[iter]);
 			}
+			*/
+			
+			if(1 || 2 || 3 || 4 || 5) getTimer();
+			//else if(1) getTimer();
+			/*
+			if(1) getTimer();
+			if(1) getTimer();
+			*/
+			if(1) getTimer();
+			if(1) getTimer();
+			
+			getTimer();
+			getTimer();
+			
+			/*
+			
 			trace('Starting constructor');
 			trace('stage: '+stage);
 			
@@ -293,7 +320,7 @@ package
 			stage.scaleMode = StageScaleMode.NO_SCALE;
 			stage.align = StageAlign.TOP_LEFT;
 			trace('Stage is: '+stage.stageWidth+'x'+stage.stageHeight);
-			*/
+			* /
 			
 			publicMethod('test');
 			protectedMethod('test');
@@ -317,6 +344,7 @@ package
 			shape.addEventListener(MouseEvent.MOUSE_DOWN, clickHandler);
 			
 			trace('Ending constructor');
+			*/
 		}
 	}
 }

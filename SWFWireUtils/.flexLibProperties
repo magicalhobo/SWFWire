@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<flexLibProperties includeAllClasses="false" version="3">
+<flexLibProperties includeAllClasses="false" useMultiPlatformConfig="false" version="3">
   <includeClasses>
     <classEntry path="com.swfwire.utils.ArrayUtil"/>
     <classEntry path="com.swfwire.utils.ByteArrayUtil"/>
@@ -9,6 +9,7 @@
     <classEntry path="com.swfwire.utils.StringUtil"/>
     <classEntry path="com.swfwire.utils.air.WindowTracker"/>
     <classEntry path="net.anirudh.as3syntaxhighlight.CodePrettyPrint"/>
+    <classEntry path="com.swfwire.utils.IDebug"/>
   </includeClasses>
   <includeResources/>
   <namespaceManifests/>

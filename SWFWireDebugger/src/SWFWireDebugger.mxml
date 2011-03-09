@@ -15,6 +15,7 @@
 			import air.update.events.UpdateEvent;
 			
 			import com.swfwire.debugger.DebuggerAsyncModifier;
+			import com.swfwire.debugger.debug;
 			import com.swfwire.debugger.events.AsyncSWFModifierEvent;
 			import com.swfwire.debugger.flex.ui.PreviewWindow;
 			import com.swfwire.debugger.utils.*;
@@ -69,6 +70,9 @@
 			
 			private function main():void
 			{
+				debug = new Debug(true, 'SWFWireDebugger');
+				debug.log('main');
+				
 				contextMenu.items.push(new ContextMenuItem('SWFWireDebugger Version '+Config.VERSION));
 				
 				stage.addEventListener(Event.ENTER_FRAME, function(ev:Event):void
@@ -199,8 +203,6 @@
 					
 					inspect(preview.loader.content);
 				});
-				
-				Debug.enabled = true;
 				
 				var context:LoaderContext = new LoaderContext();
 				context.applicationDomain = new ApplicationDomain();
@@ -469,9 +471,9 @@
 				try
 				{
 					methods = target.enumerateProperties();
-					for(var iter2:* in methods)
+					for(var iter3:* in methods)
 					{
-						privatePropertiesDP.addItem({name: iter2, value: methods[iter2]});
+						privatePropertiesDP.addItem({name: iter3, value: methods[iter3]});
 					}
 				}
 				catch(e:*)
@@ -742,7 +744,7 @@
 					
 					if(!instance)
 					{
-						Debug.dump(result, 4);
+						debug.dump(result, 4);
 						
 						preview.setSWFSize((swf.header.frameSize.xMax - swf.header.frameSize.xMin)/20, (swf.header.frameSize.yMax - swf.header.frameSize.yMin)/20);
 					
