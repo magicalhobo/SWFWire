@@ -21,8 +21,6 @@ package
 	
 	public class SWFCorpse extends Sprite
 	{
-		public static const forceImport:Array = [ClassName];
-		
 		/*
 		internal namespace custom = "http://magicalhobo.com/custom";
 		
@@ -31,12 +29,6 @@ package
 		private static var privateStaticVar:Boolean;
 		internal static var internalStaticVar:Boolean;
 		custom static var customStaticVar:Boolean;
-		
-		public static function killDecompiler():void
-		{
-			if(0) 0;
-			if(0) 0;
-		}
 		
 		public function playground():*
 		{
@@ -276,27 +268,53 @@ package
 		*/
 		public function SWFCorpse(param1:Object = null)
 		{
+			if(param1.prop1 == 1 ||
+			   param1.prop2 == 2 ||
+			   param1.prop3 == 3 ||
+			   param1.prop4 == 4 ||
+			   param1.prop5 == 5 ||
+			   param1.prop6 == 6 ||
+			   param1.prop7 == 7)
+			{
+				trace('if1');
+				if(-1)
+				{
+					trace('if2');
+				}
+			}
+			else
+			{
+				trace('else1');
+			}
+			
+			if(param1.prop1 == 1 ||
+			   param1.prop2 == 2 ||
+			   param1.prop3 == 3 ||
+			   param1.prop4 == 4 ||
+			   param1.prop5 == 5 ||
+			   param1.prop6 == 6 ||
+			   param1.prop7 == 7)
+			{
+				trace('if1');
+				if(-1)
+				{
+					trace('if2');
+				}
+			}
+			else
+			{
+				trace('else1');
+			}
+			
+			getTimer();
+			getTimer();
+			getTimer();
+			
 			/*
 			for(var iter:String in loaderInfo.parameters)
 			{
 				trace(iter+': '+loaderInfo.parameters[iter]);
 			}
-			*/
-			
-			if(1 || 2 || 3 || 4 || 5) getTimer();
-			//else if(1) getTimer();
-			/*
-			if(1) getTimer();
-			if(1) getTimer();
-			*/
-			if(1) getTimer();
-			if(1) getTimer();
-			
-			getTimer();
-			getTimer();
-			
-			/*
-			
 			trace('Starting constructor');
 			trace('stage: '+stage);
 			

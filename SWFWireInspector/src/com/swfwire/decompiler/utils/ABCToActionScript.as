@@ -72,6 +72,11 @@ package com.swfwire.decompiler.utils
 						var rtqn:MultinameRTQNameToken = multiname.data as MultinameRTQNameToken;
 						readable.name = cpool.strings[rtqn.name].utf8;
 						break;
+					case MultinameToken.KIND_Multiname:
+					case MultinameToken.KIND_MultinameA:
+						var mm:MultinameMultinameToken = multiname.data as MultinameMultinameToken;
+						readable.name = cpool.strings[mm.name].utf8;
+						break;
 					default:
 						readable.name = '#'+index+'/'+cpool.multinames.length+'('+multiname.kind+')';
 						break;
