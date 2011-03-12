@@ -46,9 +46,11 @@ package com.swfwire.decompiler.utils
 			customNamespaces = new Array();
 		}
 		
-		public function getReadableMultiname(index:uint, readable:ReadableMultiname):void
+		public function getReadableMultiname(index:uint, readable:ReadableMultiname):int
 		{
 			var cpool:ConstantPoolToken = abcFile.cpool;
+			
+			var operandsToPop:int = 0;
 			
 			var multiname:MultinameToken = cpool.multinames[index];
 			readable.namespace = '';
@@ -82,6 +84,7 @@ package com.swfwire.decompiler.utils
 						break;
 				}
 			}
+			return operandsToPop;
 		}
 		
 		public function getMethodBody(name:uint, methodId:uint, r:ReadableTrait):void
@@ -741,11 +744,17 @@ package com.swfwire.decompiler.utils
 							iter = b.merge - 1;
 						}
 						
-						source = '//'+key2+'\n'+source;
+						if(showBranchInfo)
+						{
+							source = '//'+key2+'\n'+source;
+						}
 						
 						if(cached)
 						{
-							source = '[CACHED]\n'+source;
+							if(showBranchInfo)
+							{
+								source = '[CACHED]\n'+source;
+							}
 						}
 						else
 						{
@@ -927,31 +936,47 @@ package com.swfwire.decompiler.utils
 					}
 					else if(op is Instruction_getslot)
 					{
+						tempStr = stack.pop();
 						stack.push(slotNames[Instruction_getslot(op).slotIndex]);
 					}
 					else if(op is Instruction_setlocal0)
 					{
-						source = locals.getName(0)+' = '+stack.pop()+';';
+						//source = locals.getName(0)+' = '+stack.pop()+';';
+						locals.setValue(0, stack.pop());
 					}
 					else if(op is Instruction_setlocal1)
 					{
-						source = locals.getName(1)+' = '+stack.pop()+';';
+						//source = locals.getName(1)+' = '+stack.pop()+';';
+						locals.setValue(1, stack.pop());
 					}
 					else if(op is Instruction_setlocal2)
 					{
-						source = locals.getName(2)+' = '+stack.pop()+';';
+						//source = locals.getName(2)+' = '+stack.pop()+';';
+						locals.setValue(2, stack.pop());
 					}
 					else if(op is Instruction_setlocal3)
 					{
-						source = locals.getName(3)+' = '+stack.pop()+';';
+						//source = locals.getName(3)+' = '+stack.pop()+';';
+						locals.setValue(3, stack.pop());
 					}
 					else if(op is Instruction_setlocal)
 					{
-						source = locals.getName(Instruction_setlocal(op).index)+' = '+stack.pop()+';';
+						//source = locals.getName(Instruction_setlocal(op).index)+' = '+stack.pop()+';';
+						locals.setValue(Instruction_setlocal(op).index, stack.pop());
 					}
 					else if(op is Instruction_setslot)
 					{
-						source = slotNames[Instruction_setslot(op).slotIndex]+' = '+stack.pop()+';';
+						tempStr = stack.pop();
+						tempStr3 = stack.pop();
+						var matches:Array = tempStr.match(/([\w]+)\((.*)\)/);
+						tempStr2 = '*';
+						if(matches)
+						{
+							tempStr = matches[2];
+							tempStr2 = matches[1];
+						}
+						source = 'var '+slotNames[Instruction_setslot(op).slotIndex]+':'+tempStr2+' = '+tempStr+';';
+						//source = slotNames[Instruction_setslot(op).slotIndex]+' = '+tempStr+';';
 					}
 					else if(op is Instruction_kill)
 					{
@@ -961,6 +986,13 @@ package com.swfwire.decompiler.utils
 					{
 						tempStr = stack.pop();
 						stack.push(tempStr);
+						stack.push(tempStr);
+					}
+					else if(op is Instruction_swap)
+					{
+						tempStr = stack.pop();
+						tempStr2 = stack.pop();
+						stack.push(tempStr2);
 						stack.push(tempStr);
 					}
 					else if(op is Instruction_throw)
@@ -1077,15 +1109,22 @@ package com.swfwire.decompiler.utils
 						var obj:String = stack.pop();
 						switch(mn.kind)
 						{
+							case MultinameToken.KIND_RTQNameL:
+							case MultinameToken.KIND_RTQNameLA:
+							case MultinameToken.KIND_MultinameL:
+							case MultinameToken.KIND_MultinameLA:
+								tempStr = stack.pop();
+								tempStr = tempStr+'['+obj+']';
+								break;
 							default:
 								rmn = new ReadableMultiname();
 								getReadableMultiname(tempInt, rmn);
 								tempStr = this.multinameTypeToString(rmn);
+								if(obj != tempStr)
+								{
+									tempStr = obj+'.'+tempStr;
+								}
 								break;
-						}
-						if(obj != tempStr)
-						{
-							tempStr = obj+'.'+tempStr;
 						}
 						stack.push(tempStr);
 					}
@@ -1095,6 +1134,15 @@ package com.swfwire.decompiler.utils
 						mn = abcFile.cpool.multinames[tempInt];
 						switch(mn.kind)
 						{
+							case MultinameToken.KIND_RTQNameL:
+							case MultinameToken.KIND_RTQNameLA:
+							case MultinameToken.KIND_MultinameL:
+							case MultinameToken.KIND_MultinameLA:
+								tempStr = stack.pop();
+								tempStr2 = stack.pop();
+								tempStr3 = stack.pop();
+								source = tempStr3+'['+tempStr2+'] = '+tempStr+';';
+								break;
 							default:
 								var value3:String = stack.pop();
 								tempStr2 = stack.pop();
@@ -1118,6 +1166,15 @@ package com.swfwire.decompiler.utils
 						mn = abcFile.cpool.multinames[tempInt];
 						switch(mn.kind)
 						{
+							case MultinameToken.KIND_RTQNameL:
+							case MultinameToken.KIND_RTQNameLA:
+							case MultinameToken.KIND_MultinameL:
+							case MultinameToken.KIND_MultinameLA:
+								tempStr = stack.pop();
+								tempStr2 = stack.pop();
+								tempStr3 = stack.pop();
+								source = tempStr3+'['+tempStr2+'] = '+tempStr+';';
+								break;
 							default:
 								var value2:String = stack.pop();
 								tempStr2 = stack.pop();
@@ -1280,20 +1337,13 @@ package com.swfwire.decompiler.utils
 					{
 						tempStr = stack.pop();
 						
-						if(tempStr == 'null' || tempStr == 'undefined')
-						{
-							stack.push(tempStr);
-						}
-						else
-						{
-							tempInt = Instruction_coerce(op).index;
-							
-							rmn = new ReadableMultiname();
-							getReadableMultiname(tempInt, rmn);
-							tempStr2 = this.multinameTypeToString(rmn);
+						tempInt = Instruction_coerce(op).index;
+						
+						rmn = new ReadableMultiname();
+						getReadableMultiname(tempInt, rmn);
+						tempStr2 = this.multinameTypeToString(rmn);
 
-							stack.push(tempStr2+'('+tempStr+')');
-						}
+						stack.push(tempStr2+'('+tempStr+')');
 					}
 					else if(op is Instruction_coerce_s)
 					{
@@ -1425,6 +1475,16 @@ package com.swfwire.decompiler.utils
 						line += '{'+props2.join(', ')+'}';
 						stack.push(line);
 					}
+					else if(op is Instruction_newactivation)
+					{
+						stack.push('<activation>');
+					}
+					else if(op is Instruction_newfunction)
+					{
+						var r2:ReadableTrait = new ReadableTrait();
+						getMethodBody(0, Instruction_newfunction(op).index, r2);
+						stack.push(traitToString(r2, false, false, 0));
+					}
 					else if(op is Instruction_returnvalue)
 					{
 						var str:String = stack.pop();
@@ -1473,16 +1533,19 @@ package com.swfwire.decompiler.utils
 			return resultObj;
 		}
 		
-		public function traitToString(r:ReadableTrait):String
+		public function traitToString(r:ReadableTrait, showNamespace:Boolean = true, showName:Boolean = true, methodIndents:int = 2):String
 		{
-			var pieces:Array = [r.declaration.namespace+' '];
+			var pieces:Array = [];
+			if(showNamespace)
+			{
+				pieces.push(r.declaration.namespace+' ');
+			}
 			if(r.traitType == ReadableTrait.TYPE_METHOD)
 			{
 				if(r.isStatic)
 				{
 					pieces.push('static ');
 				}
-				pieces.push('function ');
 			}
 			else if(r.traitType == ReadableTrait.TYPE_NAMESPACE)
 			{
@@ -1527,13 +1590,22 @@ package com.swfwire.decompiler.utils
 				{
 					args.push(r.argumentNames[iter] + ':' + multinameTypeToString(r.arguments[iter]));
 				}
-				pieces.push(r.declaration.name);
+				if(showName)
+				{
+					pieces.push('function ');
+					pieces.push(r.declaration.name);
+				}
+				else
+				{
+					pieces.push('function');
+				}
 				pieces.push('('+args.join(', ')+')');
 				pieces.push(':'+multinameTypeToString(r.type));
 				
 				if(r.instructions && r.instructions.length > 0)
 				{
-					pieces.push('\n		{\n'+StringUtil.indent(instructionsToString(r.declaration.name, getTimer(), r.instructions, r.argumentNames, r.slots, r.localCount).result, '			')+'\n		}');
+					var indent:String = StringUtil.repeat('\t', methodIndents);
+					pieces.push('\n'+indent+'{\n'+StringUtil.indent(instructionsToString(r.declaration.name, getTimer(), r.instructions, r.argumentNames, r.slots, r.localCount).result, indent+'	')+'\n'+indent+'}');
 				}
 				else
 				{
