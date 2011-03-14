@@ -311,15 +311,18 @@ package com.swfwire.decompiler.utils
 			{
 				locals = new LocalRegisters();
 				locals.setName(0, 'this');
+				locals.setValue(0, 'this');
 				var iterArg:uint;
 				var argumentCount:uint = argumentNames.length;
 				for(iterArg = 0; iterArg < argumentCount; iterArg++)
 				{
 					locals.setName(iterArg + 1, argumentNames[iterArg]);
+					locals.setValue(iterArg + 1, argumentNames[iterArg]);
 				}
 				for(; iterArg < localCount; iterArg++)
 				{
 					locals.setName(iterArg + 1, 'local'+(iterArg - argumentCount));
+					locals.setValue(iterArg + 1, 'null');
 				}
 			}
 			if(!stack)
@@ -916,23 +919,28 @@ package com.swfwire.decompiler.utils
 					}
 					else if(op is Instruction_getlocal0)
 					{
-						stack.push(locals.getName(0));
+						//stack.push(locals.getName(0));
+						stack.push(locals.getValue(0));
 					}
 					else if(op is Instruction_getlocal1)
 					{
-						stack.push(locals.getName(1));
+						//stack.push(locals.getName(1));
+						stack.push(locals.getValue(1));
 					}
 					else if(op is Instruction_getlocal2)
 					{
-						stack.push(locals.getName(2));
+						//stack.push(locals.getName(2));
+						stack.push(locals.getValue(2));
 					}
 					else if(op is Instruction_getlocal3)
 					{
-						stack.push(locals.getName(3));
+						//stack.push(locals.getName(3));
+						stack.push(locals.getValue(3));
 					}
 					else if(op is Instruction_getlocal)
 					{
-						stack.push(locals.getName(Instruction_getlocal(op).index));
+						//stack.push(locals.getName(Instruction_getlocal(op).index));
+						stack.push(locals.getValue(Instruction_getlocal(op).index));
 					}
 					else if(op is Instruction_getslot)
 					{
@@ -1008,6 +1016,10 @@ package com.swfwire.decompiler.utils
 					else if(op is Instruction_increment_i)
 					{
 						stack.push('int('+stack.pop()+') + 1');
+					}
+					else if(op is Instruction_decrement_i)
+					{
+						stack.push('int('+stack.pop()+') - 1');
 					}
 					else if(op is Instruction_add)
 					{
@@ -1383,6 +1395,10 @@ package com.swfwire.decompiler.utils
 					else if(op is Instruction_increment)
 					{
 						stack.push(stack.pop()+' + 1');
+					}
+					else if(op is Instruction_decrement)
+					{
+						stack.push(stack.pop()+' - 1');
 					}
 					else if(op is Instruction_pushscope)
 					{
