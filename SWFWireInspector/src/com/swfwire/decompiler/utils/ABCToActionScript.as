@@ -215,7 +215,7 @@ package com.swfwire.decompiler.utils
 			}
 			if(traitInfo.kind == TraitsInfoToken.KIND_TRAIT_SETTER)
 			{
-				r.declaration.name = 'get '+r.declaration.name;
+				r.declaration.name = 'set '+r.declaration.name;
 			}
 			if(traitInfo.kind == TraitsInfoToken.KIND_TRAIT_SLOT || traitInfo.kind == TraitsInfoToken.KIND_TRAIT_CONST)
 			{
@@ -1116,6 +1116,64 @@ package com.swfwire.decompiler.utils
 								
 								stack.push(tempStr);
 								//source = 'getprop - '+tempStr;
+								break;
+						}
+					}
+					else if(op is Instruction_getsuper)
+					{
+						tempInt = Instruction_getsuper(op).index;
+						mn = abcFile.cpool.multinames[tempInt];
+						var obj:String = stack.pop();
+						switch(mn.kind)
+						{
+							case MultinameToken.KIND_RTQNameL:
+							case MultinameToken.KIND_RTQNameLA:
+							case MultinameToken.KIND_MultinameL:
+							case MultinameToken.KIND_MultinameLA:
+								tempStr = stack.pop();
+								tempStr = 'super['+obj+']';
+								break;
+							default:
+								rmn = new ReadableMultiname();
+								getReadableMultiname(tempInt, rmn);
+								tempStr = this.multinameTypeToString(rmn);
+								if(obj != tempStr)
+								{
+									tempStr = 'super.'+tempStr;
+								}
+								break;
+						}
+						stack.push(tempStr);
+					}
+					else if(op is Instruction_setsuper)
+					{
+						tempInt = Instruction_setsuper(op).index;
+						mn = abcFile.cpool.multinames[tempInt];
+						switch(mn.kind)
+						{
+							case MultinameToken.KIND_RTQNameL:
+							case MultinameToken.KIND_RTQNameLA:
+							case MultinameToken.KIND_MultinameL:
+							case MultinameToken.KIND_MultinameLA:
+								tempStr = stack.pop();
+								tempStr2 = stack.pop();
+								tempStr3 = stack.pop();
+								source = 'super['+tempStr2+'] = '+tempStr+';';
+								break;
+							default:
+								var value3:String = stack.pop();
+								tempStr2 = stack.pop();
+								
+								rmn = new ReadableMultiname();
+								getReadableMultiname(tempInt, rmn);
+								tempStr = this.multinameTypeToString(rmn);
+								
+								if(tempStr2 != tempStr)
+								{
+									tempStr = 'super.'+tempStr;
+								}
+								tempStr = tempStr;
+								source = tempStr+' = '+value3+';';
 								break;
 						}
 					}
