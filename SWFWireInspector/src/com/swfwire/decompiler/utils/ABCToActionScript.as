@@ -868,11 +868,23 @@ package com.swfwire.decompiler.utils
 						tempStr2 = stack.pop();
 						conditional(tempStr2+' == '+tempStr, false);
 					}
+					else if(op is Instruction_ifstricteq)
+					{
+						tempStr = stack.pop();
+						tempStr2 = stack.pop();
+						conditional(tempStr2+' === '+tempStr, false);
+					}
 					else if(op is Instruction_ifne)
 					{
 						tempStr = stack.pop();
 						tempStr2 = stack.pop();
 						conditional(tempStr2+' != '+tempStr, false);
+					}
+					else if(op is Instruction_ifstrictne)
+					{
+						tempStr = stack.pop();
+						tempStr2 = stack.pop();
+						conditional(tempStr2+' !== '+tempStr, false);
 					}
 					else if(op is Instruction_ifgt)
 					{
