@@ -79,6 +79,9 @@ package com.swfwire.decompiler.utils
 						var mm:MultinameMultinameToken = multiname.data as MultinameMultinameToken;
 						readable.name = cpool.strings[mm.name].utf8;
 						break;
+					case MultinameToken.KIND_TypeName:
+						var tn:MultinameTypeNameToken = multiname.data as MultinameTypeNameToken;
+						break;
 					default:
 						readable.name = '#'+index+'/'+cpool.multinames.length+'('+multiname.kind+')';
 						break;
@@ -424,6 +427,7 @@ package com.swfwire.decompiler.utils
 				var args:Array = [];
 				var tempInt:int;
 				var tempInt2:int;
+				var tempArr:Array;
 				var tempStr:String;
 				var tempStr2:String;
 				var tempStr3:String;
@@ -433,6 +437,7 @@ package com.swfwire.decompiler.utils
 				var exit:Boolean = false;
 				var tempStr4:String;
 				var b:Object;
+				var i:int;
 				
 				if(showByteCode)
 				{
@@ -949,27 +954,27 @@ package com.swfwire.decompiler.utils
 					}
 					else if(op is Instruction_setlocal0)
 					{
-						//source = locals.getName(0)+' = '+stack.pop()+';';
+						source = locals.getName(0)+' = '+stack.pop()+';';
 						locals.setValue(0, stack.pop());
 					}
 					else if(op is Instruction_setlocal1)
 					{
-						//source = locals.getName(1)+' = '+stack.pop()+';';
+						source = locals.getName(1)+' = '+stack.pop()+';';
 						locals.setValue(1, stack.pop());
 					}
 					else if(op is Instruction_setlocal2)
 					{
-						//source = locals.getName(2)+' = '+stack.pop()+';';
+						source = locals.getName(2)+' = '+stack.pop()+';';
 						locals.setValue(2, stack.pop());
 					}
 					else if(op is Instruction_setlocal3)
 					{
-						//source = locals.getName(3)+' = '+stack.pop()+';';
+						source = locals.getName(3)+' = '+stack.pop()+';';
 						locals.setValue(3, stack.pop());
 					}
 					else if(op is Instruction_setlocal)
 					{
-						//source = locals.getName(Instruction_setlocal(op).index)+' = '+stack.pop()+';';
+						source = locals.getName(Instruction_setlocal(op).index)+' = '+stack.pop()+';';
 						locals.setValue(Instruction_setlocal(op).index, stack.pop());
 					}
 					else if(op is Instruction_setslot)
@@ -1387,6 +1392,30 @@ package com.swfwire.decompiler.utils
 					else if(op is Instruction_convert_u)
 					{
 						stack.push('uint('+stack.pop()+')');
+					}
+					else if(op is Instruction_applytype)
+					{
+						tempArr = [];
+						for(i = 0; i < Instruction_applytype(op).argCount; i++)
+						{
+							tempArr.push(stack.pop());
+						}
+						tempArr.reverse();
+						tempStr2 = tempArr.join(', ');
+						tempStr = stack.pop();
+						stack.push(tempStr+'.<'+tempStr2+'>');
+					}
+					else if(op is Instruction_construct)
+					{
+						tempArr = [];
+						for(i = 0; i < Instruction_construct(op).argCount; i++)
+						{
+							tempArr.push(stack.pop());
+						}
+						tempArr.reverse();
+						tempStr2 = tempArr.join(', ');
+						tempStr = stack.pop();
+						stack.push('new '+tempStr+'('+tempStr2+')');
 					}
 					else if(op is Instruction_typeof)
 					{
