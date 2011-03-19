@@ -486,9 +486,12 @@ package net.anirudh.as3syntaxhighlight
                     var patternParts:Array = shortcuts[tail.charAt(0)];
                     if (patternParts) {
                         match = tail.match(patternParts[1]);
-                        token = match[0];
-                   
-                        style = patternParts[0];
+						if(match)
+						{
+	                        token = match[0];
+	                   
+	                        style = patternParts[0];
+						}
                     } else {
                         for (var i:int = 0; i < nPatterns; ++i) {
                             patternParts = fallthroughStylePatterns[i];
@@ -533,11 +536,11 @@ package net.anirudh.as3syntaxhighlight
                                 break;
                             }
                         }
-                        
-                        if (!token) {  // make sure that we make progress
-                            style = PR_PLAIN;
-                            token = tail.substring(0, 1);
-                        }
+                    }
+					
+                    if (!token) {  // make sure that we make progress
+                        style = PR_PLAIN;
+                        token = tail.substring(0, 1);
                     }
                    //trace("found special keywords " + token  + " " + style);
                   
@@ -1030,48 +1033,42 @@ package net.anirudh.as3syntaxhighlight
         // removed
         public function prettyPrintOne(sourceCodeHtml:String, opt_langExtension:String, buildHTML:Boolean=false):String
         {
-            try {
-            	mainDecorations = null;
-                // Extract tags, and convert the source code to plain text.       
-                //Anirudh: Change not to do HTML extraction         
-                //var sourceAndExtractedTags:Object = extractTags(sourceCodeHtml);                                
-                //var sourceAndExtractedTags:Object = {source: sourceCodeHtml, tags: []};
-                
-                // Pick a lexer and apply it.
-                if (!langHandlerRegistry.hasOwnProperty(opt_langExtension)) {
-                    // Treat it as markup if the first non whitespace character is a < and
-                    // the last non-whitespace character is a >.
-                    var checkmark:RegExp = /^\s*?</;
-                    opt_langExtension =
-                        checkmark.test(sourceCodeHtml) ? 'default-markup' : 'default-code';
-                }
-                
-                /** Even entries are positions in source in ascending order.  Odd enties
-                 * are style markers (e.g., PR_COMMENT) that run from that position until
-                 * the end.
+        	mainDecorations = null;
+            // Extract tags, and convert the source code to plain text.       
+            //Anirudh: Change not to do HTML extraction         
+            //var sourceAndExtractedTags:Object = extractTags(sourceCodeHtml);                                
+            //var sourceAndExtractedTags:Object = {source: sourceCodeHtml, tags: []};
+            
+            // Pick a lexer and apply it.
+            if (!langHandlerRegistry.hasOwnProperty(opt_langExtension)) {
+                // Treat it as markup if the first non whitespace character is a < and
+                // the last non-whitespace character is a >.
+                var checkmark:RegExp = /^\s*?</;
+                opt_langExtension =
+                    checkmark.test(sourceCodeHtml) ? 'default-markup' : 'default-code';
+            }
+            
+            /** Even entries are positions in source in ascending order.  Odd enties
+             * are style markers (e.g., PR_COMMENT) that run from that position until
+             * the end.
+             * @type {Array.<number|string>}
+             */
+            var decorations:Array = langHandlerRegistry[opt_langExtension].call({}, sourceCodeHtml);
+            mainDecorations = decorations;
+            //Anirudh: added buildHTML variable, because during live syntax highlighting, I 
+            //just need the mainDecorations to apply the correct TextRange sections
+            if ( buildHTML )
+            {
+            	/** Even entries are positions in source in ascending order.  Odd entries
+                 * are tags that were extracted at that position.
                  * @type {Array.<number|string>}
                  */
-                var decorations:Array = langHandlerRegistry[opt_langExtension].call({}, sourceCodeHtml);
-                mainDecorations = decorations;
-                //Anirudh: added buildHTML variable, because during live syntax highlighting, I 
-                //just need the mainDecorations to apply the correct TextRange sections
-                if ( buildHTML )
-                {
-                	/** Even entries are positions in source in ascending order.  Odd entries
-	                 * are tags that were extracted at that position.
-	                 * @type {Array.<number|string>}
-	                 */
-                	var extractedTags:Array = [];
-	                // Integrate the decorations and tags back into the source code to produce
-	                // a decorated html string.
-    	            return recombineTagsAndDecorations(sourceCodeHtml, extractedTags, decorations);                	
-                }
-                return null;
-            } catch (e:Error) {
-                
-                trace(e);
+            	var extractedTags:Array = [];
+                // Integrate the decorations and tags back into the source code to produce
+                // a decorated html string.
+	            return recombineTagsAndDecorations(sourceCodeHtml, extractedTags, decorations);                	
             }
-             return null;
+            return null;
         }
     }
 }

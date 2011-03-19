@@ -5,5 +5,6 @@ package com.swfwire.decompiler.utils
 		public var className:ReadableMultiname;
 		public var superName:ReadableMultiname;
 		public var traits:Array;
+		public var interfaces:Array;
 	}
 }

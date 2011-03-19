@@ -594,6 +594,7 @@
 					rc.superName = new ReadableMultiname();
 					translator.getReadableMultiname(instance.superName, rc.superName);
 					rc.traits = new Array();
+					rc.interfaces = new Array();
 
 					var iter2:uint;
 					var trait:TraitsInfoToken;
@@ -622,6 +623,11 @@
 						r = new ReadableTrait();
 						translator.getReadableTrait(trait, r);
 						rc.traits.push(r);
+					}
+					
+					for(iter2 = 0; iter2 < instance.interfaceCount; iter2++)
+					{
+						rc.interfaces.push(instance.interfaces[iter2]);
 					}
 
 					var start:uint = getTimer();

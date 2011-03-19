@@ -81,6 +81,9 @@ package com.swfwire.decompiler.utils
 						break;
 					case MultinameToken.KIND_TypeName:
 						var tn:MultinameTypeNameToken = multiname.data as MultinameTypeNameToken;
+						var mq1:MultinameQNameToken = cpool.multinames[tn.name].data as MultinameQNameToken;
+						var mq2:MultinameQNameToken = cpool.multinames[tn.subType].data as MultinameQNameToken;
+						readable.name = cpool.strings[mq1.name].utf8 + '.<' + cpool.strings[mq2.name].utf8 + '>';
 						break;
 					default:
 						readable.name = '#'+index+'/'+cpool.multinames.length+'('+multiname.kind+')';
@@ -1780,10 +1783,27 @@ package com.swfwire.decompiler.utils
 					}
 				}
 			}
+			
+			var interfaces:Array = [];
+			
+			for(var iter2:uint = 0; iter2 < c.interfaces.length; iter2++)
+			{
+				var r:ReadableMultiname = new ReadableMultiname();
+				getReadableMultiname(c.interfaces[iter2], r);
+				interfaces.push(multinameTypeToString(r));
+			}
+			
+			var interfaceString:String = '';
+			
+			if(interfaces.length > 0)
+			{
+				interfaceString = ' implements '+interfaces.join(', ');
+			}
+			
 			var result:String = 
 'package '+c.className.namespace+'\n' +
 '{\n' +
-'	public class '+c.className.name+' extends '+multinameTypeToString(c.superName)+'\n' +
+'	public class '+c.className.name+' extends '+multinameTypeToString(c.superName)+interfaceString+'\n' +
 '	{\n' +
 '		' + properties.join('\n		') + '\n' +
 '	}\n' +
