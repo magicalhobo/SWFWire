@@ -939,28 +939,28 @@ package com.swfwire.decompiler.utils
 					}
 					else if(op is Instruction_getlocal0)
 					{
-						//stack.push(locals.getName(0));
-						stack.push(locals.getValue(0));
+						stack.push(locals.getName(0));
+						//stack.push(locals.getValue(0));
 					}
 					else if(op is Instruction_getlocal1)
 					{
-						//stack.push(locals.getName(1));
-						stack.push(locals.getValue(1));
+						stack.push(locals.getName(1));
+						//stack.push(locals.getValue(1));
 					}
 					else if(op is Instruction_getlocal2)
 					{
-						//stack.push(locals.getName(2));
-						stack.push(locals.getValue(2));
+						stack.push(locals.getName(2));
+						//stack.push(locals.getValue(2));
 					}
 					else if(op is Instruction_getlocal3)
 					{
-						//stack.push(locals.getName(3));
-						stack.push(locals.getValue(3));
+						stack.push(locals.getName(3));
+						//stack.push(locals.getValue(3));
 					}
 					else if(op is Instruction_getlocal)
 					{
-						//stack.push(locals.getName(Instruction_getlocal(op).index));
-						stack.push(locals.getValue(Instruction_getlocal(op).index));
+						stack.push(locals.getName(Instruction_getlocal(op).index));
+						//stack.push(locals.getValue(Instruction_getlocal(op).index));
 					}
 					else if(op is Instruction_getslot)
 					{
@@ -1081,6 +1081,47 @@ package com.swfwire.decompiler.utils
 						tempStr = stack.pop();
 						
 						stack.push('-'+tempStr);
+					}
+					else if(op is Instruction_bitand)
+					{
+						tempStr = stack.pop();
+						tempStr2 = stack.pop();
+						stack.push('('+tempStr2+') & ('+tempStr+')');
+					}
+					else if(op is Instruction_bitor)
+					{
+						tempStr = stack.pop();
+						tempStr2 = stack.pop();
+						stack.push('('+tempStr2+') | ('+tempStr+')');
+					}
+					else if(op is Instruction_bitxor)
+					{
+						tempStr = stack.pop();
+						tempStr2 = stack.pop();
+						stack.push('('+tempStr2+') ^ ('+tempStr+')');
+					}
+					else if(op is Instruction_bitnot)
+					{
+						tempStr = stack.pop();
+						stack.push('~('+tempStr+')');
+					}
+					else if(op is Instruction_lshift)
+					{
+						tempStr = stack.pop();
+						tempStr2 = stack.pop();
+						stack.push('('+tempStr2+') << ('+tempStr+')');
+					}
+					else if(op is Instruction_rshift)
+					{
+						tempStr = stack.pop();
+						tempStr2 = stack.pop();
+						stack.push('('+tempStr2+') >> ('+tempStr+')');
+					}
+					else if(op is Instruction_urshift)
+					{
+						tempStr = stack.pop();
+						tempStr2 = stack.pop();
+						stack.push('('+tempStr2+') >>> ('+tempStr+')');
 					}
 					else if(op is Instruction_equals)
 					{
@@ -1718,7 +1759,12 @@ package com.swfwire.decompiler.utils
 					pieces.push('function');
 				}
 				pieces.push('('+args.join(', ')+')');
-				pieces.push(':'+multinameTypeToString(r.type));
+				
+				var type:String = multinameTypeToString(r.type);
+				if(type != '')
+				{
+					pieces.push(':'+type);
+				}
 				
 				if(r.instructions && r.instructions.length > 0)
 				{
@@ -1800,10 +1846,17 @@ package com.swfwire.decompiler.utils
 				interfaceString = ' implements '+interfaces.join(', ');
 			}
 			
+			var inheritanceString:String = '';
+			var superName:String = multinameTypeToString(c.superName);
+			if(superName != '*' && superName != '')
+			{
+				inheritanceString = ' extends '+superName;
+			}
+			
 			var result:String = 
 'package '+c.className.namespace+'\n' +
 '{\n' +
-'	public class '+c.className.name+' extends '+multinameTypeToString(c.superName)+interfaceString+'\n' +
+'	public class '+c.className.name+inheritanceString+interfaceString+'\n' +
 '	{\n' +
 '		' + properties.join('\n		') + '\n' +
 '	}\n' +

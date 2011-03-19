@@ -606,6 +606,8 @@
 					*/
 					r = new ReadableTrait();
 					translator.getMethodBody(instance.name, instance.iinit, r);
+					r.type.name = '';
+					r.declaration.namespace = 'public';
 					rc.traits.push(r);
 
 					for(iter2 = 0; iter2 < classInfo.traitCount; iter2++)
