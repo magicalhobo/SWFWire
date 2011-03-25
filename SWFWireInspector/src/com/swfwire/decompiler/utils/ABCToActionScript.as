@@ -77,6 +77,7 @@ package com.swfwire.decompiler.utils
 					case MultinameToken.KIND_Multiname:
 					case MultinameToken.KIND_MultinameA:
 						var mm:MultinameMultinameToken = multiname.data as MultinameMultinameToken;
+						readable.namespace = cpool.strings[cpool.namespaces[cpool.nsSets[mm.nsSet].namespaces[0]].name].utf8;
 						readable.name = cpool.strings[mm.name].utf8;
 						break;
 					case MultinameToken.KIND_TypeName:
@@ -303,7 +304,8 @@ package com.swfwire.decompiler.utils
 											  locals:LocalRegisters = null,
 											  stack:OperandStack = null,
 											  target:int = -1,
-											  depth:int = 0):Object
+											  depth:int = 0,
+											  definedLocals:Object = null):Object
 		{
 			var lines:Array = [];
 			
@@ -312,6 +314,10 @@ package com.swfwire.decompiler.utils
 			if(!scope)
 			{
 				scope = new ScopeStack(0);
+			}
+			if(!definedLocals)
+			{
+				definedLocals = {};
 			}
 			if(!locals)
 			{
@@ -324,11 +330,13 @@ package com.swfwire.decompiler.utils
 				{
 					locals.setName(iterArg + 1, argumentNames[iterArg]);
 					locals.setValue(iterArg + 1, argumentNames[iterArg]);
+					definedLocals[iterArg + 1] = false;
 				}
 				for(; iterArg < localCount; iterArg++)
 				{
 					locals.setName(iterArg + 1, 'local'+(iterArg - argumentCount));
 					locals.setValue(iterArg + 1, 'null');
+					definedLocals[iterArg + 1] = false;
 				}
 			}
 			if(!stack)
@@ -773,6 +781,36 @@ package com.swfwire.decompiler.utils
 						}
 						return source;
 					}
+					
+					function localAssign(id:int):void
+					{
+						var tempStr:String = stack.pop();
+						var coercion:RegExp = /^([\w.]+)\((.*)\)$/i;
+						var result:Array = tempStr.match(coercion);
+						tempStr2 = result ? result[1] : '';
+						tempStr3 = result ? result[2] : tempStr;
+						
+						if(!definedLocals[id] && tempStr2)
+						{
+							tempStr4 = tempStr2.split('.').pop();
+							locals.setName(id, tempStr4.substr(0, 1).toLowerCase() + tempStr4.substr(1));
+						}
+							
+						var dec:String = locals.getName(id);
+						
+						if(!definedLocals[id])
+						{
+							dec = 'var '+dec;
+							if(tempStr2)
+							{
+								dec = dec+':'+tempStr2;
+							}
+							definedLocals[id] = true;
+						}
+
+						source = dec+' = '+tempStr3+';';
+						locals.setValue(id, tempStr3);
+					}
 
 					if(op is EndInstruction)
 					{
@@ -969,28 +1007,23 @@ package com.swfwire.decompiler.utils
 					}
 					else if(op is Instruction_setlocal0)
 					{
-						source = locals.getName(0)+' = '+stack.pop()+';';
-						locals.setValue(0, stack.pop());
+						localAssign(0);
 					}
 					else if(op is Instruction_setlocal1)
 					{
-						source = locals.getName(1)+' = '+stack.pop()+';';
-						locals.setValue(1, stack.pop());
+						localAssign(1);
 					}
 					else if(op is Instruction_setlocal2)
 					{
-						source = locals.getName(2)+' = '+stack.pop()+';';
-						locals.setValue(2, stack.pop());
+						localAssign(2);
 					}
 					else if(op is Instruction_setlocal3)
 					{
-						source = locals.getName(3)+' = '+stack.pop()+';';
-						locals.setValue(3, stack.pop());
+						localAssign(3);
 					}
 					else if(op is Instruction_setlocal)
 					{
-						source = locals.getName(Instruction_setlocal(op).index)+' = '+stack.pop()+';';
-						locals.setValue(Instruction_setlocal(op).index, stack.pop());
+						localAssign(Instruction_setlocal(op).index);
 					}
 					else if(op is Instruction_setslot)
 					{
@@ -1518,6 +1551,12 @@ package com.swfwire.decompiler.utils
 						tempStr2 = tempArr.join(', ');
 						tempStr = stack.pop();
 						stack.push(tempStr+'.<'+tempStr2+'>');
+					}
+					else if(op is Instruction_astypelate)
+					{
+						tempStr = stack.pop();
+						tempStr2 = stack.pop();
+						stack.push(tempStr+'('+tempStr2+')');
 					}
 					else if(op is Instruction_construct)
 					{
