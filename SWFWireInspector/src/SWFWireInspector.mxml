@@ -11,6 +11,7 @@
 			import air.update.ApplicationUpdaterUI;
 			import air.update.events.UpdateEvent;
 			
+			import com.adobe.licensing.LicenseManager;
 			import com.swfwire.decompiler.*;
 			import com.swfwire.decompiler.abc.instructions.*;
 			import com.swfwire.decompiler.abc.tokens.*;
@@ -39,6 +40,7 @@
 			
 			import net.anirudh.as3syntaxhighlight.CodePrettyPrint;
 
+			private var licenseManager:LicenseManager;
 			private var loader:Loader;
 			private var urlLoader:URLLoader;
 			private var windowTracker:WindowTracker;
@@ -58,10 +60,20 @@
 				debug = new Debug(true, 'SWFWireInspector');
 				debug.log('main');
 
-				contextMenu.items.push(new ContextMenuItem('SWFWireInspector '+Config.VERSION));
+				var updateCheckItem:ContextMenuItem = new ContextMenuItem('SWFWireInspector '+Config.VERSION);
+				updateCheckItem.addEventListener(Event.SELECT, function(ev:Event):void
+				{
+					appUpdater.isCheckForUpdateVisible = true;
+					appUpdater.checkNow();
+				});
+				
+				contextMenu.items.push(updateCheckItem);
+				
+				licenseManager = new LicenseManager();
+				licenseManager.checkLicense(this, 'A6BEB7F6-801B-17FE-FF07-FB1256D5305C', true, Config.TESTING);
 
 				appUpdater = new ApplicationUpdaterUI();
-				appUpdater.configurationFile = new File('app:/updateConfig.xml');
+				appUpdater.configurationFile = new File('app:/config/updateConfig.xml');
 				if(Config.TESTING)
 				{
 					appUpdater.addEventListener(UpdateEvent.INITIALIZED, function(ev:Event):void
