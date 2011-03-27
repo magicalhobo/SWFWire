@@ -4,6 +4,7 @@ package com.swfwire.decompiler.utils
 
 	public class ReadableTrait
 	{
+		public static const TYPE_CLASS:String = 'class';
 		public static const TYPE_METHOD:String = 'method';
 		public static const TYPE_PROPERTY:String = 'property';
 		public static const TYPE_NAMESPACE:String = 'namespace';
@@ -19,5 +20,6 @@ package com.swfwire.decompiler.utils
 		public var instructions:Vector.<IInstruction>;
 		public var type:ReadableMultiname;
 		public var localCount:uint;
+		public var classInfo:ReadableClass;
 	}
 }

@@ -14,6 +14,7 @@
 			import com.swfwire.decompiler.*;
 			import com.swfwire.decompiler.abc.instructions.*;
 			import com.swfwire.decompiler.abc.tokens.*;
+			import com.swfwire.decompiler.abc.tokens.traits.TraitSlotToken;
 			import com.swfwire.decompiler.data.swf.*;
 			import com.swfwire.decompiler.data.swf.records.*;
 			import com.swfwire.decompiler.data.swf.tags.*;
@@ -44,6 +45,7 @@
 			private var appUpdater:ApplicationUpdaterUI;
 			private var result:SWFReadResult;
 			private var translator:ABCToActionScript;
+			private var customNamespaces:Object;
 			private var lastSource:ByteArray;
 			private var lastResult:SWFReadResult;
 			private var tagDumpCache:Array;
@@ -265,6 +267,7 @@
 				lastResult = result;
 				tagDumpCache = [];
 				tagHexCache = [];
+				customNamespaces = {};
 
 				var dp:Array = [];
 
@@ -275,6 +278,33 @@
 					var metadata:Object = result.tagMetadata[iterTag];
 					var label:String = metadata.name.substr(metadata.name.indexOf('::') + 2);
 					dp.push({name: label, id: iterTag, displayId: iterTag, size: metadata.length});
+					
+					var abc:DoABCTag = result.swf.tags[iterTag] as DoABCTag;
+					if(abc)
+					{
+						var translator:ABCToActionScript = new ABCToActionScript(abc.abcFile);
+						for each(var iterScript:ScriptInfoToken in abc.abcFile.scripts)
+						{
+							for each(var traitInfo:TraitsInfoToken in iterScript.traits)
+							{
+								if(traitInfo.kind == TraitsInfoToken.KIND_TRAIT_SLOT || traitInfo.kind == TraitsInfoToken.KIND_TRAIT_CONST)
+								{
+									var slotInfo2:TraitSlotToken = TraitSlotToken(traitInfo.data);
+									if(slotInfo2.vKind == 0x08)
+									{
+										var ns:NamespaceToken = abc.abcFile.cpool.namespaces[slotInfo2.vIndex];
+										if(ns.kind == NamespaceToken.KIND_Namespace)
+										{
+											var uri:String = abc.abcFile.cpool.strings[ns.name].utf8;
+											var r:ReadableMultiname = new ReadableMultiname();
+											translator.getReadableMultiname(traitInfo.name, r);
+											customNamespaces[uri] = translator.multinameTypeToString(r);
+										}
+									}
+								}
+							}
+						}
+					}
 				}
 
 				detailsPanel.tagList.addEventListener(ListEvent.CHANGE, tagListChangeHandler);
@@ -282,7 +312,7 @@
 				detailsPanel.tagList.dataProvider = dp;
 				if(Config.TESTING)
 				{
-					detailsPanel.tagList.selectedIndex = 9;
+					detailsPanel.tagList.selectedIndex = 10;
 					//detailsPanel.tagList.selectedIndex = 13;
 					//detailsPanel.tagList.selectedIndex = 149;
 					//detailsPanel.tagList.selectedIndex = 249;
@@ -309,7 +339,7 @@
 				if(id != currentTagId)
 				{
 					currentTagId = id;
-					translator = new ABCToActionScript(tag.abcFile, result.abcMetadata[id].offsetFromId);
+					translator = new ABCToActionScript(tag.abcFile, result.abcMetadata[id].offsetFromId, customNamespaces);
 	
 					var cpool:ConstantPoolToken = tag.abcFile.cpool;
 	
@@ -320,7 +350,7 @@
 					var classes:Array = [];
 					var ns:String;
 					var name:String;
-	
+					/*
 					for(var iter:uint = 0; iter < tag.abcFile.classCount; iter++)
 					{
 						var instance:InstanceToken = tag.abcFile.instances[iter];
@@ -330,6 +360,19 @@
 						translator.getReadableMultiname(instance.name, rc.className);
 	
 						classes.push({id: iter, className: rc.className.name, packageName: rc.className.namespace});
+					}
+					*/
+					
+					var iter:uint = 0;
+					for each(var script:ScriptInfoToken in tag.abcFile.scripts)
+					{
+						for(var iter2:uint = 0; iter2 < script.traitCount; iter2++)
+						{
+							var r:ReadableTrait = new ReadableTrait();
+							translator.getReadableTrait(script.traits[iter2], r);
+							classes.push({id: iter, className: r.declaration.name, packageName: r.declaration.namespace, trait: script.traits[iter2]});
+							iter++;
+						}
 					}
 	
 					detailsPanel.actionScript.classesList.dataProvider = classes;
@@ -580,75 +623,46 @@
 				translator.showStack = detailsPanel.actionScript.showStack.selected;
 				translator.showBranchInfo = detailsPanel.actionScript.showBranchInfo.selected;
 
-				var item:Object = detailsPanel.actionScript.classesList.selectedItem;
-				var index:uint = item.id;
 				var tag:DoABCTag = lastResult.swf.tags[detailsPanel.tagList.selectedItem.id] as DoABCTag;
 				if(tag)
 				{
-					var classInfo:ClassInfoToken = tag.abcFile.classes[index];
-					var instance:InstanceToken = tag.abcFile.instances[index];
-
-					var rc:ReadableClass = new ReadableClass();
-					rc.className = new ReadableMultiname();
-					translator.getReadableMultiname(instance.name, rc.className);
-					rc.superName = new ReadableMultiname();
-					translator.getReadableMultiname(instance.superName, rc.superName);
-					rc.traits = new Array();
-					rc.interfaces = new Array();
-
-					var iter2:uint;
-					var trait:TraitsInfoToken;
-					var r:ReadableTrait;
-					/*
-					r = new ReadableTrait();
-					translator.getMethodBody(instance.name, classInfo.cinit, r);
-					rc.traits.push(r);
-					*/
-					r = new ReadableTrait();
-					translator.getMethodBody(instance.name, instance.iinit, r);
-					r.type.name = '';
-					r.declaration.namespace = 'public';
-					rc.traits.push(r);
-
-					for(iter2 = 0; iter2 < classInfo.traitCount; iter2++)
+					var item:Object = detailsPanel.actionScript.classesList.selectedItem;
+					if(item)
 					{
-						trait = classInfo.traits[iter2];
-						r = new ReadableTrait();
-						r.isStatic = true;
-						translator.getReadableTrait(trait, r);
-						rc.traits.push(r);
-					}
-
-					for(iter2 = 0; iter2 < instance.traitCount; iter2++)
-					{
-						trait = instance.traits[iter2];
-						r = new ReadableTrait();
-						translator.getReadableTrait(trait, r);
-						rc.traits.push(r);
-					}
-					
-					for(iter2 = 0; iter2 < instance.interfaceCount; iter2++)
-					{
-						rc.interfaces.push(instance.interfaces[iter2]);
-					}
-
-					var start:uint = getTimer();
-					var text:String = translator.classToString(rc);
-					log('Decompiling class took '+(getTimer() - start)+'ms');
-					if(syntaxHighlighting)
-					{
-						var prettyPrint:CodePrettyPrint = new CodePrettyPrint();
-						var codeStyle:StyleSheet = new StyleSheet();
-						codeStyle.parseCSS(as3Styles);
-						text = prettyPrint.prettyPrintOne(text, null, true);
-	
-						detailsPanel.actionScript.classes.setStyle('contentBackgroundColor', 0xFFFFFF);
-						detailsPanel.actionScript.classes.styleSheet = codeStyle;
-						detailsPanel.actionScript.classes.htmlText = text;
+						if(item.trait)
+						{
+							var trait:TraitsInfoToken = item.trait as TraitsInfoToken;
+							
+							var r:ReadableTrait = new ReadableTrait();
+							translator.getReadableTrait(trait, r);
+							
+							var start:uint = getTimer();
+							var text:String = translator.scriptTraitToString(r);
+							log('Decompiling script took '+(getTimer() - start)+'ms');
+							if(syntaxHighlighting)
+							{
+								var prettyPrint:CodePrettyPrint = new CodePrettyPrint();
+								var codeStyle:StyleSheet = new StyleSheet();
+								codeStyle.parseCSS(as3Styles);
+								text = prettyPrint.prettyPrintOne(text, null, true);
+								
+								detailsPanel.actionScript.classes.setStyle('contentBackgroundColor', 0xFFFFFF);
+								detailsPanel.actionScript.classes.styleSheet = codeStyle;
+								detailsPanel.actionScript.classes.htmlText = text;
+							}
+							else
+							{
+								detailsPanel.actionScript.classes.setStyle('contentBackgroundColor', 0x383733);
+								detailsPanel.actionScript.classes.styleSheet = null;
+								detailsPanel.actionScript.classes.text = text;
+							}			
+						}
 					}
 					else
 					{
-						detailsPanel.actionScript.classes.text = text;
+							detailsPanel.actionScript.classes.setStyle('contentBackgroundColor', 0x383733);
+							detailsPanel.actionScript.classes.styleSheet = null;
+							detailsPanel.actionScript.classes.text = '';
 					}
 				}
 			}
