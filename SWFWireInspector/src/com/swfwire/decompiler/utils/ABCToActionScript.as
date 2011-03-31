@@ -51,11 +51,29 @@ package com.swfwire.decompiler.utils
 			this.customNamespaces = customNamespaces;
 		}
 		
-		public function getReadableMultiname(index:uint, readable:ReadableMultiname):int
+		public function getReadableMultinameRuntime(index:uint, readable:ReadableMultiname, stack:OperandStack):void
 		{
 			var cpool:ConstantPoolToken = abcFile.cpool;
 			
-			var operandsToPop:int = 0;
+			var multiname:MultinameToken = cpool.multinames[index];
+			
+			switch(multiname.kind)
+			{
+				case MultinameToken.KIND_RTQName:
+				case MultinameToken.KIND_RTQNameA:
+					var rtqn:MultinameRTQNameToken = multiname.data as MultinameRTQNameToken;
+					readable.name = cpool.strings[rtqn.name].utf8;
+					readable.namespace = stack.pop();
+					break;
+				default:
+					getReadableMultiname(index, readable);
+					break;
+			}
+		}
+		
+		public function getReadableMultiname(index:uint, readable:ReadableMultiname):void
+		{
+			var cpool:ConstantPoolToken = abcFile.cpool;
 			
 			var multiname:MultinameToken = cpool.multinames[index];
 			readable.namespace = '';
@@ -98,7 +116,6 @@ package com.swfwire.decompiler.utils
 						break;
 				}
 			}
-			return operandsToPop;
 		}
 		
 		public function getReadableClass(index:uint, rc:ReadableClass):void
@@ -1369,23 +1386,24 @@ package com.swfwire.decompiler.utils
 					{
 						tempInt = Instruction_getproperty(op).index;
 						mn = abcFile.cpool.multinames[tempInt];
-						var obj:String = stack.pop();
 						switch(mn.kind)
 						{
 							case MultinameToken.KIND_RTQNameL:
 							case MultinameToken.KIND_RTQNameLA:
 							case MultinameToken.KIND_MultinameL:
 							case MultinameToken.KIND_MultinameLA:
+								tempStr2 = stack.pop();
 								tempStr = stack.pop();
-								tempStr = tempStr+'['+obj+']';
+								tempStr = tempStr+'['+tempStr2+']';
 								break;
 							default:
 								rmn = new ReadableMultiname();
-								getReadableMultiname(tempInt, rmn);
+								getReadableMultinameRuntime(tempInt, rmn, stack);
+								tempStr2 = stack.pop();
 								tempStr = this.multinameTypeToString(rmn);
-								if(obj != tempStr)
+								if(tempStr2 != tempStr)
 								{
-									tempStr = obj+'.'+tempStr;
+									tempStr = tempStr2+'.'+tempStr;
 								}
 								break;
 						}
@@ -1407,19 +1425,20 @@ package com.swfwire.decompiler.utils
 								source = tempStr3+'['+tempStr2+'] = '+tempStr+';';
 								break;
 							default:
-								var value3:String = stack.pop();
-								tempStr2 = stack.pop();
+								tempStr4 = stack.pop();
 								
 								rmn = new ReadableMultiname();
-								getReadableMultiname(tempInt, rmn);
+								getReadableMultinameRuntime(tempInt, rmn, stack);
 								tempStr = this.multinameTypeToString(rmn);
+								
+								tempStr2 = stack.pop();
 								
 								if(tempStr2 != tempStr)
 								{
 									tempStr = tempStr2+'.'+tempStr;
 								}
 								tempStr = tempStr;
-								source = tempStr+' = '+value3+';';
+								source = tempStr+' = '+tempStr4+';';
 								break;
 						}
 					}
