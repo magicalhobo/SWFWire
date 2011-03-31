@@ -70,7 +70,10 @@
 				contextMenu.items.push(updateCheckItem);
 				
 				licenseManager = new LicenseManager();
-				licenseManager.checkLicense(this, 'A6BEB7F6-801B-17FE-FF07-FB1256D5305C', true, Config.TESTING);
+				if(!Config.TESTING)
+				{
+					licenseManager.checkLicense(this, 'A6BEB7F6-801B-17FE-FF07-FB1256D5305C', true, false);
+				}
 
 				appUpdater = new ApplicationUpdaterUI();
 				appUpdater.configurationFile = new File('app:/config/updateConfig.xml');

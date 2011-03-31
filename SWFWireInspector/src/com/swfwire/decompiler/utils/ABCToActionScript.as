@@ -1852,7 +1852,8 @@ package com.swfwire.decompiler.utils
 			var pieces:Array = [];
 			if(showNamespace)
 			{
-				pieces.push(r.declaration.namespace+' ');
+				var ns:String = customNamespaces.hasOwnProperty(r.declaration.namespace) ? customNamespaces[r.declaration.namespace] : r.declaration.namespace;
+				pieces.push(ns+' ');
 			}
 			if(r.traitType == ReadableTrait.TYPE_METHOD)
 			{
@@ -1973,19 +1974,24 @@ package com.swfwire.decompiler.utils
 		public function classToString(c:ReadableClass):String
 		{
 			var properties:Array = [];
-			//properties.push(traitToString(c.traits[iter]));
-			var runs:uint = 0;
+			
 			for(var iter:String in c.traits)
 			{
-				var str:String = traitToString(c.traits[iter]);
+				var rt:ReadableTrait = c.traits[iter]; 
+				if(rt.traitType == ReadableTrait.TYPE_NAMESPACE)
+				{
+					var uri:String = rt.initializer.replace(/^"(.*)"$/, '$1');
+					trace(uri);
+					customNamespaces[uri] = multinameTypeToString(rt.declaration);
+				}
+			}
+			
+			for(var iter3:String in c.traits)
+			{
+				var str:String = traitToString(c.traits[iter3]);
 				if(str != '')
 				{
 					properties.push(str);
-					runs++;
-					if(runs >= 100)
-					{
-						break;
-					}
 				}
 			}
 			
