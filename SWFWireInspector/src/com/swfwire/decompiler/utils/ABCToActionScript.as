@@ -83,6 +83,7 @@ package com.swfwire.decompiler.utils
 			var multiname:MultinameToken = cpool.multinames[index];
 			readable.namespace = '';
 			readable.name = '?';
+			var isAttribute:Boolean = false;
 			if(index == 0)
 			{
 				readable.name = '*';
@@ -119,6 +120,10 @@ package com.swfwire.decompiler.utils
 					default:
 						readable.name = '#'+index+'/'+cpool.multinames.length+'('+multiname.kind.toString(16)+')';
 						break;
+				}
+				if(multiname.kind == MultinameToken.KIND_MultinameA)
+				{
+					readable.name = '@'+readable.name;
 				}
 			}
 		}
@@ -952,9 +957,6 @@ package com.swfwire.decompiler.utils
 					else if(op is Instruction_debug || op is Instruction_debugfile || op is Instruction_debugline)
 					{
 					}
-					else if(op is Instruction_label)
-					{
-					}
 					else if(op is Instruction_hasnext2)
 					{
 						tempStr = locals.getName(Instruction_hasnext2(op).objectReg);
@@ -1514,6 +1516,19 @@ package com.swfwire.decompiler.utils
 								break;
 						}
 					}
+					else if(op is Instruction_getdescendants)
+					{
+						tempInt = Instruction_getdescendants(op).index;
+						mn = abcFile.cpool.multinames[tempInt];
+
+						rmn = new ReadableMultiname();
+						getReadableMultinameRuntime(tempInt, rmn, stack);
+						tempStr2 = stack.pop();
+						tempStr = this.multinameTypeToString(rmn);
+						tempStr = tempStr2+'..'+tempStr;
+						
+						stack.push(tempStr);
+					}
 					else if(op is Instruction_callproperty)
 					{
 						tempInt = Instruction_callproperty(op).index;
@@ -1770,9 +1785,10 @@ package com.swfwire.decompiler.utils
 					else if(op is Instruction_pushstring)
 					{
 						tempStr = abcFile.cpool.strings[Instruction_pushstring(op).index].utf8;
-						tempStr = tempStr.replace('\r', '\\r');
-						tempStr = tempStr.replace('\n', '\\n');
-						stack.push('"'+tempStr+'"');
+						tempStr = tempStr.replace(/\r/g, '\\r');
+						tempStr = tempStr.replace(/\n/g, '\\n');
+						tempStr = tempStr.replace(/'/g, '\\\'');
+						stack.push('\''+tempStr+'\'');
 					}
 					else if(op is Instruction_pushtrue)
 					{
@@ -1849,6 +1865,12 @@ package com.swfwire.decompiler.utils
 							source = 'return;';
 						}
 						exit = true;
+					}
+					else if(op is Instruction_label)
+					{
+					}
+					else if(op is Instruction_checkfilter)
+					{
 					}
 					else
 					{
