@@ -69,10 +69,13 @@
 				
 				contextMenu.items.push(updateCheckItem);
 				
-				licenseManager = new LicenseManager();
-				if(!Config.TESTING)
+				if(Config.IN_MARKET)
 				{
-					licenseManager.checkLicense(this, 'A6BEB7F6-801B-17FE-FF07-FB1256D5305C', true, false);
+					licenseManager = new LicenseManager();
+					if(!Config.TESTING)
+					{
+						licenseManager.checkLicense(this, 'A6BEB7F6-801B-17FE-FF07-FB1256D5305C', true, false);
+					}
 				}
 
 				appUpdater = new ApplicationUpdaterUI();
