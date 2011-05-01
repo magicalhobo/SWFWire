@@ -286,6 +286,13 @@ package com.swfwire.debugger
 						var netConnectionQName:MultinameQNameToken = abcTag.abcFile.cpool.multinames[netConnectionIndex].data as MultinameQNameToken;
 						netConnectionQName.ns = injectedNamespace;
 					}
+					
+					var socketIndex:int = wrapper.getMultinameIndex('flash.net', 'Socket');
+					if(socketIndex >= 0)
+					{
+						var socketQName:MultinameQNameToken = abcTag.abcFile.cpool.multinames[socketIndex].data as MultinameQNameToken;
+						socketQName.ns = injectedNamespace;
+					}
 					/*
 					update(wrapper, abcTag, 'flash.display', 'Loader', injectedNamespace, -1);
 					update(wrapper, abcTag, 'flash.display', 'Sprite', injectedNamespace, wrapper.addString('SWFWire_Sprite'));

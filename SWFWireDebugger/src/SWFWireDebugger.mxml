@@ -266,13 +266,43 @@
 					});
 					urlLoaderClass.globalEvents.addEventListener(IOErrorEvent.IO_ERROR, function(ev:*):void
 					{
-						logToNet(ev.url+': error'+ev);
+						logToNet(ev.url+': error '+ev);
 					});
 					
 					var ncClass:* = injectedAppDomain.getDefinition('com.swfwire.debugger.injected.NetConnection');
 					ncClass.globalEvents.addEventListener('connect', function(ev:*):void
 					{
 						logToNet(ev.command+': rtmp connect');
+					});
+					
+					var socketClass:* = injectedAppDomain.getDefinition('com.swfwire.debugger.injected.Socket');
+					socketClass.globalEvents.addEventListener('swfWireConnect', function(ev:*):void
+					{
+						logToNet(ev.host+':'+ev.port+': socket connect');
+					});
+					socketClass.globalEvents.addEventListener('swfWireClose', function(ev:*):void
+					{
+						logToNet(ev.host+':'+ev.port+': socket closed by client');
+					});
+					socketClass.globalEvents.addEventListener(Event.CONNECT, function(ev:*):void
+					{
+						logToNet(ev.host+':'+ev.port+': socket connected');
+					});
+					socketClass.globalEvents.addEventListener(ProgressEvent.SOCKET_DATA, function(ev:*):void
+					{
+						logToNet(ev.host+':'+ev.port+': socket data: '+ev.instance.bytesAvailable);
+					});
+					socketClass.globalEvents.addEventListener(IOErrorEvent.IO_ERROR, function(ev:*):void
+					{
+						logToNet(ev.host+':'+ev.port+': socket ioerror');
+					});
+					socketClass.globalEvents.addEventListener(SecurityErrorEvent.SECURITY_ERROR, function(ev:*):void
+					{
+						logToNet(ev.host+':'+ev.port+': socket security error');
+					});
+					socketClass.globalEvents.addEventListener(Event.CLOSE, function(ev:*):void
+					{
+						logToNet(ev.host+':'+ev.port+': socket closed by server');
 					});
 					
 					//injectedAppDomain.getDefinition('com.swfwire.debugger.injected').output = logOut;
