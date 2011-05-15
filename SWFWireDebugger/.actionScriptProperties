@@ -26,11 +26,11 @@
   <flashCatalyst validateFlashCatalystCompatibility="false"/>
   <buildTargets>
     <buildTarget buildTargetName="default">
-      <airSettings airCertificatePath="F:/www/hobo.webhop.net/htdocs/workspaces/fb_burrito_swfwire/SWFWireDebugger/deploy.p12" airTimestamp="true" version="1">
+      <airSettings airCertificatePath="F:/www/hobo.webhop.net/htdocs/workspaces/fb_i6_swfwire/swfwire.p12" airTimestamp="true" version="1">
         <airExcludes>
+          <pathEntry path="catalog.xml"/>
           <pathEntry path="assets/logo.psd"/>
           <pathEntry path="assets/logo.png"/>
-          <pathEntry path="catalog.xml"/>
         </airExcludes>
       </airSettings>
       <actionScriptSettings version="1"/>
