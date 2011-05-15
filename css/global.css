@@ -1,0 +1,204 @@
+@font-face {
+	font-family: 'PT Sans Narrow';
+	font-style: normal;
+	font-weight: normal;
+	src: local('PT Sans Narrow'), local('PTSans-Narrow'), url('PT_Sans-Narrow-Web-Regular.woff') format('woff');
+}
+
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, font, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	outline: 0;
+	font-weight: inherit;
+	font-style: inherit;
+	font-size: 100%;
+	font-family: inherit;
+	vertical-align: baseline;
+}
+:focus {
+	outline: 0;
+}
+body {
+	line-height: 1;
+	color: black;
+	background: white;
+}
+ol, ul {
+	list-style: inside;
+}
+table {
+	border-collapse: separate;
+	border-spacing: 0;
+}
+caption, th, td {
+	text-align: left;
+	font-weight: normal;
+}
+blockquote:before, blockquote:after,
+q:before, q:after {
+	content: "";
+}
+blockquote, q {
+	quotes: "" "";
+}
+
+html
+{
+	font-family: "PT Sans Narrow", "Myriad Pro", Myriad, Arial, sans-serif;
+	font-size: 16px;
+}
+body
+{
+	background: url("../images/background.png");
+	color: #DDD;
+}
+a
+{
+	color: inherit;
+	text-decoration: inherit;
+}
+pre
+{
+	font-size: 10pt;
+	font-family: "Courier New", monospace;
+}
+h1
+{
+	font-size: 28px;
+	line-height: 34px;
+}
+p
+{
+	text-indent: 1em;
+}
+.clear
+{
+	clear: both;
+}
+
+#navigation
+{
+	line-height: 80px;
+	text-align: center;
+	border-bottom: 8px solid #222;
+}
+#navigation, .download
+{
+	font-weight: normal;
+	font-size: 24px;
+}
+#navigation *
+{
+	vertical-align: middle;
+}
+#navigation a, .download
+{
+	color: #FFF;
+	text-decoration: none;
+	padding: 15px;
+}
+#navigation a:hover, .download a,
+			body#inspector .inspector.link,
+			body#decompiler .decompiler.link,
+			body#debugger .debugger.link
+{
+	background-color: #a4da22;
+	color: #000;
+}
+#navigation a.logo:hover
+{
+	background-color: inherit;
+}
+
+#body
+{
+	background-color: #292929;
+	width: 750px;
+	margin: 0 auto;
+	padding: 17px 25px;
+}
+#body a
+{
+	color: #a4da22;
+}
+#body em
+{
+	font-style: italic;
+	text-transform: uppercase;
+	margin-right: 0.1em;
+}
+#body a:hover
+{
+	color: #DDD;
+}
+
+#body-background
+{
+	width: 100%;
+	background-position: center center;
+	background-attachment: fixed;
+	background-color: #333;
+	background-image: url("../images/shadow.png");
+	background-repeat: repeat-y;"
+}
+
+#footer
+{
+	padding: 8px;
+	text-align: center;
+	border-top: 8px solid #222;
+}
+body#inspector #body>.column
+{
+	width: 200px;
+	margin: 10px;
+	float: left;
+	background-color: #111;
+}
+.section
+{
+	margin-bottom: 25px;
+	line-height: 24px;
+	background-color: #333;
+	padding: 20px;
+}
+.section.left img
+{
+	float: left;
+	margin-right: 50px;
+}
+.section.right img
+{
+	float: right;
+	margin-left: 50px;
+}
+.section.last
+{
+	margin-bottom: 0;
+}
+body#inspector .screenshot
+{
+	width: 300px;
+}
+.description
+{
+	line-height: 1.5em;
+	font-size: 16px;
+}
+.download
+{
+	text-align: center;
+	margin-bottom: 8px;
+}
+#inspector-badge, #debugger-badge {
+	float: right;
+    margin-left: 10px;
+}

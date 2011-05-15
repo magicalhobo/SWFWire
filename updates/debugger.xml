@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<update xmlns="http://ns.adobe.com/air/framework/update/description/1.0">
+	<version>0.4.13</version>
+	<url>http://swfwire.com/download/SWFWireDebugger-0.4.13.air</url>
+	<description>Running in AIR 2.0</description>
+</update>

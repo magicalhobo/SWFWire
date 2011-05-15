@@ -1,0 +1,134 @@
+---
+layout: default
+id: decompiler
+title: SWFWire Decompiler
+---
+			<div class="section right">
+				<a href="https://github.com/downloads/magicalhobo/SWFWire/SWFWireDecompiler-1.2.swc" title="Download SWFWire Decompiler"><img src="images/download.png" alt="Download"/></a>
+				<h1><a href="https://github.com/downloads/magicalhobo/SWFWire/SWFWireDecompiler-1.2.swc">SWFWire Decompiler</a></h1>
+				An <a href="http://github.com/magicalhobo/SWFWire/tree/master/SWFWireDecompiler/">open source</a>
+				library written in ActionScript 3 for reading and writing swfs.
+				<div class="clear"></div>
+			</div>
+			<div class="section">
+				<h1>Parse a SWF and view the result:</h1>
+				<pre class="brush: as3">
+public function parse(bytes:ByteArray):void
+{
+	var reader:AsyncSWFReader = new AsyncSWFReader();
+
+	reader.addEventListener(AsyncSWFReaderEvent.TAG_READ, tagReadHandler);
+	reader.addEventListener(AsyncSWFReaderEvent.READ_COMPLETE, completeHandler);
+
+	reader.read(new SWFByteArray(bytes));
+}
+
+private function tagReadHandler(ev:AsyncSWFReaderEvent):void
+{
+	var current:uint = ev.context.bytes.getBytePosition();
+	var max:uint = ev.context.bytes.getLength();
+	trace('Read '+current+' bytes out of '+max);
+}
+
+private function completeHandler(ev:AsyncSWFReaderEvent):void
+{
+	Debug.dump(ev.result.swf);
+}
+				</pre>
+				<div class="description">
+				This example uses the AsyncSWFReader so that each tag is read separately.
+				This way the UI remains responsive, since parsing Flex-based swfs may take a couple seconds.
+				</div>
+				<div class="clear"></div>
+			</div>
+			<div class="section">
+				<h1>Creating a SWF from scratch:</h1>
+				<pre class="brush: as3">
+private function create():SWF
+{
+	var swf:SWF = new SWF(
+		new SWFHeader(SWFHeader.UNCOMPRESSED_SIGNATURE, 8, 0, new RectangleRecord(16, 0, 8000, 0, 8000), 24, 1),
+		Vector.&lt;SWFTag&gt;([
+			new FileAttributesTag(),
+			new SetBackgroundColorTag(new RGBRecord(255, 0, 0)),
+			new DefineShape4Tag(
+				1, new RectangleRecord(13, 431, 3410, 370, 2430),
+				new RectangleRecord(13, 441, 3400, 380, 2420), 0,
+				false, false, false,
+				new ShapeWithStyleRecord4(
+					new FillStyleArrayRecord3(
+						3, 0,
+						Vector.&lt;FillStyleRecord2&gt;([
+							new FillStyleRecord2(0, new RGBARecord(255, 255, 255, 255)),
+							new FillStyleRecord2(0, new RGBARecord(255, 0, 0, 255)),
+							new FillStyleRecord2(0, new RGBARecord(0, 153, 51, 255))
+						])
+					),
+					new LineStyle2ArrayRecord(
+						1, 0,
+						Vector.&lt;LineStyle2Record&gt;([
+							new LineStyle2Record(20, 0, 0, false, false, false, false, 0, false, 0, NaN, new RGBARecord())
+						])
+					),
+					2, 1,
+					Vector.&lt;IShapeRecord&gt;([
+						new StyleChangeRecord4(false, true, true, false, true, 13, 3400, 2420, 0, 3, 1),
+						new StraightEdgeRecord(11, false, false, 5233, 0),
+						new StraightEdgeRecord(10, false, true, 0, 2056),
+						new StraightEdgeRecord(11, false, false, 2959, 0),
+						new StraightEdgeRecord(10, false, true, 0, 2040),
+						new EndShapeRecord()
+					])
+				)
+			),
+			new PlaceObject2Tag(
+				false, 1, 1, new MatrixRecord(null, null, new MatrixTranslateStructure())
+			),
+			new ShowFrameTag(),
+			new EndTag()
+		])
+	);
+	return swf;
+}
+				</pre>
+				<div class="description">
+				This will create a SWF with a red background, and green rectangle in it.
+				</div>
+				<div class="clear"></div>
+			</div>
+			<div class="section">
+				<h1>Modify SWF metadata:</h1>
+				<pre class="brush: as3">
+public function modify(swf:SWF):void
+{
+	for(var iter:uint = 0; iter < swf.tags.length; iter++)
+	{
+		var metadataTag:MetadataTag = swf.tags[iter] as MetadataTag;
+		if(metadataTag)
+		{
+			metadataTag.metadata = 'SWFWire was here.';
+		}
+	}
+}
+				</pre>
+				<div class="description">
+				ActionScript Byte Code can be modified using the same low-level technique, but it's a bit complicated.
+				APIs to simplify this are in development.
+				</div>
+				<div class="clear"></div>
+			</div>
+			<div class="section last">
+				<h1>Write the resulting SWF to a file:</h1>
+				<pre class="brush: as3">
+public function write(bytes:ByteArray):void
+{
+	var swfWriter:SWF10Writer = new SWF10Writer();
+	var result:SWFWriteResult = swfWriter.write(swf);
+}
+				</pre>
+				<div class="description">
+				Unfortunately, SWF10Writer doesn't currently support most swf tags.
+				But, you can always write tags from other SWFs as UnknownTags.
+				</div>
+				<div class="clear"></div>
+			</div>
