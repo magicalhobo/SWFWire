@@ -1,18 +1,13 @@
-@font-face {
+@font-face
+{
 	font-family: 'PT Sans Narrow';
 	font-style: normal;
 	font-weight: normal;
 	src: local('PT Sans Narrow'), local('PTSans-Narrow'), url('PT_Sans-Narrow-Web-Regular.woff') format('woff');
 }
 
-html, body, div, span, applet, object, iframe,
-h1, h2, h3, h4, h5, h6, p, blockquote, pre,
-a, abbr, acronym, address, big, cite, code,
-del, dfn, em, font, img, ins, kbd, q, s, samp,
-small, strike, strong, sub, sup, tt, var,
-dl, dt, dd, ol, ul, li,
-fieldset, form, label, legend,
-table, caption, tbody, tfoot, thead, tr, th, td {
+html, body, div, span, h1, h2, h3, h4, h5, h6, p
+{
 	margin: 0;
 	padding: 0;
 	border: 0;
@@ -23,31 +18,9 @@ table, caption, tbody, tfoot, thead, tr, th, td {
 	font-family: inherit;
 	vertical-align: baseline;
 }
-:focus {
+:focus
+{
 	outline: 0;
-}
-body {
-	line-height: 1;
-	color: black;
-	background: white;
-}
-ol, ul {
-	list-style: inside;
-}
-table {
-	border-collapse: separate;
-	border-spacing: 0;
-}
-caption, th, td {
-	text-align: left;
-	font-weight: normal;
-}
-blockquote:before, blockquote:after,
-q:before, q:after {
-	content: "";
-}
-blockquote, q {
-	quotes: "" "";
 }
 
 html
@@ -89,6 +62,7 @@ p
 	line-height: 80px;
 	text-align: center;
 	border-bottom: 8px solid #222;
+	padding: 0 100px;
 }
 #navigation, .download
 {
@@ -106,9 +80,9 @@ p
 	padding: 15px;
 }
 #navigation a:hover, .download a,
-			body#inspector .inspector.link,
-			body#decompiler .decompiler.link,
-			body#debugger .debugger.link
+	body#inspector .inspector.link,
+	body#decompiler .decompiler.link,
+	body#debugger .debugger.link
 {
 	background-color: #a4da22;
 	color: #000;
