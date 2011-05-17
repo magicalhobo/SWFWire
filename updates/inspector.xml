@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <update xmlns="http://ns.adobe.com/air/framework/update/description/1.0">
-	<version>2.17</version>
-	<url>http://swfwire.com/download/SWFWireInspector-2.17.air</url>
+	<version>2.18</version>
+	<url>https://github.com/downloads/magicalhobo/SWFWire/SWFWireInspector-2.18.air</url>
 	<description>Support for xml, delete opcodes.</description>
 </update>
