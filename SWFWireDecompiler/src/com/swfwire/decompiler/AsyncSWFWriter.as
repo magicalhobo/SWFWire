@@ -14,6 +14,9 @@ package com.swfwire.decompiler
 	[Event(type="com.swfwire.decompiler.events.AsyncSWFWriterEvent", name="tagWritten")]
 	[Event(type="com.swfwire.decompiler.events.AsyncSWFWriterEvent", name="writeComplete")]
 	
+	/**
+	 * Writes SWF tags asynchronously, so a progress bar can be displayed.
+	 */
 	public class AsyncSWFWriter extends SWF10Writer
 	{
 		public function get active():Boolean

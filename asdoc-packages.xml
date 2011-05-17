@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<overviews>
+	<all-packages>
+		<description><![CDATA[SWF tags are grouped into packages according to the SWF version in which they were introduced.]]></description>
+	</all-packages>
+<!--
+	<all-classes>
+		<description><![CDATA[]]></description>
+	</all-classes>
+-->
+	<packages>
+	    <package name="com.swfwire.decompiler">
+	    	<shortDescription>High-level classes that provide the ability to read/write SWF files.</shortDescription>
+	    </package>
+	    <package name="com.swfwire.decompiler.abc">
+	    	<shortDescription>High-level classes that provide the ability to read/write ABC data.</shortDescription>
+	    </package>
+	    <package name="com.swfwire.decompiler.data.swf">
+	    	<shortDescription>Classes that provide the data structure for each SWF tag, arranged by the SWF version the tag was introduced.</shortDescription>
+	    </package>
+	    <package name="com.swfwire.decompiler.events">
+	    	<shortDescription>Events for reading/writing SWF files.</shortDescription>
+	    </package>
+	    <package name="com.swfwire.utils">
+	    	<shortDescription>Common utilities for logging and debugging.</shortDescription>
+	    </package>
+	    <package name="net.anirudh.as3syntaxhighlight">
+	    	<shortDescription>http://code.google.com/p/as3syntaxhighlight/</shortDescription>
+	    </package>
+	</packages>
+</overviews>

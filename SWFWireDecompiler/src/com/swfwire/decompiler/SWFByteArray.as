@@ -6,6 +6,14 @@ package com.swfwire.decompiler
 	import flash.utils.ByteArray;
 	import flash.utils.Endian;
 	
+	/**
+	 * Adds the ability to read and write core SWF data types to standard ByteArray.
+	 * Abbreviations from the SWF spec:
+	 * 	SI = Signed Integer
+	 * 	UI = Unsigned Integer
+	 * 	SB = Snsigned Bits
+	 * 	UB = Unsigned Bits
+	 */
 	public class SWFByteArray
 	{
 		private static const filter5:uint = ~0 >>> -5;
@@ -16,9 +24,11 @@ package com.swfwire.decompiler
 		private static const filter16:uint = ~0 >>> -16;
 		private static const filter23:uint = ~0 >>> -23;
 		
-		private var bytes:ByteArray;
-		private var bitPosition:uint = 0;
+		private static const tempByteArray:ByteArray = new ByteArray();
 		
+		/**
+		 * Returns the number of bits required to hold <code>number</code> in a UB
+		 */
 		public static function calculateUBBits(number:uint):uint
 		{
 			if(number == 0) return 0;
@@ -27,11 +37,17 @@ package com.swfwire.decompiler
 			return bits + 1;
 		}
 		
+		/**
+		 * Returns the number of bits required to hold <code>number</code> in an SB
+		 */
 		public static function calculateSBBits(number:int):uint
 		{
 			return number == 0 ? 1 : calculateUBBits(number < 0 ? ~number : number) + 1;
 		}
 		
+		/**
+		 * Returns the number of bits required to hold <code>number</code> in an FB
+		 */
 		public static function calculateFBBits(number:Number):uint
 		{
 			var integer:int = Math.floor(number);
@@ -41,8 +57,6 @@ package com.swfwire.decompiler
 			
 			return number == 0 ? 1 : calculateSBBits(sbVersion);
 		}
-		
-		private static const tempByteArray:ByteArray = new ByteArray();
 		
 		private static function float32AsUnsignedInt(value:Number):uint
 		{
@@ -67,8 +81,11 @@ package com.swfwire.decompiler
 			bytes.position = 0;
 		}
 		
+		private var bytes:ByteArray;
+		private var bitPosition:uint = 0;
+		
 		/**
-		 * Integers must be aligned to bytes
+		 * Move forward to the next byte boundary
 		 */
 		public function alignBytes():void
 		{
@@ -110,15 +127,20 @@ package com.swfwire.decompiler
 			return bytes.length;
 		}
 		
-		public function clear():void
+		public function compress():void
 		{
-			bitPosition = 0;
-			bytes.clear();
+			bytes.compress();
 		}
 		
 		public function decompress():void
 		{
 			bytes.uncompress();
+		}
+		
+		public function clear():void
+		{
+			bitPosition = 0;
+			bytes.clear();
 		}
 		
 		public function dump():void
@@ -129,13 +151,16 @@ package com.swfwire.decompiler
 		}
 		
 		/**
-		 * Not in the spec, but needed to read ABCData from the DoABC tag, and image data from the JPEG tag
+		 * Reads a UI8[] into a ByteArray
 		 */
 		public function readBytes(byteArray:ByteArray, offset:uint = 0, length:uint = 0):void
 		{
 			alignBytes();
 			bytes.readBytes(byteArray, offset, length);
 		}
+		/**
+		 * Writes a UI8[] into a ByteArray
+		 */
 		public function writeBytes(byteArray:ByteArray, offset:uint = 0, length:uint = 0):void
 		{
 			alignBytes();
@@ -143,18 +168,21 @@ package com.swfwire.decompiler
 		}
 		
 		/**
-		 * Not in the spec, but easier than repeating every time there's a UB[1]
+		 * Shortcut for reading UB[1]
 		 */
 		public function readFlag():Boolean
 		{
 			return readUB(1) == 1;
 		}
+		/**
+		 * Shortcut for writing UB[1]
+		 */
 		public function writeFlag(value:Boolean):void
 		{
 			writeUB(1, value ? 1 : 0);
 		}
 		
-		/**
+		/*
 		 * Signed int values
 		 */
 		public function readSI8():int
@@ -201,7 +229,7 @@ package com.swfwire.decompiler
 			return result;
 		}
 		
-		/**
+		/*
 		 * Unsigned int values
 		 */
 		public function readUI8():uint
@@ -275,7 +303,7 @@ package com.swfwire.decompiler
 			return result;
 		}
 		
-		/**
+		/*
 		 * Fixed point numbers
 		 */
 		public function readFixed8_8():Number
@@ -309,7 +337,7 @@ package com.swfwire.decompiler
 			return result;
 		}
 		
-		/**
+		/*
 		 * Floating point numbers
 		 */
 		public function readFloat16():Number
@@ -389,7 +417,7 @@ package com.swfwire.decompiler
 			bytes.writeDouble(value);
 		}
 		
-		/**
+		/*
 		 * Encoded integers
 		 */
 		public function readEncodedUI32():uint
@@ -428,7 +456,7 @@ package com.swfwire.decompiler
 			}
 		}
 
-		/**
+		/*
 		 * Bit values
 		 */
 		public function readUB(length:uint):uint
@@ -562,7 +590,7 @@ package com.swfwire.decompiler
 			writeSB(length, raw);
 		}
 		
-		/**
+		/*
 		 * String values
 		 */
 		public function readString():String
@@ -577,16 +605,17 @@ package com.swfwire.decompiler
 			var result:String = bytes.readUTFBytes(byteCount);
 			return result;
 		}
-		public function readStringWithLength(length:uint):String
-		{
-			alignBytes();
-			return bytes.readUTFBytes(length);
-		}
 		public function writeString(value:String):void
 		{
 			alignBytes();
 			bytes.writeUTFBytes(value);
 			bytes.writeByte(0);
+		}
+		
+		public function readStringWithLength(length:uint):String
+		{
+			alignBytes();
+			return bytes.readUTFBytes(length);
 		}
 		public function writeStringWithLength(value:String, length:uint):void
 		{

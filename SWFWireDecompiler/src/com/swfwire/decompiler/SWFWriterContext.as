@@ -5,6 +5,13 @@ package com.swfwire.decompiler
 	
 	import flash.utils.ByteArray;
 
+	/**
+	 * Provides the context for SWFWriter when writing a single tag.  
+	 * <p>
+	 * Necessary because writing a tag could depend on previous tags.
+	 * e.g. DefineFontAlignZonesTag requires data from any previously written DefineFont3Tag
+	 * </p>
+	 */
 	public class SWFWriterContext
 	{
 		public var fileVersion:uint;

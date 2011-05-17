@@ -5,7 +5,7 @@
 						width="800" height="800" applicationComplete="main()" creationPolicy="all"
 						currentState="waiting" frameRate="60" layout="absolute"
 						showStatusBar="false">
-	<mx:Style source="style.css"/>
+	<mx:Style source="../assets/style.css"/>
 	<mx:Script>
 		<![CDATA[
 			import air.update.ApplicationUpdaterUI;
@@ -79,7 +79,7 @@
 				}
 
 				appUpdater = new ApplicationUpdaterUI();
-				appUpdater.configurationFile = new File('app:/config/updateConfig.xml');
+				appUpdater.configurationFile = new File('app:/updateConfig.xml');
 				if(Config.TESTING)
 				{
 					appUpdater.addEventListener(UpdateEvent.INITIALIZED, function(ev:Event):void

@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<flex-config xmlns="http://www.adobe.com/2006/flex-config">
+	<load-config>${flexlib}/${configname}-config.xml</load-config>
+    <doc-sources>
+		<path-element>SWFWireUtils/src</path-element>
+		<path-element>SWFWireDecompiler/src</path-element>
+		<path-element>SWFWireInspector/src/classes</path-element>
+		<path-element>SWFWireDebugger/src/classes</path-element>
+    </doc-sources>
+    <compiler>
+    	<source-path>
+			<path-element>SWFWireUtils/src</path-element>
+			<path-element>SWFWireDecompiler/src</path-element>
+			<path-element>SWFWireInspector/src/classes</path-element>
+			<path-element>SWFWireDebugger/src/classes</path-element>
+    	</source-path>
+        <library-path>
+        	<path-element>${flexlib}\libs</path-element>
+        	<path-element>${flexlib}\libs\air</path-element>
+        	<path-element>SWFWireInspector/libs</path-element>
+        </library-path>
+        <external-library-path>
+        	<path-element>${flexlib}\libs\air\airglobal.swc</path-element>
+        </external-library-path>
+    </compiler>
+    <window-title>SWFWire Official Documentation</window-title>
+    <main-title>SWFWire Development Tools</main-title>
+    <footer><![CDATA[&amp;copy; 2011 SWFWire.com]]></footer>
+    <package-description-file>asdoc-packages.xml</package-description-file>
+</flex-config>

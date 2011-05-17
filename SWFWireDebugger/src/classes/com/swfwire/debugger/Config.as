@@ -1,4 +1,4 @@
-package
+package com.swfwire.debugger
 {
 	public class Config
 	{

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml"
-		   xmlns:display="com.swfwire.inspector.display.*"
+		   xmlns:ui="com.swfwire.inspector.flex.ui.*"
 		   currentState="swf" width="100%" height="100%">
 	<mx:states>
 		<mx:State name="swf">
@@ -18,8 +18,8 @@
 			<mx:Button label="ActionScript" click="currentState = 'actionScript'" id="button1"/>
 		</mx:HBox>
 		<mx:Canvas width="100%" height="100%">
-			<display:SWFPanel id="swf" width="100%" height="100%"/>
-			<display:ActionScriptPanel id="actionScript" width="100%" height="100%"/>
+			<ui:SWFPanel id="swf" width="100%" height="100%"/>
+			<ui:ActionScriptPanel id="actionScript" width="100%" height="100%"/>
 		</mx:Canvas>
 	</mx:VBox>
 </mx:Canvas>

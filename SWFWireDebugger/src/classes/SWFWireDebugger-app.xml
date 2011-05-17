@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
-<application xmlns="http://ns.adobe.com/air/application/2.6">
+<application xmlns="http://ns.adobe.com/air/application/2.0">
 
 <!-- Adobe AIR Application Descriptor File Template.
 
@@ -25,7 +25,7 @@
 	<name>SWFWire Debugger</name>
 
 	<!-- An application version designator (such as "v1", "2.5", or "Alpha 1"). Required. -->
-	<versionNumber>0.4.13</versionNumber>
+	<versionNumber>0.4.14</versionNumber>
 
 	<!-- Description, displayed in the AIR application installer.
 	     May have multiple values for each language. See samples or xsd schema file. Optional. -->
@@ -99,10 +99,10 @@
 	<!-- The icon the system uses for the application. For at least one resolution,
 		 specify the path to a PNG file included in the AIR package. Optional. -->
 	<icon>
-		<image16x16>assets/icon_16.png</image16x16>
-		<image32x32>assets/icon_32.png</image32x32>
-		<image48x48>assets/icon_48.png</image48x48>
-		<image128x128>assets/icon.png</image128x128>
+		<image16x16>/assets/icon_16.png</image16x16>
+		<image32x32>/assets/icon_32.png</image32x32>
+		<image48x48>/assets/icon_48.png</image48x48>
+		<image128x128>/assets/icon.png</image128x128>
 	</icon>
 
 	<!-- Whether the application handles the update when a user double-clicks an update version

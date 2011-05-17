@@ -1,5 +1,7 @@
 package
 {
+	import com.swfwire.utils.ObjectUtil;
+	
 	import flash.display.DisplayObject;
 	import flash.display.LoaderInfo;
 	import flash.display.Shape;
@@ -21,9 +23,14 @@ package
 	
 	import packagename.ClassName;
 	import packagename.IEmpty;
+	import packagename.mynamespace;
 	
 	public class SWFCorpse extends Sprite implements IEmpty
 	{
+		public function notEmptyAnyMore(bitches:*):void
+		{
+			return;
+		}
 		/*
 		internal namespace custom = "http://magicalhobo.com/custom";
 		
@@ -356,8 +363,37 @@ package
 			super.x = value;
 		}
 		
+		private namespace irock = "http://magicalhobo.com";
+		
+		irock static var wtf2:String = 'omg';
+		
+		irock var wtf:String = "hell yes";
+		
+		mynamespace var test:String = 'hell yes2';
+		
 		public function SWFCorpse(obj:Object = null)
 		{
+			var n:Boolean = 1 == 1 || 2 == 2;
+			
+			if(1)
+			{
+				boolean = true;
+			}
+			else
+			{
+				var boolean:Boolean = false;
+			}
+			
+			trace(boolean);
+			
+			if(obj == 1 || obj == 2 || obj == 3)
+			{
+				trace('1 or 2');
+			}
+			trace('3');
+			
+			
+			/*
 			vec = new Vector.<DisplayObject>();
 			
 			var a:Number = 1 | 2 & 3;

@@ -8,9 +8,10 @@
 						paddingRight="5" paddingBottom="5"
 						horizontalAlign="right"
 						currentState="waiting" backgroundColor="#222222">
-	<mx:Style source="style.css"/>
+	<mx:Style source="../assets/style.css"/>
 	<mx:Script>
 		<![CDATA[
+			import com.swfwire.debugger.Config;
 			import air.update.ApplicationUpdaterUI;
 			import air.update.events.UpdateEvent;
 			
@@ -1012,7 +1013,7 @@
 	</mx:states>
 	<mx:HBox id="header" width="100%">
 		<mx:Spacer width="100%"/>
-		<mx:Image source="@Embed('logo.png')"/>
+		<mx:Button styleName="logo"/>
 	</mx:HBox>
 	<ui:BreadCrumb id="breadCrumb" width="100%" height="26"/>
 	<mx:Canvas width="100%" height="100%" id="swfDropTarget" backgroundColor="#000000" backgroundAlpha="0">
