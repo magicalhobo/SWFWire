@@ -1,15 +1,21 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<flexLibProperties includeAllClasses="true" useMultiPlatformConfig="false" version="3">
+<flexLibProperties includeAllClasses="false" useMultiPlatformConfig="false" version="3">
   <includeClasses>
     <classEntry path="com.swfwire.debugger.injected.ExternalInterface"/>
+    <classEntry path="com.swfwire.debugger.injected.Loader"/>
+    <classEntry path="com.swfwire.debugger.injected.Logger"/>
+    <classEntry path="com.swfwire.debugger.injected.NetConnection"/>
+    <classEntry path="com.swfwire.debugger.injected.SWFWire_LoaderInfo"/>
+    <classEntry path="com.swfwire.debugger.injected.SWFWire_MovieClip"/>
+    <classEntry path="com.swfwire.debugger.injected.SWFWire_Sprite"/>
+    <classEntry path="com.swfwire.debugger.injected.SWFWire_Stage"/>
+    <classEntry path="com.swfwire.debugger.injected.Security"/>
+    <classEntry path="com.swfwire.debugger.injected.Socket"/>
+    <classEntry path="com.swfwire.debugger.injected.StackInfo"/>
     <classEntry path="com.swfwire.debugger.injected.URLLoader"/>
     <classEntry path="com.swfwire.debugger.injected.events.DynamicEvent"/>
-    <classEntry path="com.swfwire.debugger.injected.NetConnection"/>
-    <classEntry path="com.swfwire.debugger.injected.SWFWire_Sprite"/>
-    <classEntry path="com.swfwire.debugger.injected.SWFWire_LoaderInfo"/>
-    <classEntry path="com.swfwire.debugger.injected.Loader"/>
-    <classEntry path="com.swfwire.debugger.injected.SWFWire_Stage"/>
-    <classEntry path="com.swfwire.debugger.injected.Socket"/>
+    <classEntry path="com.swfwire.debugger.injected.navigateToURL"/>
+    <classEntry path="com.swfwire.debugger.injected.URLStream"/>
   </includeClasses>
   <includeResources/>
   <namespaceManifests/>

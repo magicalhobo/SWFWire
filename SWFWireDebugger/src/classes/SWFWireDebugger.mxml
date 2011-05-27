@@ -157,7 +157,7 @@
 						log('Uncaught error in child.');
 						log(ObjectUtil.objectToString(ev.error, 2, 2, 50, 50, '	'));
 					});
-					
+					/*
 					var parameters:Object = {};
 					var flashvarParser:URLVariables;
 					try
@@ -172,7 +172,7 @@
 					{
 						log('Error parsing flashvars');
 					}
-					
+					*/
 					var loaderClass:* = injectedAppDomain.getDefinition('com.swfwire.debugger.injected.Loader');
 					loaderClass.overrideApplicationDomain = preview.loader.contentLoaderInfo.applicationDomain;
 					
@@ -183,7 +183,7 @@
 					stageClass.stage = preview.stage;
 					
 					var loaderInfoClass:* = injectedAppDomain.getDefinition('com.swfwire.debugger.injected.SWFWire_LoaderInfo');
-					loaderInfoClass.defaultParameters = parameters;
+					//loaderInfoClass.defaultParameters = parameters;
 					
 					//loaderClass.overrideApplicationDomain = new ApplicationDomain(preview.loader.contentLoaderInfo.applicationDomain);
 					
@@ -236,19 +236,27 @@
 					var loaderClass:* = injectedAppDomain.getDefinition('com.swfwire.debugger.injected.Loader');
 					loaderClass.globalEvents.addEventListener('loadComplete', function(ev:*):void
 					{
-						var ur:URLRequest = ev.request as URLRequest;
-						
+						ev.instance.loadBytes(ev.data);
 						var data:ByteArray = ev.data as ByteArray;
 						var signature:String = data.readUTFBytes(3);
 						
 						if(signature == 'FWS' || signature == 'CWS')
 						{
 							log('[SWF] '+ev.request.url+' - Load complete');
-							read(ev.data, ev.context, ev.instance);
+						}
+					});
+					loaderClass.globalEvents.addEventListener('loadBytes', function(ev:*):void
+					{
+						var bytes:ByteArray = ev.bytes as ByteArray;
+						var signature:String = bytes.readUTFBytes(3);
+						
+						if(signature == 'FWS' || signature == 'CWS')
+						{
+							read(ev.bytes, ev.context, ev.instance);
 						}
 						else
 						{
-							ev.instance.loadBytes(ev.data);
+							ev.instance.swfWire_loadBytes(ev.bytes);
 						}
 					});
 					
@@ -806,7 +814,7 @@
 				if(instance)
 				{
 					log('[SWF] Rewrite complete... loading');
-					instance.loadBytes(bytes, context);
+					instance['swfWire_loadBytes'](bytes, context);
 				}
 				else
 				{
@@ -816,6 +824,26 @@
 					var context:LoaderContext = new LoaderContext();
 					context.allowCodeImport = true;
 					context.applicationDomain = new ApplicationDomain(injectedAppDomain);
+
+					var parameters:Object = {};
+					var flashvarParser:URLVariables;
+					if(flashvars.text)
+					{
+						try
+						{
+							flashvarParser = new URLVariables(flashvars.text);
+							for(var iter:String in flashvarParser)
+							{
+								parameters[iter] = flashvarParser[iter];
+							}
+						}
+						catch(e:Error)
+						{
+							log('Error parsing flashvars');
+						}
+					}
+					
+					context.parameters = parameters;
 					preview.loadBytes(bytes, context);
 				}
 			}

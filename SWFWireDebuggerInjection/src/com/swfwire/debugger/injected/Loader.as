@@ -34,6 +34,12 @@ package com.swfwire.debugger.injected
 		
 		override public function loadBytes(bytes:ByteArray, context:LoaderContext = null):void
 		{
+			trace('Loader.loadBytes() - '+bytes.length+' bytes');
+			globalEvents.dispatchEvent(new DynamicEvent('loadBytes', {bytes: bytes, context: context, instance: this}));
+		}
+		
+		public function swfWire_loadBytes(bytes:ByteArray, context:LoaderContext = null):void
+		{
 			if(!context)
 			{
 				context = new LoaderContext();

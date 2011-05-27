@@ -273,11 +273,25 @@ package com.swfwire.debugger
 					}
 					*/
 					
+					var navigateToURLIndex:int = wrapper.getMultinameIndex('flash.net', 'navigateToURL');
+					if(navigateToURLIndex >= 0)
+					{
+						var navigateToURLQName:MultinameQNameToken = abcTag.abcFile.cpool.multinames[navigateToURLIndex].data as MultinameQNameToken;
+						navigateToURLQName.ns = injectedNamespace;
+					}
+					
 					var urlLoaderIndex:int = wrapper.getMultinameIndex('flash.net', 'URLLoader');
 					if(urlLoaderIndex >= 0)
 					{
 						var urlLoaderQName:MultinameQNameToken = abcTag.abcFile.cpool.multinames[urlLoaderIndex].data as MultinameQNameToken;
 						urlLoaderQName.ns = injectedNamespace;
+					}
+					
+					var urlStreamIndex:int = wrapper.getMultinameIndex('flash.net', 'URLStream');
+					if(urlStreamIndex >= 0)
+					{
+						var urlStreamQName:MultinameQNameToken = abcTag.abcFile.cpool.multinames[urlStreamIndex].data as MultinameQNameToken;
+						urlStreamQName.ns = injectedNamespace;
 					}
 					
 					var netConnectionIndex:int = wrapper.getMultinameIndex('flash.net', 'NetConnection');
@@ -293,6 +307,14 @@ package com.swfwire.debugger
 						var socketQName:MultinameQNameToken = abcTag.abcFile.cpool.multinames[socketIndex].data as MultinameQNameToken;
 						socketQName.ns = injectedNamespace;
 					}
+					
+					var loaderIndex:int = wrapper.getMultinameIndex('flash.display', 'Loader');
+					if(loaderIndex >= 0)
+					{
+						var loaderQName:MultinameQNameToken = abcTag.abcFile.cpool.multinames[loaderIndex].data as MultinameQNameToken;
+						loaderQName.ns = injectedNamespace;
+					}
+					
 					/*
 					update(wrapper, abcTag, 'flash.display', 'Loader', injectedNamespace, -1);
 					update(wrapper, abcTag, 'flash.display', 'Sprite', injectedNamespace, wrapper.addString('SWFWire_Sprite'));

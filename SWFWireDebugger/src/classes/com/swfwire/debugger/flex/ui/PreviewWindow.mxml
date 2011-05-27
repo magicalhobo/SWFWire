@@ -112,7 +112,7 @@
 				else
 				{
 					loader = new Loader();
-					loader.contentLoaderInfo.addEventListener(Event.COMPLETE, loaderCompleteHandler, false, 0, true);
+					loader.contentLoaderInfo.addEventListener(Event.INIT, loaderCompleteHandler, false, 0, true);
 					content.addChild(loader);
 				}
 				loader.loadBytes(bytes, context);
@@ -146,6 +146,13 @@
 				loader.scaleX = 1;
 				loader.scaleY = 1;
 				
+				loader.x = 0
+				loader.y = 0
+				
+				/*
+				loader.scaleX = 1;
+				loader.scaleY = 1;
+				
 				var ratioX:Number = loader.width/swfWidth;
 				var ratioY:Number = loader.height/swfHeight;
 				
@@ -154,6 +161,7 @@
 				loader.y = scaledBounds.y;
 				loader.width = scaledBounds.width * ratioX;
 				loader.height = scaledBounds.height * ratioY;
+				*/
 			}
 			
 			public function clearOverlay():void
