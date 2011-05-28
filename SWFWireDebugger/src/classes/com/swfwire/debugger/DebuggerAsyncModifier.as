@@ -182,7 +182,8 @@ package com.swfwire.debugger
 		}
 		
 		protected function createMethod(abcTag:DoABCTag, wrapper:ABCWrapper, instance:InstanceToken, 
-										name:String, instructions:Vector.<IInstruction>, maxStack:int):void
+										name:String, instructions:Vector.<IInstruction>, maxStack:int,
+										attributes:uint = 0):void
 		{
 			var methodQName:int = wrapper.addQName(
 				wrapper.addNamespaceFromString(''), 
@@ -197,7 +198,7 @@ package com.swfwire.debugger
 			
 			var methodTrait:TraitsInfoToken = new TraitsInfoToken(methodQName,
 				TraitsInfoToken.KIND_TRAIT_METHOD,
-				0,
+				attributes,
 				new TraitMethodToken(0, methodIndex));
 			
 			instance.traits.push(methodTrait);
@@ -371,13 +372,17 @@ package com.swfwire.debugger
 						
 						mainInst.iinit = defcmi;
 					}
-					/*
+					
 					for(var iterInstance:int = 0; iterInstance < abcTag.abcFile.instances.length; iterInstance++)
 					{
+						var thisInstance:InstanceToken = abcTag.abcFile.instances[iterInstance];
+						if(thisInstance.flags & InstanceToken.FLAG_CLASS_INTERFACE)
+						{
+							continue;
+						}
+						
 						var enumerateMethodsInstructions:Vector.<IInstruction> = new Vector.<IInstruction>();
 						var enumeratePropertiesInstructions:Vector.<IInstruction> = new Vector.<IInstruction>();
-						
-						var thisInstance:InstanceToken = abcTag.abcFile.instances[iterInstance];
 						
 						for(var iterMainTraits:* in thisInstance.traits)
 						{
@@ -399,14 +404,21 @@ package com.swfwire.debugger
 							}
 						}
 						
+						var instanceQName:MultinameQNameToken = abcTag.abcFile.cpool.multinames[thisInstance.name].data as MultinameQNameToken;
+						var instanceNS:String = abcTag.abcFile.cpool.strings[abcTag.abcFile.cpool.namespaces[instanceQName.ns].name].utf8;
+						var instanceName:String = abcTag.abcFile.cpool.strings[instanceQName.name].utf8;
+						
+						var uniqueID:String = instanceNS ? instanceNS+'::'+instanceName : instanceName;
+						
 						enumerateMethodsInstructions.push(new Instruction_newobject(enumerateMethodsInstructions.length * 1 / 3));
 						enumerateMethodsInstructions.push(new Instruction_returnvalue());
-						createMethod(abcTag, wrapper, thisInstance, 'enumerateMethods', enumerateMethodsInstructions, enumerateMethodsInstructions.length);
+						createMethod(abcTag, wrapper, thisInstance, 'swfWire_enumerateMethods_'+uniqueID, enumerateMethodsInstructions, enumerateMethodsInstructions.length);
 
 						enumeratePropertiesInstructions.push(new Instruction_newobject(enumeratePropertiesInstructions.length * 1 / 3));
 						enumeratePropertiesInstructions.push(new Instruction_returnvalue());
-						createMethod(abcTag, wrapper, thisInstance, 'enumerateProperties', enumeratePropertiesInstructions, enumeratePropertiesInstructions.length);
+						createMethod(abcTag, wrapper, thisInstance, 'swfWire_enumerateProperties_'+uniqueID, enumeratePropertiesInstructions, enumeratePropertiesInstructions.length);
 
+						/*
 						var getPropertyInstructions:Vector.<IInstruction> = new Vector.<IInstruction>();
 						getPropertyInstructions.push(new Instruction_newobject(getPropertyInstructions.length * 1 / 3));
 						getPropertyInstructions.push(new Instruction_returnvalue());
@@ -417,8 +429,9 @@ package com.swfwire.debugger
 							getPropertyInstructions,
 							getPropertyInstructions.length,
 							Vector.<String>([':String']));
+						*/
 					}
-					*/
+					
 					//Debug.log('test', 'after', mainInst.traits);
 					
 					//mainInst.iinit--;

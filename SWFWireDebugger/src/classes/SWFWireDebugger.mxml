@@ -496,7 +496,8 @@
 				
 				try
 				{
-					methods = target.enumerateMethods();
+					var methodsMethod:String = 'swfWire_enumerateMethods_'+String(description.@name);
+					methods = target[methodsMethod]();
 					for(var iter2:* in methods)
 					{
 						privateMethodsDP.addItem({name: iter2, value: ''});
@@ -509,7 +510,8 @@
 				
 				try
 				{
-					methods = target.enumerateProperties();
+					var propertiesMethod:String = 'swfWire_enumerateProperties_'+String(description.@name);
+					methods = target[propertiesMethod]();
 					for(var iter3:* in methods)
 					{
 						privatePropertiesDP.addItem({name: iter3, value: methods[iter3]});
