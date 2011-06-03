@@ -565,14 +565,37 @@
 				{
 					if(lastInspectTarget)
 					{
-						var info:Object = publicPropertiesDP.getItemAt(event.rowIndex);
-						try
+						var dp:ArrayCollection;
+						if(tabnavigator2.selectedChild == publicPropertiesGrid.parent)
 						{
-							lastInspectTarget[info.name] = TextInput(event.currentTarget.itemEditorInstance).text;
+							dp = publicPropertiesDP;
 						}
-						catch(e:*)
+						else if(tabnavigator2.selectedChild == privatePropertiesGrid.parent)
 						{
-							logOut.text += 'Error setting property.\n';
+							dp = privatePropertiesDP;
+						}
+						
+						if(dp)
+						{
+							var info:Object = dp.getItemAt(event.rowIndex);
+							try
+							{
+								lastInspectTarget[info.name] = TextInput(event.currentTarget.itemEditorInstance).text;
+							}
+							catch(e:*)
+							{
+								var description:XML = describeType(lastInspectTarget);
+								var setPropertyMethod:String = 'swfWire_setProperty_'+String(description.@name);
+								try
+								{
+									var result:* = lastInspectTarget[setPropertyMethod](info.name, TextInput(event.currentTarget.itemEditorInstance).text);
+									trace('set result: '+result);
+								}
+								catch(e:*)
+								{
+									logOut.text += 'Error setting property: '+e+'\n';
+								}
+							}
 						}
 					}
 				}
@@ -1159,6 +1182,7 @@
 					<mx:HBox label="Console" width="100%" height="100%" horizontalGap="5">
 						<mx:TextArea id="logOut" width="100%" height="100%" editable="false" fontFamily="Courier New" fontSize="11"/>
 						<mx:VBox height="100%" id="vbox2" paddingRight="5" minHeight="0" horizontalScrollPolicy="off" width="200">
+							<mx:Button label="Clear Console" click="button1_clickHandler(event)" width="100%"/>
 							<mx:CheckBox id="logToOutput" label="Log to output" click="logToOutput_clickHandler(event)" styleName="smallText"/>
 							<mx:CheckBox id="logToTrace" label="Log to trace" click="logToTrace_clickHandler(event)" styleName="smallText"/>
 							<mx:CheckBox id="showMethodEntry"		 label="Show method entry"		 click="showMethodEntry_clickHandler(event)" styleName="smallText"/>
@@ -1175,7 +1199,6 @@
 								<mx:Label text="Max Stack Depth:" styleName="smallText" paddingTop="2"/>
 								<mx:NumericStepper id="maxStackDepth" value="10" change="maxStackDepth_changeHandler(event)" minimum="0" maximum="100"/>
 							</mx:HBox>
-							<mx:Button label="Clear Console" click="button1_clickHandler(event)" width="100%"/>
 						</mx:VBox>
 					</mx:HBox>
 					<mx:Canvas label="Display List">
