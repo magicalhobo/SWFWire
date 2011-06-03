@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <update xmlns="http://ns.adobe.com/air/framework/update/description/1.0">
-	<version>0.4.14</version>
+	<version>1.4.15</version>
 	<url>https://github.com/downloads/magicalhobo/SWFWire/SWFWireDebugger-1.4.15.air</url>
 	<description>New "Object List" feature to detect memory leaks and private/protected inspection.</description>
 </update>
