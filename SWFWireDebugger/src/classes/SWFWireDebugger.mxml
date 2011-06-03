@@ -96,6 +96,7 @@
 					if(!nativeWindow.closed)
 					{
 						ev.preventDefault();
+						objectList.dataProvider = null;
 						preview.unload();
 						preview.visible = false;
 						currentState = 'waiting';
@@ -433,7 +434,7 @@
 				{
 					target = hits.pop();
 				}
-				if(!preview.loader.contains(target))
+				if(target && !preview.loader.contains(target))
 				{
 					target = null;
 				}
@@ -820,6 +821,8 @@
 				}
 				else
 				{
+					objectList.dataProvider = null;
+					
 					currentState = 'loaded';
 	
 					lastRunBytes = bytes;

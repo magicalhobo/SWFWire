@@ -1203,8 +1203,8 @@ package com.swfwire.decompiler.utils
 					{
 						tempStr = stack.pop();
 						tempStr2 = stack.pop();
-						stack.push(tempStr2);
 						stack.push(tempStr);
+						stack.push(tempStr2);
 					}
 					else if(op is Instruction_throw)
 					{
