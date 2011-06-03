@@ -5,6 +5,8 @@ package com.swfwire.debugger.injected
 	
 	import flash.events.Event;
 	import flash.events.TimerEvent;
+	import flash.utils.Dictionary;
+	import flash.utils.getQualifiedClassName;
 	import flash.utils.getTimer;
 	
 	public class Logger
@@ -29,6 +31,8 @@ package com.swfwire.debugger.injected
 		
 		public static var output:*;
 		public static var buffer:String = '';
+		
+		private static var objectReferences:Dictionary = new Dictionary(true);
 		
 		private static var inEnterFrame:Boolean;
 		private static var inExitFrame:Boolean;
@@ -211,6 +215,42 @@ package com.swfwire.debugger.injected
 				//_log('<<');
 			}
 			return;
+		}
+		
+		private static var _objectId:int = 0;
+		
+		public static function newObject(object:*):void
+		{
+			if(object)
+			{
+				objectReferences[object] = {creationTime: getTimer(), id: _objectId++};
+			}
+		}
+		
+		public static function enumerateObjects():Array
+		{
+			var result:Array = [];
+			for(var iter:* in objectReferences)
+			{
+				var d:* = objectReferences[iter];
+				result.push({name: getQualifiedClassName(iter),	creationTime: String(d.creationTime), id: String(d.id)});
+			}
+			return result;
+		}
+		
+		public static function getObjectById(id:int):*
+		{
+			var result:*;
+			for(var iter:* in objectReferences)
+			{
+				var d:* = objectReferences[iter];
+				if(d.id == id)
+				{
+					result = iter;
+					break;
+				}
+			}
+			return result;
 		}
 		
 		public static function uncaughtError(e:* = null):void

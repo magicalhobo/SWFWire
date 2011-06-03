@@ -450,6 +450,7 @@ package com.swfwire.debugger
 						
 						var enterFunctionIndex:int = wrapper.addQName(emptyNS, wrapper.addString('enterFunction'));
 						var exitFunctionIndex:int = wrapper.addQName(emptyNS, wrapper.addString('exitFunction'));
+						var newObjectIndex:int = wrapper.addQName(emptyNS, wrapper.addString('newObject'));
 						
 						var traceIndex:int = wrapper.getMultinameIndex('', 'trace');
 						if(traceIndex >= 0)
@@ -569,6 +570,7 @@ package com.swfwire.debugger
 						}
 						
 						l = wrapper.findInstruction(new InstructionTemplate(Instruction_newfunction, {}));
+						
 						for(var i15:int = 0; i15 < l.length; i15++)
 						{
 							var mb2:MethodBodyInfoToken = abcTag.abcFile.methodBodies[l[i15].methodBody];
@@ -634,7 +636,6 @@ package com.swfwire.debugger
 							}
 						}
 						
-						
 						l = wrapper.findInstruction(new InstructionTemplate(Instruction_returnvoid, {}));
 						
 						for(var iter6:* in l)
@@ -689,6 +690,28 @@ package com.swfwire.debugger
 								a.unshift(new Instruction_swap());
 								a.unshift(new Instruction_getlex(loggerClassIndex));
 								a.unshift(new Instruction_dup());
+							}
+							wrapper.redirectReferences(z.methodBody, a[a.length - 1], a[0]);
+							return a;
+						});
+						
+						
+						l = wrapper.findInstruction(new InstructionTemplate(Instruction_constructprop, {}));
+						
+						for(var iter7:* in l)
+						{
+							abcTag.abcFile.methodBodies[l[iter7].methodBody].maxStack += 1;
+						}
+						
+						wrapper.replaceInstruction2(l, function(z:InstructionLocation, a:Vector.<IInstruction>):Vector.<IInstruction>
+						{
+							var mb:MethodBodyInfoToken = abcTag.abcFile.methodBodies[z.methodBody];
+							if(mb.initScopeDepth >= minScopeDepth)
+							{
+								a.push(new Instruction_dup());
+								a.push(new Instruction_getlex(loggerClassIndex));
+								a.push(new Instruction_swap());
+								a.push(new Instruction_callpropvoid(newObjectIndex, 1));
 							}
 							wrapper.redirectReferences(z.methodBody, a[a.length - 1], a[0]);
 							return a;

@@ -24,6 +24,11 @@
 			
 			private function loaderCompleteHandler(ev:Event):void
 			{
+				stage.scaleMode = StageScaleMode.SHOW_ALL;
+				stage.align = StageAlign.TOP_LEFT;
+				
+				trace('loaderCompleteHandler');
+				
 				/*
 				stage.scaleMode = StageScaleMode.NO_SCALE;
 				stage.align = StageAlign.TOP_LEFT;

@@ -11,10 +11,10 @@
 	<mx:Style source="../assets/style.css"/>
 	<mx:Script>
 		<![CDATA[
-			import com.swfwire.debugger.Config;
 			import air.update.ApplicationUpdaterUI;
 			import air.update.events.UpdateEvent;
 			
+			import com.swfwire.debugger.Config;
 			import com.swfwire.debugger.DebuggerAsyncModifier;
 			import com.swfwire.debugger.debug;
 			import com.swfwire.debugger.events.AsyncSWFModifierEvent;
@@ -963,9 +963,9 @@
 				trace('key: '+event.keyCode);
 			}
 
-			protected function inspectGrid_itemDoubleClickHandler(event:ListEvent):void
+			protected function inspectGrid_itemDoubleClickHandler(event:ListEvent, dp:ArrayCollection):void
 			{
-				var info:Object = publicPropertiesDP.getItemAt(event.rowIndex);
+				var info:Object = dp.getItemAt(event.rowIndex);
 				try
 				{
 					inspect(lastInspectTarget[info.name]);
@@ -976,6 +976,18 @@
 				}
 			}
 
+			protected function objectItemDoubleClickHandler(event:ListEvent):void
+			{
+				var info:Object = objectList.dataProvider.getItemAt(event.rowIndex);
+				try
+				{
+					inspect(logger.getObjectById(info.id));
+				}
+				catch(e:*)
+				{
+					logOut.text += 'Error inspecting property.\n';
+				}
+			}
 
 			protected function maxStackDepth_changeHandler(event:NumericStepperEvent):void
 			{
@@ -988,6 +1000,18 @@
 				load(swfUrl.text);
 			}
 
+			protected function runGC():void
+			{
+				objectList.dataProvider = null;
+				System.gc();
+				refreshObjectList();
+			}
+			
+			protected function refreshObjectList():void
+			{
+				var objects:Array = logger.enumerateObjects();
+				objectList.dataProvider = new ArrayCollection(objects);
+			}
 		]]>
 	</mx:Script>
 	<mx:states>
@@ -1076,7 +1100,7 @@
 							<mx:DataGrid id="publicPropertiesGrid" width="100%" height="100%" editable="true"
 										 doubleClickEnabled="true"
 										 itemEditEnd="inspectGrid_itemEditEndHandler(event)"
-										 itemDoubleClick="inspectGrid_itemDoubleClickHandler(event)"
+										 itemDoubleClick="inspectGrid_itemDoubleClickHandler(event, publicPropertiesDP)"
 										 keyDown="inspectGrid_keyDownHandler(event)">
 								<mx:columns>
 									<mx:DataGridColumn headerText="Name" dataField="name" editable="false" width="180"/>
@@ -1088,7 +1112,7 @@
 							<mx:DataGrid id="privatePropertiesGrid" width="100%" height="100%" editable="true"
 										 doubleClickEnabled="true"
 										 itemEditEnd="inspectGrid_itemEditEndHandler(event)"
-										 itemDoubleClick="inspectGrid_itemDoubleClickHandler(event)"
+										 itemDoubleClick="inspectGrid_itemDoubleClickHandler(event, privatePropertiesDP)"
 										 keyDown="inspectGrid_keyDownHandler(event)">
 								<mx:columns>
 									<mx:DataGridColumn headerText="Name" dataField="name" editable="false" width="180"/>
@@ -1100,7 +1124,7 @@
 							<mx:DataGrid id="publicMethodsGrid" width="100%" height="100%" editable="true"
 										 doubleClickEnabled="true"
 										 itemEditEnd="inspectGrid_itemEditEndHandler(event)"
-										 itemDoubleClick="inspectGrid_itemDoubleClickHandler(event)"
+										 itemDoubleClick="inspectGrid_itemDoubleClickHandler(event, publicMethodsDP)"
 										 keyDown="inspectGrid_keyDownHandler(event)">
 								<mx:columns>
 									<mx:DataGridColumn headerText="Name" dataField="name" editable="false" width="180"/>
@@ -1111,7 +1135,7 @@
 							<mx:DataGrid id="privateMethodsGrid" width="100%" height="100%" editable="true"
 										 doubleClickEnabled="true"
 										 itemEditEnd="inspectGrid_itemEditEndHandler(event)"
-										 itemDoubleClick="inspectGrid_itemDoubleClickHandler(event)"
+										 itemDoubleClick="inspectGrid_itemDoubleClickHandler(event, privateMethodsDP)"
 										 keyDown="inspectGrid_keyDownHandler(event)">
 								<mx:columns>
 									<mx:DataGridColumn headerText="Name" dataField="name" editable="false" width="180"/>
@@ -1157,6 +1181,21 @@
 					<mx:Canvas label="Net">
 						<mx:TextArea id="netLog" width="100%" height="100%" editable="false"/>
 					</mx:Canvas>
+					<mx:VBox label="Objects">
+						<mx:HBox>
+							<mx:Button label="Run Garbage Collector" click="runGC()"/>
+							<mx:Button label="Refresh" click="refreshObjectList()"/>
+						</mx:HBox>
+						<mx:DataGrid id="objectList" width="100%" height="100%"
+									 doubleClickEnabled="true"
+									 itemDoubleClick="objectItemDoubleClickHandler(event)">
+							<mx:columns>
+								<mx:DataGridColumn headerText="ID" dataField="id" editable="false" width="50"/>
+								<mx:DataGridColumn headerText="Name" dataField="name" editable="false"/>
+								<mx:DataGridColumn headerText="Creation Time" dataField="creationTime" editable="false"/>
+							</mx:columns>
+						</mx:DataGrid>
+					</mx:VBox>
 				</mx:TabNavigator>
 			</mx:VBox>
 		</mx:VDividedBox>

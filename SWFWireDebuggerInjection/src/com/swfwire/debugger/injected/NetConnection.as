@@ -12,7 +12,9 @@ package com.swfwire.debugger.injected
 		override public function connect(command:String, ...parameters):void
 		{
 			globalEvents.dispatchEvent(new DynamicEvent('connect', {command: command, parameters: parameters}));
-			super.connect(command, parameters);
+			var args:Array = parameters.slice();
+			args.unshift(command);
+			super.connect.apply(this, args);
 		}
 	}
 }
