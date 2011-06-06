@@ -1,26 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Label xmlns:fx="http://ns.adobe.com/mxml/2009" 
+<mx:HBox xmlns:fx="http://ns.adobe.com/mxml/2009" 
 		  xmlns:s="library://ns.adobe.com/flex/spark" 
 		  xmlns:mx="library://ns.adobe.com/flex/mx"
-		  paddingLeft="4">
+		  paddingLeft="4" horizontalScrollPolicy="off" verticalScrollPolicy="off"
+		  verticalAlign="middle">
 	<fx:Script>
 		<![CDATA[
 			import avmplus.getQualifiedClassName;
+			
+			import mx.controls.dataGridClasses.DataGridItemRenderer;
 			
 			override public function set data(value:Object):void
 			{
 				super.data = value;
 				var reference:* = value.value;
 				var type:String = typeof(reference);
-				if(type == 'object')
+				if(reference && type == 'object')
 				{
-					text = getQualifiedClassName(reference);
+					valueLabel.visible = false;
+					valueLabel.includeInLayout = false;
+					button.visible = true;
+					button.includeInLayout = true;
+					button.label = getQualifiedClassName(reference);
 				}
 				else
 				{
-					text = reference;
+					button.visible = false;
+					button.includeInLayout = false;
+					valueLabel.visible = true;
+					valueLabel.includeInLayout = true;
+					valueLabel.text = reference;
+					button.label = '';
 				}
+				DataGridItemRenderer
 			}
 		]]>
 	</fx:Script>
-</mx:Label>
+	<mx:Label id="valueLabel"/>
+	<mx:Button id="button"/>
+</mx:HBox>

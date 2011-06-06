@@ -329,7 +329,6 @@
 				
 				publicPropertiesGrid.dataProvider = publicPropertiesDP;
 				publicMethodsGrid.dataProvider = publicMethodsDP;
-				privateMethodsGrid.dataProvider = privateMethodsDP;
 				
 				breadCrumb.addEventListener('breadCrumbClick', function(ev:DynamicEvent):void
 				{
@@ -501,13 +500,11 @@
 					methods = target[methodsMethod]();
 					for(var iter2:* in methods)
 					{
-						privateMethodsDP.addItem({name: iter2, value: ''});
+						publicMethodsDP.addItem({type: 'private', name: iter2});
+						//privateMethodsDP.addItem({name: iter2, value: ''});
 					}
 				}
-				catch(e:*)
-				{
-					log('Error enumerating private methods');
-				}
+				catch(e:*){}
 				
 				try
 				{
@@ -520,10 +517,7 @@
 						//privatePropertiesDP.addItem({name: iter3, value: methods[iter3]});
 					}
 				}
-				catch(e:*)
-				{
-					log('Error enumerating private properties');
-				}
+				catch(e:*){}
 				
 				inspectType.text = description.@name;
 				
@@ -560,7 +554,7 @@
 					{
 						continue;
 					}
-					publicMethodsDP.addItem({name: node.@name, value: ''});
+					publicMethodsDP.addItem({type: 'public', name: node.@name, value: ''});
 				}
 				
 				lastInspectTarget = target;
@@ -998,7 +992,7 @@
 				var info:Object = dp.getItemAt(event.rowIndex);
 				try
 				{
-					inspect(lastInspectTarget[info.name]);
+					inspect(info.value);
 				}
 				catch(e:*)
 				{
@@ -1034,7 +1028,6 @@
 			{
 				objectList.dataProvider = null;
 				System.gc();
-				refreshObjectList();
 			}
 			
 			protected function refreshObjectList():void
@@ -1150,35 +1143,27 @@
 									 paddingBottom="5" paddingLeft="5" paddingTop="5" paddingRight="5" chromeColor="#131313" minHeight="0">
 						<mx:Canvas width="100%" height="100%" label="Properties">
 							<mx:DataGrid id="publicPropertiesGrid" width="100%" height="100%"
+										 doubleClickEnabled="true" editable="true"
 										 itemEditEnd="inspectGrid_itemEditEndHandler(event)"
 										 itemDoubleClick="inspectGrid_itemDoubleClickHandler(event, publicPropertiesDP)"
-										 keyDown="inspectGrid_keyDownHandler(event)">
+										 keyDown="inspectGrid_keyDownHandler(event)" variableRowHeight="true">
 								<mx:columns>
-									<ui:AccessorTypeColumn headerText="" dataField="type"/>
-									<mx:DataGridColumn headerText="Name" dataField="name" editable="false" width="180"/>
-									<mx:DataGridColumn headerText="Value" dataField="value" editable="true" itemRenderer="com.swfwire.debugger.flex.ui.PropertyValueRenderer"/>
+									<ui:AccessorTypeColumn headerText="" dataField="type" width="25" resizable="false"/>
+									<mx:DataGridColumn headerText="Name" dataField="name" width="180" editable="false"/>
+									<mx:DataGridColumn headerText="Value" dataField="value" editable="true"
+													   itemRenderer="com.swfwire.debugger.flex.ui.PropertyValueRenderer"/>
 								</mx:columns>
 							</mx:DataGrid>
 						</mx:Canvas>
-						<mx:Canvas width="100%" height="100%" label="Public Methods">
+						<mx:Canvas width="100%" height="100%" label="Methods">
 							<mx:DataGrid id="publicMethodsGrid" width="100%" height="100%" editable="true"
 										 doubleClickEnabled="true"
 										 itemEditEnd="inspectGrid_itemEditEndHandler(event)"
 										 itemDoubleClick="inspectGrid_itemDoubleClickHandler(event, publicMethodsDP)"
-										 keyDown="inspectGrid_keyDownHandler(event)">
+										 keyDown="inspectGrid_keyDownHandler(event)" variableRowHeight="true">
 								<mx:columns>
-									<mx:DataGridColumn headerText="Name" dataField="name" editable="false" width="180"/>
-								</mx:columns>
-							</mx:DataGrid>
-						</mx:Canvas>
-						<mx:Canvas width="100%" height="100%" label="Private Methods">
-							<mx:DataGrid id="privateMethodsGrid" width="100%" height="100%" editable="true"
-										 doubleClickEnabled="true"
-										 itemEditEnd="inspectGrid_itemEditEndHandler(event)"
-										 itemDoubleClick="inspectGrid_itemDoubleClickHandler(event, privateMethodsDP)"
-										 keyDown="inspectGrid_keyDownHandler(event)">
-								<mx:columns>
-									<mx:DataGridColumn headerText="Name" dataField="name" editable="false" width="180"/>
+									<ui:AccessorTypeColumn headerText="" dataField="type" width="25"/>
+									<mx:DataGridColumn headerText="Name" dataField="name"/>
 								</mx:columns>
 							</mx:DataGrid>
 						</mx:Canvas>
