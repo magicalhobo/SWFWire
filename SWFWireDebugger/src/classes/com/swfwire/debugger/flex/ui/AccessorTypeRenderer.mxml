@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:HBox xmlns:fx="http://ns.adobe.com/mxml/2009"
+		 xmlns:s="library://ns.adobe.com/flex/spark"
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 horizontalAlign="center" horizontalScrollPolicy="off" paddingLeft="2"
+		 verticalAlign="middle" verticalScrollPolicy="off">
+	<fx:Script>
+		<![CDATA[
+			[Embed(source="../assets/circle.png")]
+			public static const PRIVATE_ICON:Class;
+			
+			[Embed(source="../assets/square.png")]
+			public static const PUBLIC_ICON:Class;
+			
+			override public function set data(value:Object):void
+			{
+				switch(value.type)
+				{
+					case 'private':
+						image.source = PRIVATE_ICON;
+						break;
+					case 'public':
+						image.source = PUBLIC_ICON;
+						break;
+					default:
+						image.source = null;
+				}
+			}
+		]]>
+	</fx:Script>
+	<mx:Image id="image"/>
+</mx:HBox>

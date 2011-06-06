@@ -597,7 +597,16 @@ package com.swfwire.debugger
 						{
 							var mb2:MethodBodyInfoToken = abcTag.abcFile.methodBodies[l[i15].methodBody];
 							var newfinst:Instruction_newfunction = mb2.instructions[l[i15].id] as Instruction_newfunction;
-							nameFromMethodId[newfinst.index] = nameFromMethodId[mb2.method]+'/<anonymous>';
+							var anonMethodName:String = nameFromMethodId[mb2.method];
+							if(anonMethodName)
+							{
+								anonMethodName = anonMethodName+'/<anonymous>';
+							}
+							else
+							{
+								anonMethodName = '<anonymous>';
+							}
+							nameFromMethodId[newfinst.index] = anonMethodName;
 						}
 						
 						//Debug.dump(nameFromMethodId, 20);
@@ -647,7 +656,7 @@ package com.swfwire.debugger
 								
 								j9.unshift(new Instruction_getlocal0());
 								
-								var methodId:int =  wrapper.addString(iTag+'.'+String(i9));
+								var methodId:int = wrapper.addString(iTag+'.'+String(i9));
 								var methodName:String = nameFromMethodId[mb.method];
 								if(methodName)
 								{

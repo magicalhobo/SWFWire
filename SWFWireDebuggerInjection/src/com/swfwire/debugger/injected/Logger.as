@@ -24,6 +24,8 @@ package com.swfwire.debugger.injected
 		public static var skipRender:Boolean = true;
 		public static var skipFrameConstructed:Boolean = true;
 		public static var skipTimer:Boolean = true;
+		public static var skipFL:Boolean = true;
+		public static var skipMX:Boolean = true;
 		
 		public static var indentString:String = '  ';
 		
@@ -44,6 +46,7 @@ package com.swfwire.debugger.injected
 		private static var indent:int = 0;
 		private static var startTimes:Array = [];
 		private static var stack:Array = [];
+		private static var objectId:int = 0;
 		
 		public static function flushBuffer():void
 		{
@@ -79,7 +82,7 @@ package com.swfwire.debugger.injected
 			var str:String = String(message);
 			if(autoIndent)
 			{
-				str = StringUtil.indent(message, StringUtil.repeat(indentString, indent + 2));
+				str = StringUtil.indent(message, StringUtil.repeat(indentString, indent));
 			}
 			buffer += str + '\n';
 		}
@@ -131,15 +134,9 @@ package com.swfwire.debugger.injected
 						(!skipFrameConstructed || !inFrameConstructed) &&
 						(!skipTimer || !inTimer);
 			}
-			/*
-			if(methodName.substr(0, 3) == 'fl.')
-			{
-				return;
-			}
-			*/
 			
-			var show3:Boolean = show2 && stack.length < maxStack;
-			
+			var show3:Boolean = show2 && stack.length < maxStack && !(skipMX && methodName.substr(0, 3) == 'mx.') && !(skipFL && methodName.substr(0, 3) == 'fl.');
+
 			stack.push(methodName);
 			if(show3 && showMethodEntry)
 			{
@@ -147,8 +144,9 @@ package com.swfwire.debugger.injected
 				//_log('> ' + methodName + ' | '+methodName2);
 				//methodName = new StackInfo(1).functionName;
 				_log('> ' + methodName);
+				indent++;
 			}
-			indent = stack.length;
+			//indent = stack.length;
 			if(show3 && showArguments && params)
 			{
 				_log(ObjectUtil.objectToString(params, 2, 2, 50, 50, indentString));
@@ -188,14 +186,19 @@ package com.swfwire.debugger.injected
 				show2 = true;
 			}
 			
-			var show3:Boolean = show && stack.length < maxStack;
+			var show3:Boolean = show && stack.length < maxStack && !(skipMX && methodName.substr(0, 3) == 'mx.') && !(skipFL && methodName.substr(0, 3) == 'fl.');
 			
 			if(showReturn && returnValue !== null && show3)
 			{
 				_log('return '+ObjectUtil.objectToString(returnValue, 2, 2, 50, 50, indentString));
 			}
-			indent = stack.length;
-			//indent = Math.max(indent, 0);
+			//indent = stack.length;
+			
+			if(show3)
+			{
+				indent--;
+				indent = Math.max(indent, 0);
+			}
 			
 			if(show3 && showMethodEntry && showMethodExit)
 			{
@@ -204,7 +207,7 @@ package com.swfwire.debugger.injected
 				
 				var diff:int = getTimer() - start;
 				
-				_log('< '+diff+'ms');
+				_log('< '+methodName+' ('+diff+'ms)');
 				
 				if(diff > 3000)
 				{
@@ -217,13 +220,14 @@ package com.swfwire.debugger.injected
 			return;
 		}
 		
-		private static var _objectId:int = 0;
-		
 		public static function newObject(object:*):void
 		{
 			if(object)
 			{
-				objectReferences[object] = {creationTime: getTimer(), id: _objectId++};
+				if(!(object is QName))
+				{
+					objectReferences[object] = {creationTime: getTimer(), id: objectId++, method: stack[stack.length - 1]};
+				}
 			}
 		}
 		
@@ -233,7 +237,7 @@ package com.swfwire.debugger.injected
 			for(var iter:* in objectReferences)
 			{
 				var d:* = objectReferences[iter];
-				result.push({name: getQualifiedClassName(iter),	creationTime: String(d.creationTime), id: String(d.id)});
+				result.push({id: String(d.id), type: getQualifiedClassName(iter), method: d.method, creationTime: String(d.creationTime)});
 			}
 			return result;
 		}

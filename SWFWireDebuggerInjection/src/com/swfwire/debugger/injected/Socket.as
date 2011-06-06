@@ -16,13 +16,15 @@ package com.swfwire.debugger.injected
 		private var lastHost:String = '';
 		private var lastPort:int = 0;
 		
-		public function Socket()
+		public function Socket(host:String = null, port:int = 0)
 		{
 			addEventListener(Event.CONNECT, connectHandler);
 			addEventListener(ProgressEvent.SOCKET_DATA, socketDataHandler);
 			addEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);
 			addEventListener(SecurityErrorEvent.SECURITY_ERROR, securityErrorHandler);
 			addEventListener(Event.CLOSE, closeHandler);
+			
+			super(host, port);
 		}
 		
 		protected function connectHandler(ev:Event):void

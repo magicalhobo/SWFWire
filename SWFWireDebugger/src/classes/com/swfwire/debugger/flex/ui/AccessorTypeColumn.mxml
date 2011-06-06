@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:DataGridColumn xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			 xmlns:s="library://ns.adobe.com/flex/spark" 
+			 xmlns:mx="library://ns.adobe.com/flex/mx"
+			 sortCompareFunction="{sortByType}"
+			 itemRenderer="com.swfwire.debugger.flex.ui.AccessorTypeRenderer"
+			 width="25" resizable="false">
+	<fx:Script>
+		<![CDATA[
+			import mx.utils.ObjectUtil;
+			
+			protected function sortByType(a:*, b:*):int
+			{
+				var map:Object = {'private': 0, 'public': 1};
+				var a2:Number = map[a.type];
+				var b2:Number = map[b.type];
+				return ObjectUtil.numericCompare(a2, b2);
+			}
+		]]>
+	</fx:Script>
+</mx:DataGridColumn>

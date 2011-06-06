@@ -327,7 +327,6 @@
 				//var librarySwf:String = new File(File.applicationDirectory.nativePath).resolvePath('library.swf?nocache='+Math.random()).url;
 				
 				publicPropertiesGrid.dataProvider = publicPropertiesDP;
-				privatePropertiesGrid.dataProvider = privatePropertiesDP;
 				publicMethodsGrid.dataProvider = publicMethodsDP;
 				privateMethodsGrid.dataProvider = privateMethodsDP;
 				
@@ -515,7 +514,9 @@
 					methods = target[propertiesMethod]();
 					for(var iter3:* in methods)
 					{
-						privatePropertiesDP.addItem({name: iter3, value: methods[iter3]});
+						//props.push({type: 'private', name: iter3, value: methods[iter3]});
+						publicPropertiesDP.addItem({type: 'private', name: iter3, value: methods[iter3]});
+						//privatePropertiesDP.addItem({name: iter3, value: methods[iter3]});
 					}
 				}
 				catch(e:*)
@@ -541,11 +542,11 @@
 				{
 					try
 					{
-						publicPropertiesDP.addItem({name: props[iter], value: target[props[iter]]});
+						publicPropertiesDP.addItem({type: 'public', name: props[iter], value: target[props[iter]]});
 					}
 					catch(e:Error)
 					{
-						publicPropertiesDP.addItem({name: props[iter], value: '<exception thrown by getter>'});
+						publicPropertiesDP.addItem({type: 'public', name: props[iter], value: '<exception thrown by getter>'});
 					}
 				}
 				
@@ -569,10 +570,6 @@
 						if(tabnavigator2.selectedChild == publicPropertiesGrid.parent)
 						{
 							dp = publicPropertiesDP;
-						}
-						else if(tabnavigator2.selectedChild == privatePropertiesGrid.parent)
-						{
-							dp = privatePropertiesDP;
 						}
 						
 						if(dp)
@@ -1122,25 +1119,13 @@
 					<mx:Label id="inspectType" width="100%"/>
 					<mx:TabNavigator id="tabnavigator2" width="100%" height="100%" creationPolicy="all" backgroundAlpha="1" backgroundColor="#2C2C2C"
 									 paddingBottom="5" paddingLeft="5" paddingTop="5" paddingRight="5" chromeColor="#131313" minHeight="0">
-						<mx:Canvas width="100%" height="100%" label="Public Properties">
-							<mx:DataGrid id="publicPropertiesGrid" width="100%" height="100%" editable="true"
-										 doubleClickEnabled="true"
+						<mx:Canvas width="100%" height="100%" label="Properties">
+							<mx:DataGrid id="publicPropertiesGrid" width="100%" height="100%"
 										 itemEditEnd="inspectGrid_itemEditEndHandler(event)"
 										 itemDoubleClick="inspectGrid_itemDoubleClickHandler(event, publicPropertiesDP)"
 										 keyDown="inspectGrid_keyDownHandler(event)">
 								<mx:columns>
-									<mx:DataGridColumn headerText="Name" dataField="name" editable="false" width="180"/>
-									<mx:DataGridColumn headerText="Value" dataField="value" editable="true"/>
-								</mx:columns>
-							</mx:DataGrid>
-						</mx:Canvas>
-						<mx:Canvas width="100%" height="100%" label="Private Properties">
-							<mx:DataGrid id="privatePropertiesGrid" width="100%" height="100%" editable="true"
-										 doubleClickEnabled="true"
-										 itemEditEnd="inspectGrid_itemEditEndHandler(event)"
-										 itemDoubleClick="inspectGrid_itemDoubleClickHandler(event, privatePropertiesDP)"
-										 keyDown="inspectGrid_keyDownHandler(event)">
-								<mx:columns>
+									<ui:AccessorTypeColumn headerText="" dataField="type"/>
 									<mx:DataGridColumn headerText="Name" dataField="name" editable="false" width="180"/>
 									<mx:DataGridColumn headerText="Value" dataField="value" editable="true"/>
 								</mx:columns>
@@ -1217,8 +1202,9 @@
 									 itemDoubleClick="objectItemDoubleClickHandler(event)">
 							<mx:columns>
 								<mx:DataGridColumn headerText="ID" dataField="id" editable="false" width="50"/>
-								<mx:DataGridColumn headerText="Name" dataField="name" editable="false"/>
-								<mx:DataGridColumn headerText="Creation Time" dataField="creationTime" editable="false"/>
+								<mx:DataGridColumn headerText="Type" dataField="type" editable="false"/>
+								<mx:DataGridColumn headerText="Method" dataField="method" editable="false"/>
+								<mx:DataGridColumn headerText="Creation Time" dataField="creationTime" editable="false" width="100"/>
 							</mx:columns>
 						</mx:DataGrid>
 					</mx:VBox>
