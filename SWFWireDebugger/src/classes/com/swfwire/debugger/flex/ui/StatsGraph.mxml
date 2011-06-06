@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				xmlns:s="library://ns.adobe.com/flex/spark" 
+				xmlns:mx="library://ns.adobe.com/flex/mx"
+				horizontalScrollPolicy="off" verticalScrollPolicy="off">
+	<fx:Script>
+		<![CDATA[
+			import mx.events.FlexEvent;
+			
+			private var points:Array = [];
+			private var timer:Timer;
+			
+			public function addPoint(value:Number):void
+			{
+				points.push(value);
+				invalidateDisplayList();
+			}
+			
+			override protected function updateDisplayList(unscaledWidth:Number, unscaledHeight:Number):void
+			{
+				super.updateDisplayList(unscaledWidth, unscaledHeight);
+				
+				var start:int = Math.max(0, points.length - unscaledWidth);
+				
+				graph.graphics.clear();
+				graph.graphics.lineStyle(1, 0x999999);
+				
+				var maxPoint:int = 0;
+				for(var iter:int = start; iter < points.length; iter++)
+				{
+					maxPoint = Math.max(maxPoint, points[iter]);
+				}
+				if(maxPoint > 0)
+				{
+					for(var iter2:int = start; iter2 < points.length; iter2++)
+					{
+						if(iter2 == start)
+						{
+							graph.graphics.moveTo(iter2 - start, unscaledHeight * (1 - points[iter2]/maxPoint));
+						}
+						else
+						{
+							graph.graphics.lineTo(iter2 - start, unscaledHeight * (1 - points[iter2]/maxPoint));
+						}
+					}
+				}
+				
+				count.text = points[points.length - 1] + ' objects';
+			}
+		]]>
+	</fx:Script>
+	<mx:Label id="count" horizontalCenter="0" verticalCenter="0" text="Object Count" styleName="bigText" alpha="0.2"/>
+	<mx:UIComponent id="graph" width="100%" height="100%"/>
+</mx:Canvas>

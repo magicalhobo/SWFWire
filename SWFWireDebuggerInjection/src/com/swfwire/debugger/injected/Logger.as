@@ -242,6 +242,16 @@ package com.swfwire.debugger.injected
 			return result;
 		}
 		
+		public static function getObjectCount():int
+		{
+			var result:int = 0;
+			for(var iter:* in objectReferences)
+			{
+				result++;
+			}
+			return result;
+		}
+		
 		public static function getObjectById(id:int):*
 		{
 			var result:*;

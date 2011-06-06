@@ -28,7 +28,11 @@
     <buildTarget buildTargetName="default">
       <airSettings airCertificatePath="F:/www/hobo.webhop.net/htdocs/workspaces/fb_i6_swfwire/swfwire.p12" airTimestamp="true" version="1">
         <airExcludes>
+          <pathEntry path="icon.png"/>
+          <pathEntry path="icon_32.png"/>
           <pathEntry path="catalog.xml"/>
+          <pathEntry path="icon_16.png"/>
+          <pathEntry path="icon_48.png"/>
         </airExcludes>
       </airSettings>
       <actionScriptSettings version="1"/>

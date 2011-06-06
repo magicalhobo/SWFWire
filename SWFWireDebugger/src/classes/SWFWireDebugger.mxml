@@ -50,6 +50,7 @@
 			import mx.events.DataGridEvent;
 			import mx.events.DataGridEventReason;
 			import mx.events.DynamicEvent;
+			import mx.events.FlexEvent;
 			import mx.events.ListEvent;
 			import mx.events.NumericStepperEvent;
 			import mx.managers.DragManager;
@@ -554,6 +555,11 @@
 				
 				for each(node in description.method)
 				{
+					var methodName:String = node.@name;
+					if(methodName.substr(0, 8) == 'swfWire_')
+					{
+						continue;
+					}
 					publicMethodsDP.addItem({name: node.@name, value: ''});
 				}
 				
@@ -672,6 +678,7 @@
 			
 			private var lastFileSize:uint;
 			private var lastRunBytes:ByteArray;
+			private var updateStatsTimer:Timer;
 			
 			public function load(url:String):void
 			{
@@ -1035,6 +1042,23 @@
 				var objects:Array = logger.enumerateObjects();
 				objectList.dataProvider = new ArrayCollection(objects);
 			}
+			
+			protected function updateObjectCount():void
+			{
+				stats.addPoint(logger.getObjectCount());
+			}
+			
+			protected function updateStatsTimerHandler(event:TimerEvent):void
+			{
+				updateObjectCount();
+			}
+			
+			protected function stats_creationCompleteHandler(event:FlexEvent):void
+			{
+				updateStatsTimer = new Timer(100);
+				updateStatsTimer.addEventListener(TimerEvent.TIMER, updateStatsTimerHandler);
+				updateStatsTimer.start();
+			}			
 		]]>
 	</mx:Script>
 	<mx:states>
@@ -1046,6 +1070,7 @@
 			<mx:RemoveChild target="{writeProgress}"/>
 			<mx:RemoveChild target="{systemLog}"/>
 			<mx:RemoveChild target="{breadCrumb}"/>
+			<mx:RemoveChild target="{stats}"/>
 		</mx:State>
 		<mx:State name="loading">
 			<mx:RemoveChild target="{hdividedbox1}"/>
@@ -1054,6 +1079,7 @@
 			<mx:RemoveChild target="{writeProgress}"/>
 			<mx:RemoveChild target="{swfDropTarget}"/>
 			<mx:RemoveChild target="{breadCrumb}"/>
+			<mx:RemoveChild target="{stats}"/>
 		</mx:State>
 		<mx:State name="reading">
 			<mx:RemoveChild target="{swfDropTarget}"/>
@@ -1062,6 +1088,7 @@
 			<mx:RemoveChild target="{writeProgress}"/>
 			<mx:RemoveChild target="{modifyProgress}"/>
 			<mx:RemoveChild target="{breadCrumb}"/>
+			<mx:RemoveChild target="{stats}"/>
 		</mx:State>
 		<mx:State name="modifying">
 			<mx:RemoveChild target="{swfDropTarget}"/>
@@ -1070,6 +1097,7 @@
 			<mx:RemoveChild target="{readProgress}"/>
 			<mx:RemoveChild target="{writeProgress}"/>
 			<mx:RemoveChild target="{breadCrumb}"/>
+			<mx:RemoveChild target="{stats}"/>
 		</mx:State>
 		<mx:State name="writing">
 			<mx:RemoveChild target="{swfDropTarget}"/>
@@ -1078,6 +1106,7 @@
 			<mx:RemoveChild target="{readProgress}"/>
 			<mx:RemoveChild target="{modifyProgress}"/>
 			<mx:RemoveChild target="{breadCrumb}"/>
+			<mx:RemoveChild target="{stats}"/>
 		</mx:State>
 		<mx:State name="loaded">
 			<mx:RemoveChild target="{loadProgress}"/>
@@ -1089,8 +1118,8 @@
 		</mx:State>
 	</mx:states>
 	<mx:HBox id="header" width="100%">
-		<mx:Spacer width="100%"/>
 		<mx:Button styleName="logo"/>
+		<ui:StatsGraph id="stats" width="100%" height="100%" creationComplete="stats_creationCompleteHandler(event)"/>
 	</mx:HBox>
 	<ui:BreadCrumb id="breadCrumb" width="100%" height="26"/>
 	<mx:Canvas width="100%" height="100%" id="swfDropTarget" backgroundColor="#000000" backgroundAlpha="0">
@@ -1127,7 +1156,7 @@
 								<mx:columns>
 									<ui:AccessorTypeColumn headerText="" dataField="type"/>
 									<mx:DataGridColumn headerText="Name" dataField="name" editable="false" width="180"/>
-									<mx:DataGridColumn headerText="Value" dataField="value" editable="true"/>
+									<mx:DataGridColumn headerText="Value" dataField="value" editable="true" itemRenderer="com.swfwire.debugger.flex.ui.PropertyValueRenderer"/>
 								</mx:columns>
 							</mx:DataGrid>
 						</mx:Canvas>
