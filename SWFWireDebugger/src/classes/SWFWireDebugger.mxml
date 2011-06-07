@@ -140,7 +140,7 @@
 					ev.stopImmediatePropagation();
 					logger.uncaughtError(ev.error);
 					log('Uncaught error in root.');
-					log(ObjectUtil.objectToString(ev.error, 2, 2, 50, 50, '	'));
+					log(ObjectUtil.objectToString(ev.error, 2, 2, 50, 50, true, '	'));
 				});
 				
 				//preview.addEventListener(MouseEvent.CONTEXT_MENU, inspectHandler);
@@ -157,7 +157,7 @@
 						ev.stopImmediatePropagation();
 						logger.uncaughtError(ev.error);
 						log('Uncaught error in child.');
-						log(ObjectUtil.objectToString(ev.error, 2, 2, 50, 50, '	'));
+						log(ObjectUtil.objectToString(ev.error, 2, 2, 50, 50, true, '	'));
 					});
 					/*
 					var parameters:Object = {};
@@ -265,55 +265,59 @@
 					var urlLoaderClass:* = injectedAppDomain.getDefinition('com.swfwire.debugger.injected.URLLoader');
 					urlLoaderClass.globalEvents.addEventListener(Event.OPEN, function(ev:*):void
 					{
-						logToNet(ev.url+': open');
+						logToNet(ev.url, 'open', ev.instance.bytesLoaded, ev.instance.bytesTotal);
 					});
 					urlLoaderClass.globalEvents.addEventListener(ProgressEvent.PROGRESS, function(ev:*):void
 					{
-						logToNet(ev.url+': '+ev.bytesLoaded+'/'+ev.bytesTotal);
+						logToNet(ev.url, 'progress', ev.instance.bytesLoaded, ev.instance.bytesTotal);
 					});
 					urlLoaderClass.globalEvents.addEventListener(Event.COMPLETE, function(ev:*):void
 					{
-						logToNet(ev.url+': complete');
+						logToNet(ev.url, 'complete', ev.instance.bytesLoaded, ev.instance.bytesTotal);
 					});
 					urlLoaderClass.globalEvents.addEventListener(IOErrorEvent.IO_ERROR, function(ev:*):void
 					{
-						logToNet(ev.url+': error '+ev);
+						logToNet(ev.url, 'ioError', ev.instance.bytesLoaded, ev.instance.bytesTotal);
+					});
+					urlLoaderClass.globalEvents.addEventListener(SecurityErrorEvent.SECURITY_ERROR, function(ev:*):void
+					{
+						logToNet(ev.url, 'securityError', ev.instance.bytesLoaded, ev.instance.bytesTotal);
 					});
 					
 					var ncClass:* = injectedAppDomain.getDefinition('com.swfwire.debugger.injected.NetConnection');
 					ncClass.globalEvents.addEventListener('connect', function(ev:*):void
 					{
-						logToNet(ev.command+': rtmp connect');
+						//logToNet(ev.command+': rtmp connect');
 					});
 					
 					var socketClass:* = injectedAppDomain.getDefinition('com.swfwire.debugger.injected.Socket');
 					socketClass.globalEvents.addEventListener('swfWireConnect', function(ev:*):void
 					{
-						logToNet(ev.host+':'+ev.port+': socket connect');
+						//logToNet(ev.host+':'+ev.port+': socket connect');
 					});
 					socketClass.globalEvents.addEventListener('swfWireClose', function(ev:*):void
 					{
-						logToNet(ev.host+':'+ev.port+': socket closed by client');
+						//logToNet(ev.host+':'+ev.port+': socket closed by client');
 					});
 					socketClass.globalEvents.addEventListener(Event.CONNECT, function(ev:*):void
 					{
-						logToNet(ev.host+':'+ev.port+': socket connected');
+						//logToNet(ev.host+':'+ev.port+': socket connected');
 					});
 					socketClass.globalEvents.addEventListener(ProgressEvent.SOCKET_DATA, function(ev:*):void
 					{
-						logToNet(ev.host+':'+ev.port+': socket data: '+ev.instance.bytesAvailable);
+						//logToNet(ev.host+':'+ev.port+': socket data: '+ev.instance.bytesAvailable);
 					});
 					socketClass.globalEvents.addEventListener(IOErrorEvent.IO_ERROR, function(ev:*):void
 					{
-						logToNet(ev.host+':'+ev.port+': socket ioerror');
+						//logToNet(ev.host+':'+ev.port+': socket ioerror');
 					});
 					socketClass.globalEvents.addEventListener(SecurityErrorEvent.SECURITY_ERROR, function(ev:*):void
 					{
-						logToNet(ev.host+':'+ev.port+': socket security error');
+						//logToNet(ev.host+':'+ev.port+': socket security error');
 					});
 					socketClass.globalEvents.addEventListener(Event.CLOSE, function(ev:*):void
 					{
-						logToNet(ev.host+':'+ev.port+': socket closed by server');
+						//logToNet(ev.host+':'+ev.port+': socket closed by server');
 					});
 					
 					//injectedAppDomain.getDefinition('com.swfwire.debugger.injected').output = logOut;
@@ -329,6 +333,12 @@
 				
 				publicPropertiesGrid.dataProvider = publicPropertiesDP;
 				publicMethodsGrid.dataProvider = publicMethodsDP;
+				netList.dataProvider = netDP;
+				
+				publicPropertiesGrid.addEventListener('inspectProperty', function(ev:*):void
+				{
+					inspect(ev.info.value);
+				});
 				
 				breadCrumb.addEventListener('breadCrumbClick', function(ev:DynamicEvent):void
 				{
@@ -418,6 +428,7 @@
 			private var privatePropertiesDP:ArrayCollection = new ArrayCollection();
 			private var publicMethodsDP:ArrayCollection = new ArrayCollection();
 			private var privateMethodsDP:ArrayCollection = new ArrayCollection();
+			private var netDP:ArrayCollection = new ArrayCollection();
 			private var pathRefs:Array;
 			
 			private function inspectHandler(ev:MouseEvent):void
@@ -435,7 +446,7 @@
 				}
 				if(target && !preview.loader.contains(target))
 				{
-					target = null;
+					target = preview.loader.content;
 				}
 
 				if(target != lastTarget)
@@ -881,10 +892,10 @@
 				systemLog.text += message+'\n';
 			}
 			
-			private function logToNet(message:String):void
+			private function logToNet(url:String, state:String, current:Number, total:Number):void
 			{
-				trace(message);
-				netLog.text += message+'\n';
+				trace(url);
+				netDP.addItem({url: url, state: state, current: current, total: total});
 			}
 			
 			protected function showMethodEntry_clickHandler(event:MouseEvent):void
@@ -1052,6 +1063,18 @@
 				updateStatsTimer.addEventListener(TimerEvent.TIMER, updateStatsTimerHandler);
 				updateStatsTimer.start();
 			}			
+			
+			protected function consoleSearch_keyUpHandler(ev:Event):void
+			{
+				var search:String = consoleSearch.text;
+				var re:RegExp = new RegExp(search, 'i');
+				
+				var index:int = logOut.text.search(re);
+				if(index >= 0)
+				{
+					logOut.setSelection(index, index + search.length);
+				}
+			}
 		]]>
 	</mx:Script>
 	<mx:states>
@@ -1150,7 +1173,7 @@
 								<mx:columns>
 									<ui:AccessorTypeColumn headerText="" dataField="type" width="25" resizable="false"/>
 									<mx:DataGridColumn headerText="Name" dataField="name" width="180" editable="false"/>
-									<mx:DataGridColumn headerText="Value" dataField="value" editable="true"
+									<mx:DataGridColumn headerText="Value" dataField="value" editable="false"
 													   itemRenderer="com.swfwire.debugger.flex.ui.PropertyValueRenderer"/>
 								</mx:columns>
 							</mx:DataGrid>
@@ -1179,12 +1202,20 @@
 				<mx:TabNavigator id="tabnavigator1" width="100%" height="100%" creationPolicy="all" backgroundAlpha="1" backgroundColor="#2C2C2C"
 								 paddingBottom="5" paddingLeft="5" paddingTop="5" paddingRight="5" chromeColor="#131313" minHeight="0">
 					<mx:HBox label="Console" width="100%" height="100%" horizontalGap="5">
-						<mx:TextArea id="logOut" width="100%" height="100%" editable="false" fontFamily="Courier New" fontSize="11"/>
+						<mx:VBox width="100%" height="100%">
+							<mx:HBox width="100%" verticalAlign="middle">
+								<mx:TextInput id="consoleSearch" width="250" change="consoleSearch_keyUpHandler(event)"/>
+								<mx:Spacer width="100%"/>
+								<mx:Button label="Clear Console" click="button1_clickHandler(event)"/>
+							</mx:HBox>
+							<ui:HighlightedTextArea id="logOut" width="100%" height="100%" editable="false" fontFamily="Courier New" fontSize="11"/>
+						</mx:VBox>
 						<mx:VBox height="100%" id="vbox2" paddingRight="5" minHeight="0" horizontalScrollPolicy="off" width="200">
-							<mx:Button label="Clear Console" click="button1_clickHandler(event)" width="100%"/>
 							<mx:CheckBox id="logToOutput" label="Log to output" click="logToOutput_clickHandler(event)" styleName="smallText"/>
 							<mx:CheckBox id="logToTrace" label="Log to trace" click="logToTrace_clickHandler(event)" styleName="smallText"/>
 							<mx:CheckBox id="showMethodEntry"		 label="Show method entry"		 click="showMethodEntry_clickHandler(event)" styleName="smallText"/>
+							<mx:CheckBox id="dumpArguments"			 label="Show arguments"			 click="dumpArguments_clickHandler(event)" styleName="smallText"/>
+							<mx:CheckBox id="showReturn"			 label="Show return values"		 click="showReturn_clickHandler(event)" styleName="smallText"/>
 							<mx:CheckBox id="showMethodExit"		 label="Show method exit"		 click="showMethodExit_clickHandler(event)" styleName="smallText"/>
 							<mx:CheckBox id="skipEnterFrame"		 label="Skip ENTER_FRAME"		 click="skipEnterFrame_clickHandler(event)" styleName="smallText"/>
 							<mx:CheckBox id="skipExitFrame"			 label="Skip EXIT_FRAME"		 click="skipExitFrame_clickHandler(event)" styleName="smallText"/>
@@ -1192,8 +1223,6 @@
 							<mx:CheckBox id="skipFrameConstructed"	 label="Skip FRAME_CONSTRUCTED"	 click="skipFrameConstructed_clickHandler(event)" styleName="smallText"/>
 							<mx:CheckBox id="skipTimer"				 label="Skip TIMER"				 click="skipTimer_clickHandler(event)" styleName="smallText"/>
 							<mx:CheckBox id="showTrace"				 label="Show trace" click="showTrace_clickHandler(event)" styleName="smallText"/>
-							<mx:CheckBox id="dumpArguments" label="Show arguments" click="dumpArguments_clickHandler(event)" styleName="smallText"/>
-							<mx:CheckBox id="showReturn" label="Show return values" click="showReturn_clickHandler(event)" styleName="smallText"/>
 							<mx:HBox id="hbox1" height="50" verticalAlign="middle">
 								<mx:Label text="Max Stack Depth:" styleName="smallText" paddingTop="2"/>
 								<mx:NumericStepper id="maxStackDepth" value="10" change="maxStackDepth_changeHandler(event)" minimum="0" maximum="100"/>
@@ -1204,7 +1233,12 @@
 						<mx:TextArea id="tempDisplayList" width="100%" height="100%" editable="false"/>
 					</mx:Canvas>
 					<mx:Canvas label="Net">
-						<mx:TextArea id="netLog" width="100%" height="100%" editable="false"/>
+						<mx:DataGrid id="netList" width="100%" height="100%">
+							<mx:columns>
+								<mx:DataGridColumn headerText="URL" dataField="url"/>
+								<mx:DataGridColumn headerText="Progress" dataField="progress" itemRenderer="com.swfwire.debugger.flex.ui.NetProgressRenderer"/>
+							</mx:columns>
+						</mx:DataGrid>
 					</mx:Canvas>
 					<mx:VBox label="Objects">
 						<mx:HBox>

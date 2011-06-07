@@ -31,13 +31,13 @@ package com.swfwire.utils
 			return result;
 		}
 		public static function objectToString(variable:*, recurse:int, minPropertiesForMultiline:int,
-			singleLineLengthLimit:int, maxProperties:int, indentation:String):String
+			singleLineLengthLimit:int, maxProperties:int, callGetters:Boolean, indentation:String):String
 		{
 			return _objectToString(variable, recurse, minPropertiesForMultiline, singleLineLengthLimit,
-				maxProperties, indentation, []).result;
+				maxProperties, callGetters, indentation, []).result;
 		}
 		private static function _objectToString(variable:*, recurse:int, minPropertiesForMultiline:int,
-			singleLineLengthLimit:int, maxProperties:int, indentation:String, tagged:Array):Object
+			singleLineLengthLimit:int, maxProperties:int, callGetters:Boolean, indentation:String, tagged:Array):Object
 		{
 			for(var iterTags:String in tagged)
 			{
@@ -77,15 +77,18 @@ package com.swfwire.utils
 							}
 						}
 						
-						for each(name in description.accessor.(@access == 'readwrite' || @access == 'readonly').@name)
+						if(callGetters)
 						{
-							try
+							for each(name in description.accessor.(@access == 'readwrite' || @access == 'readonly').@name)
 							{
-								props[name] = variable[name];
-							}
-							catch(e:Error)
-							{
-								props[name] = '<exception thrown by getter>';
+								try
+								{
+									props[name] = variable[name];
+								}
+								catch(e:Error)
+								{
+									props[name] = '<exception thrown by getter>';
+								}
 							}
 						}
 					}
@@ -109,7 +112,7 @@ package com.swfwire.utils
 							break;
 						}
 						counter++;
-						var dump:Object = _objectToString(prop, recurse - 1, minPropertiesForMultiline, singleLineLengthLimit, maxProperties, indentation, tagged);
+						var dump:Object = _objectToString(prop, recurse - 1, minPropertiesForMultiline, singleLineLengthLimit, maxProperties, callGetters, indentation, tagged);
 						if(dump.hasProperties)
 						{
 							anyChildHasChildren = true;

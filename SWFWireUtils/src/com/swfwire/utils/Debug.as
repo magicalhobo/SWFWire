@@ -10,6 +10,7 @@ package com.swfwire.utils
 		public var minPropertiesForMultiline:Number = 6;
 		public var singleLineLengthLimit:Number = 60;
 		public var maxProperties:Number = 50;
+		public var callGetters:Boolean = false;
 		
 		public function Debug(enabled:Boolean, swfId:String)
 		{
@@ -31,7 +32,7 @@ package com.swfwire.utils
 		public function dumpToString(variable:*, recursion:int = 0):String
 		{
 			if(recursion <= 0)	 recursion = defaultRecursionDepth;
-			return ObjectUtil.objectToString(variable, recursion, minPropertiesForMultiline, singleLineLengthLimit, maxProperties, '  ');
+			return ObjectUtil.objectToString(variable, recursion, minPropertiesForMultiline, singleLineLengthLimit, maxProperties, callGetters, '  ');
 		}
 		
 		public function dump(variable:*, recursion:int = 0):void

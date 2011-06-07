@@ -361,7 +361,7 @@
 	
 					var cpool:ConstantPoolToken = tag.abcFile.cpool;
 	
-					detailsPanel.actionScript.cpool.text = ObjectUtil.objectToString(cpool, 10, 3, 80, 100, '	');
+					detailsPanel.actionScript.cpool.text = ObjectUtil.objectToString(cpool, 10, 3, 80, 100, true, '	');
 	
 					detailsPanel.actionScript.classesCount = tag.abcFile.classCount;
 	
@@ -408,7 +408,7 @@
 				}
 				else
 				{
-					dump = ObjectUtil.objectToString(object, 10, 3, 80, 100, '	');
+					dump = ObjectUtil.objectToString(object, 10, 3, 80, 100, true, '	');
 					tagDumpCache[tagId] = dump;
 				}
 				detailsPanel.detail.text = dump;

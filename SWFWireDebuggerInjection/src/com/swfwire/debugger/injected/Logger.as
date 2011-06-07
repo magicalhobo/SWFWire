@@ -26,6 +26,7 @@ package com.swfwire.debugger.injected
 		public static var skipTimer:Boolean = true;
 		public static var skipFL:Boolean = true;
 		public static var skipMX:Boolean = true;
+		public static var skipFlashX:Boolean = true;
 		
 		public static var indentString:String = '  ';
 		
@@ -135,7 +136,10 @@ package com.swfwire.debugger.injected
 						(!skipTimer || !inTimer);
 			}
 			
-			var show3:Boolean = show2 && stack.length < maxStack && !(skipMX && methodName.substr(0, 3) == 'mx.') && !(skipFL && methodName.substr(0, 3) == 'fl.');
+			var show3:Boolean = show2 && stack.length < maxStack &&
+				!(skipMX && methodName.substr(0, 3) == 'mx.') && 
+				!(skipFL && methodName.substr(0, 3) == 'fl.') &&
+				!(skipFlashX && methodName.substr(0, 7) == 'flashx.');
 
 			stack.push(methodName);
 			if(show3 && showMethodEntry)
@@ -149,7 +153,7 @@ package com.swfwire.debugger.injected
 			//indent = stack.length;
 			if(show3 && showArguments && params)
 			{
-				_log(ObjectUtil.objectToString(params, 2, 2, 50, 50, indentString));
+				_log(ObjectUtil.objectToString(params, 2, 2, 50, 50, false, indentString));
 			}
 			startTimes.push(getTimer());
 		}
@@ -186,11 +190,20 @@ package com.swfwire.debugger.injected
 				show2 = true;
 			}
 			
-			var show3:Boolean = show && stack.length < maxStack && !(skipMX && methodName.substr(0, 3) == 'mx.') && !(skipFL && methodName.substr(0, 3) == 'fl.');
+			var show3:Boolean = show && stack.length < maxStack && 
+				!(skipMX && methodName.substr(0, 3) == 'mx.') && 
+				!(skipFL && methodName.substr(0, 3) == 'fl.') &&
+				!(skipFlashX && methodName.substr(0, 7) == 'flashx.');
+			
+			var n:String = 'nothing';
+			if(methodName == 'com.ffi.utils:FMSConnector/get hasAudio')
+			{
+				trace('found it');
+			}
 			
 			if(showReturn && returnValue !== null && show3)
 			{
-				_log('return '+ObjectUtil.objectToString(returnValue, 2, 2, 50, 50, indentString));
+				_log('return '+ObjectUtil.objectToString(returnValue, 2, 2, 50, 50, false, indentString));
 			}
 			//indent = stack.length;
 			
@@ -228,6 +241,7 @@ package com.swfwire.debugger.injected
 				{
 					objectReferences[object] = {creationTime: getTimer(), id: objectId++, method: stack[stack.length - 1]};
 				}
+				log('new '+getQualifiedClassName(object));
 			}
 		}
 		
@@ -276,7 +290,7 @@ package com.swfwire.debugger.injected
 			flushBuffer();
 			
 			_log('Uncaught error:');
-			_log(ObjectUtil.objectToString(e, 2, 2, 50, 50, indentString));
+			_log(ObjectUtil.objectToString(e, 2, 2, 50, 50, true, indentString));
 		}
 	}
 }

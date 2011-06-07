@@ -8,7 +8,7 @@
 		<![CDATA[
 			import avmplus.getQualifiedClassName;
 			
-			import mx.controls.dataGridClasses.DataGridItemRenderer;
+			import mx.events.DynamicEvent;
 			
 			override public function set data(value:Object):void
 			{
@@ -32,10 +32,17 @@
 					valueLabel.text = reference;
 					button.label = '';
 				}
-				DataGridItemRenderer
 			}
+			
+			protected function button_clickHandler(ev:MouseEvent):void
+			{
+				var event:DynamicEvent = new DynamicEvent('inspectProperty', true);
+				event.info = data;
+				dispatchEvent(event);
+			}
+			
 		]]>
 	</fx:Script>
 	<mx:Label id="valueLabel"/>
-	<mx:Button id="button"/>
+	<mx:Button id="button" click="button_clickHandler(event)"/>
 </mx:HBox>

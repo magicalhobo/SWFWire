@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:HBox xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 horizontalScrollPolicy="off" verticalAlign="middle">
+	<fx:Script>
+		<![CDATA[
+			override public function set data(value:Object):void
+			{
+				super.data = value;
+				progressBar.setProgress(value.current, value.total);
+				switch(value.state)
+				{
+					case 'open':
+						progressBar.label = 'Opening...';
+						progressBar.indeterminate = true;
+						break;
+					case 'progress':
+						progressBar.label = 'Loading...';
+						progressBar.indeterminate = false;
+						break;
+					case 'complete':
+						progressBar.label = 'Complete';
+						progressBar.indeterminate = false;
+						break;
+				}
+			}
+		]]>
+	</fx:Script>
+	<mx:ProgressBar id="progressBar" width="100%" height="100%" labelPlacement="center" label="I am awesome"/>
+</mx:HBox>

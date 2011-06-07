@@ -20,22 +20,22 @@ package com.swfwire.debugger.injected
 		
 		private static function openHandler(ev:Event):void
 		{
-			globalEvents.dispatchEvent(new DynamicEvent(ev.type, {url: urlMap[ev.currentTarget]}));
+			globalEvents.dispatchEvent(new DynamicEvent(ev.type, {instance: ev.currentTarget, url: urlMap[ev.currentTarget]}));
 		}
 		
 		private static function progressHandler(ev:ProgressEvent):void
 		{
-			globalEvents.dispatchEvent(new DynamicEvent(ev.type, {url: urlMap[ev.currentTarget], bytesLoaded: ev.bytesLoaded, bytesTotal: ev.bytesTotal}));
+			globalEvents.dispatchEvent(new DynamicEvent(ev.type, {instance: ev.currentTarget, url: urlMap[ev.currentTarget]}));
 		}
 		
 		private static function completeHandler(ev:Event):void
 		{
-			globalEvents.dispatchEvent(new DynamicEvent(ev.type, {url: urlMap[ev.currentTarget]}));
+			globalEvents.dispatchEvent(new DynamicEvent(ev.type, {instance: ev.currentTarget, url: urlMap[ev.currentTarget]}));
 		}
 		
 		private static function errorHandler(ev:Event):void
 		{
-			globalEvents.dispatchEvent(new DynamicEvent(ev.type, {url: urlMap[ev.currentTarget]}));
+			globalEvents.dispatchEvent(new DynamicEvent(ev.type, {instance: ev.currentTarget, url: urlMap[ev.currentTarget]}));
 		}
 		
 		public function URLLoader(request:URLRequest = null)
