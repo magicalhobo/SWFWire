@@ -31,6 +31,10 @@
 						progressBar.label = 'Security Error';
 						progressBar.indeterminate = false;
 						break;
+					case 'close':
+						progressBar.label = 'Closed (%1 bytes/%2 bytes)';
+						progressBar.indeterminate = false;
+						break;
 					default:
 						progressBar.label = 'Unknown';
 						progressBar.indeterminate = true;

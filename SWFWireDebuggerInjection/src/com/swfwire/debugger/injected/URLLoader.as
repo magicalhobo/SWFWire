@@ -64,5 +64,11 @@ package com.swfwire.debugger.injected
 			//request.url = 'http://localhost/proxy?url='+encodeURIComponent(request.url);
 			super.load(request);
 		}
+		
+		override public function close():void
+		{
+			globalEvents.dispatchEvent(new DynamicEvent(Event.CLOSE, {instance: this, url: urlMap[this]}));
+			super.close();
+		}
 	}
 }

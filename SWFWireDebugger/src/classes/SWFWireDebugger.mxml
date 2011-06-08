@@ -277,6 +277,10 @@
 					{
 						logToNet(ev.instance, ev.url, 'complete');
 					});
+					urlLoaderClass.globalEvents.addEventListener(Event.CLOSE, function(ev:*):void
+					{
+						logToNet(ev.instance, ev.url, 'close');
+					});
 					urlLoaderClass.globalEvents.addEventListener(IOErrorEvent.IO_ERROR, function(ev:*):void
 					{
 						logToNet(ev.instance, ev.url, 'ioError');
@@ -348,6 +352,30 @@
 				publicPropertiesGrid.addEventListener('inspectProperty', function(ev:*):void
 				{
 					inspect(ev.info.value);
+				});
+				publicPropertiesGrid.addEventListener('editProperty', function(ev:*):void
+				{
+					var info:* = ev.info;
+					var success:Boolean = true;
+					try
+					{
+						lastInspectTarget[info.name] = ev.value;
+					}
+					catch(e:*)
+					{
+						var description:XML = describeType(lastInspectTarget);
+						var setPropertyMethod:String = 'swfWire_setProperty_'+String(description.@name);
+						try
+						{
+							success = lastInspectTarget[setPropertyMethod](info.name, ev.value);
+						}
+						catch(e:*)
+						{
+							success = false;
+							logOut.text += 'Error setting property: '+e+'\n';
+						}
+					}
+					ev.success = success;
 				});
 				
 				breadCrumb.addEventListener('breadCrumbClick', function(ev:DynamicEvent):void
@@ -1073,7 +1101,6 @@
 			protected function runGC():void
 			{
 				inspect(preview.loader.content);
-				objectList.dataProvider = null;
 				System.gc();
 				stage.addEventListener(Event.ENTER_FRAME, refreshObjectEnterFrameHandler);
 			}
@@ -1086,7 +1113,41 @@
 			
 			protected function refreshObjectList():void
 			{
-				var objects:Array = logger.enumerateObjects();
+				var dp:ArrayCollection = ArrayCollection(objectList.dataProvider);
+				
+				var existed:Object = {};
+				var objects:Array = [];
+				
+				for(var iter:* in dp)
+				{
+					var obj:* = dp[iter];
+					existed[obj.id] = obj;
+					if(obj.delta != '-')
+					{
+						obj.delta = '-';
+						objects.push(obj);
+					}
+				}
+				
+				var newObjects:Array = logger.enumerateObjects();
+				
+				for(var iter2:int = 0; iter2 < newObjects.length; iter2++)
+				{
+					var obj2:* = newObjects[iter2];
+					var existing:* = existed[obj2.id];
+					if(existing)
+					{
+						existing.delta = '';
+					}
+					else
+					{
+						obj2.delta = '+';
+						objects.push(obj2);
+					}
+				}
+				
+				objects.sortOn('id', Array.NUMERIC);
+				
 				objectList.dataProvider = new ArrayCollection(objects);
 			}
 			
@@ -1222,7 +1283,7 @@
 							</mx:DataGrid>
 						</mx:Canvas>
 						<mx:Canvas width="100%" height="100%" label="Methods">
-							<mx:DataGrid id="publicMethodsGrid" width="100%" height="100%" editable="true"
+							<mx:DataGrid id="publicMethodsGrid" width="100%" height="100%"
 										 doubleClickEnabled="true" horizontalScrollPolicy="auto"
 										 itemEditEnd="inspectGrid_itemEditEndHandler(event)"
 										 itemDoubleClick="inspectGrid_itemDoubleClickHandler(event, publicMethodsDP)"

@@ -2,13 +2,15 @@
 <mx:HBox xmlns:fx="http://ns.adobe.com/mxml/2009" 
 		  xmlns:s="library://ns.adobe.com/flex/spark" 
 		  xmlns:mx="library://ns.adobe.com/flex/mx"
-		  paddingLeft="4" horizontalScrollPolicy="off" verticalScrollPolicy="off"
+		  paddingLeft="4" paddingRight="4"
+		  horizontalScrollPolicy="off" verticalScrollPolicy="off"
 		  verticalAlign="middle">
 	<fx:Script>
 		<![CDATA[
 			import avmplus.getQualifiedClassName;
 			
 			import mx.events.DynamicEvent;
+			import mx.events.FlexEvent;
 			
 			override public function set data(value:Object):void
 			{
@@ -41,8 +43,20 @@
 				dispatchEvent(event);
 			}
 			
+			protected function valueLabel_enterHandler(ev:FlexEvent):void
+			{
+				var event:DynamicEvent = new DynamicEvent('editProperty', true);
+				event.info = data;
+				event.value = valueLabel.text;
+				event.success = false;
+				dispatchEvent(event);
+				if(!event.success)
+				{
+					valueLabel.text = data.value;
+				}
+			}
 		]]>
 	</fx:Script>
-	<mx:Label id="valueLabel"/>
+	<mx:TextInput id="valueLabel" width="100%" enter="valueLabel_enterHandler(event)"/>
 	<mx:Button id="button" click="button_clickHandler(event)"/>
 </mx:HBox>

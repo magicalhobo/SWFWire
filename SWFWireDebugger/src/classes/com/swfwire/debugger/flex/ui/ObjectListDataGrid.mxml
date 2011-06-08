@@ -2,16 +2,17 @@
 <mx:DataGrid xmlns:fx="http://ns.adobe.com/mxml/2009" 
 			 xmlns:s="library://ns.adobe.com/flex/spark" 
 			 xmlns:mx="library://ns.adobe.com/flex/mx"
-			 doubleClickEnabled="true">
+			 doubleClickEnabled="true" minWidth="400">
 	<fx:Script>
 		<![CDATA[
 			import com.swfwire.utils.ArrayUtil;
 		]]>
 	</fx:Script>
 	<mx:columns>
-		<mx:DataGridColumn headerText="ID" dataField="id" editable="false" width="50" sortCompareFunction="{ArrayUtil.getSortNumeric('id')}"/>
+		<mx:DataGridColumn headerText="" dataField="delta" editable="false" width="24" resizable="false"/>
+		<mx:DataGridColumn headerText="ID" dataField="id" editable="false" width="70" sortCompareFunction="{ArrayUtil.getSortNumeric('id')}"/>
 		<mx:DataGridColumn headerText="Type" dataField="type" editable="false"/>
 		<mx:DataGridColumn headerText="Method" dataField="method" editable="false"/>
-		<mx:DataGridColumn headerText="Creation Time" dataField="creationTime" editable="false" width="100"/>
+		<mx:DataGridColumn headerText="Creation Time" dataField="creationTime" editable="false" width="110"/>
 	</mx:columns>
 </mx:DataGrid>

@@ -251,13 +251,25 @@ package com.swfwire.debugger.injected
 			}
 		}
 		
+		public static function getClassName(object:*):String
+		{
+			var result:String = getQualifiedClassName(object);
+			switch(result)
+			{
+				case 'com.swfwire.debugger.injected::URLLoader':
+					result = 'flash.net::URLLoader';
+					break;
+			}
+			return result;
+		}
+		
 		public static function enumerateObjects():Array
 		{
 			var result:Array = [];
 			for(var iter:* in objectReferences)
 			{
 				var d:* = objectReferences[iter];
-				result.push({id: String(d.id), type: getQualifiedClassName(iter), method: d.method, creationTime: String(d.creationTime)});
+				result.push({id: String(d.id), type: getClassName(iter), method: d.method, creationTime: String(d.creationTime)});
 			}
 			return result;
 		}

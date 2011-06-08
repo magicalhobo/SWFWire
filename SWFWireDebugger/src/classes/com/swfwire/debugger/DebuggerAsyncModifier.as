@@ -425,10 +425,25 @@ package com.swfwire.debugger
 						enumeratePropertiesInstructions.push(new Instruction_returnvalue());
 						createMethod(abcTag, wrapper, thisInstance, 'swfWire_enumerateProperties_'+uniqueID, enumeratePropertiesInstructions, enumeratePropertiesInstructions.length);
 
+						var wildcardNSSet:NamespaceSetToken = new NamespaceSetToken();
+						for(var iterNS:int = 1; iterNS < abcTag.abcFile.cpool.namespaces.length; iterNS++)
+						{
+							wildcardNSSet.namespaces.push(iterNS);
+						}
+						wildcardNSSet.count = wildcardNSSet.namespaces.length;
+						var wildcardNSSetIndex:int = abcTag.abcFile.cpool.nsSets.length;
+						abcTag.abcFile.cpool.nsSets.push(wildcardNSSet);
+						
+						var wildcardMultiname:MultinameToken = new MultinameToken(MultinameToken.KIND_MultinameL, new MultinameMultinameLToken(wildcardNSSetIndex));
+						var wildcardMultinameIndex:int = abcTag.abcFile.cpool.multinames.length;
+						abcTag.abcFile.cpool.multinames.push(wildcardMultiname);
+						
 						var setPropertyInstructions:Vector.<IInstruction> = new Vector.<IInstruction>();
 						setPropertyInstructions.push(new Instruction_getlocal0());
 						setPropertyInstructions.push(new Instruction_getlocal1());
-						setPropertyInstructions.push(new Instruction_setproperty());
+						setPropertyInstructions.push(new Instruction_getlocal2());
+						setPropertyInstructions.push(new Instruction_setproperty(wildcardMultinameIndex));
+						setPropertyInstructions.push(new Instruction_pushtrue());
 						setPropertyInstructions.push(new Instruction_returnvalue());
 						createMethodWithArguments(abcTag,
 							wrapper,
