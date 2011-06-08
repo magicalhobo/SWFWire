@@ -34,6 +34,7 @@
 			import com.swfwire.decompiler.data.swf9.tags.SymbolClassTag;
 			import com.swfwire.decompiler.events.AsyncSWFReaderEvent;
 			import com.swfwire.decompiler.events.AsyncSWFWriterEvent;
+			import com.swfwire.utils.ArrayUtil;
 			import com.swfwire.utils.Debug;
 			import com.swfwire.utils.DisplayUtil;
 			import com.swfwire.utils.ObjectUtil;
@@ -228,6 +229,7 @@
 					showTrace.selected = logger.showTraceStatements;
 					dumpArguments.selected = logger.showArguments;
 					showReturn.selected = logger.showReturn;
+					showObjectCreation.selected = logger.showObjectCreation;
 					skipEnterFrame.selected = logger.skipEnterFrame;
 					skipExitFrame.selected = logger.skipExitFrame;
 					skipRender.selected = logger.skipRender;
@@ -288,6 +290,14 @@
 					ncClass.globalEvents.addEventListener('connect', function(ev:*):void
 					{
 						//logToNet(ev.command+': rtmp connect');
+					});
+					ncClass.globalEvents.addEventListener('call', function(ev:*):void
+					{
+						//logToNet(ev.command+': rtmp call');
+					});
+					ncClass.globalEvents.addEventListener('close', function(ev:*):void
+					{
+						//logToNet(ev.command+': rtmp close');
 					});
 					
 					var socketClass:* = injectedAppDomain.getDefinition('com.swfwire.debugger.injected.Socket');
@@ -367,8 +377,8 @@
 			{
 				if(previewStartDown)
 				{
-					preview.loader.x = stage.mouseX - previewStartDown.x; 
-					preview.loader.y = stage.mouseY - previewStartDown.y; 
+					preview.loader.x = stage.mouseX - previewStartDown.x;
+					preview.loader.y = stage.mouseY - previewStartDown.y;
 				}
 			}
 			
@@ -853,7 +863,9 @@
 				}
 				else
 				{
+					lastInspectTarget = null;
 					objectList.dataProvider = null;
+					netDP.removeAll();
 					
 					currentState = 'loaded';
 	
@@ -958,7 +970,7 @@
 
 			protected function showTrace_clickHandler(event:MouseEvent):void
 			{
-				logger.showTrace = showTrace.selected;
+				logger.showTraceStatements = showTrace.selected;
 			}
 
 			protected function logToOutput_clickHandler(event:MouseEvent):void
@@ -969,6 +981,11 @@
 			protected function showReturn_clickHandler(event:MouseEvent):void
 			{
 				logger.showReturn = showReturn.selected;
+			}
+
+			protected function showObjectCreation_clickHandler(event:MouseEvent):void
+			{
+				logger.showObjectCreation = showObjectCreation.selected;
 			}
 
 			protected function button1_clickHandler(event:MouseEvent):void
@@ -1055,8 +1072,16 @@
 
 			protected function runGC():void
 			{
+				inspect(preview.loader.content);
 				objectList.dataProvider = null;
 				System.gc();
+				stage.addEventListener(Event.ENTER_FRAME, refreshObjectEnterFrameHandler);
+			}
+			
+			protected function refreshObjectEnterFrameHandler(ev:Event):void
+			{
+				stage.removeEventListener(Event.ENTER_FRAME, refreshObjectEnterFrameHandler);
+				refreshObjectList();
 			}
 			
 			protected function refreshObjectList():void
@@ -1160,11 +1185,11 @@
 		<mx:VBox horizontalCenter="0" verticalCenter="0" horizontalAlign="center" id="vbox1" width="100%">
 			<mx:Label text="Drop File Here" styleName="bigText"/>
 			<mx:Form width="80%" id="form1">
-				<mx:FormItem label="FlashVars: " width="100%">
-					<mx:TextInput id="flashvars" width="100%"/>
-				</mx:FormItem>
 				<mx:FormItem label="SWF URL: " width="100%">
 					<mx:TextInput id="swfUrl" width="100%"/>
+				</mx:FormItem>
+				<mx:FormItem label="FlashVars: " width="100%">
+					<mx:TextInput id="flashvars" width="100%"/>
 				</mx:FormItem>
 				<mx:FormItem label="Use Cached: ">
 					<mx:CheckBox id="useCached"/>
@@ -1234,13 +1259,14 @@
 							<mx:CheckBox id="showMethodEntry"		 label="Show method entry"		 click="showMethodEntry_clickHandler(event)" styleName="smallText"/>
 							<mx:CheckBox id="dumpArguments"			 label="Show arguments"			 click="dumpArguments_clickHandler(event)" styleName="smallText"/>
 							<mx:CheckBox id="showReturn"			 label="Show return values"		 click="showReturn_clickHandler(event)" styleName="smallText"/>
+							<mx:CheckBox id="showObjectCreation"	 label="Show object creation"	 click="showObjectCreation_clickHandler(event)" styleName="smallText"/>
 							<mx:CheckBox id="showMethodExit"		 label="Show method exit"		 click="showMethodExit_clickHandler(event)" styleName="smallText"/>
 							<mx:CheckBox id="skipEnterFrame"		 label="Skip ENTER_FRAME"		 click="skipEnterFrame_clickHandler(event)" styleName="smallText"/>
 							<mx:CheckBox id="skipExitFrame"			 label="Skip EXIT_FRAME"		 click="skipExitFrame_clickHandler(event)" styleName="smallText"/>
 							<mx:CheckBox id="skipRender"			 label="Skip RENDER"			 click="skipRender_clickHandler(event)" styleName="smallText"/>
 							<mx:CheckBox id="skipFrameConstructed"	 label="Skip FRAME_CONSTRUCTED"	 click="skipFrameConstructed_clickHandler(event)" styleName="smallText"/>
 							<mx:CheckBox id="skipTimer"				 label="Skip TIMER"				 click="skipTimer_clickHandler(event)" styleName="smallText"/>
-							<mx:CheckBox id="showTrace"				 label="Show trace" click="showTrace_clickHandler(event)" styleName="smallText"/>
+							<mx:CheckBox id="showTrace"				 label="Show trace"				 click="showTrace_clickHandler(event)" styleName="smallText"/>
 							<mx:HBox id="hbox1" height="50" verticalAlign="middle">
 								<mx:Label text="Max Stack Depth:" styleName="smallText" paddingTop="2"/>
 								<mx:NumericStepper id="maxStackDepth" value="10" change="maxStackDepth_changeHandler(event)" minimum="0" maximum="100"/>
@@ -1264,16 +1290,7 @@
 							<mx:Button label="Run Garbage Collector" click="runGC()"/>
 							<mx:Button label="Refresh" click="refreshObjectList()"/>
 						</mx:HBox>
-						<mx:DataGrid id="objectList" width="100%" height="100%"
-									 doubleClickEnabled="true"
-									 itemDoubleClick="objectItemDoubleClickHandler(event)">
-							<mx:columns>
-								<mx:DataGridColumn headerText="ID" dataField="id" editable="false" width="50"/>
-								<mx:DataGridColumn headerText="Type" dataField="type" editable="false"/>
-								<mx:DataGridColumn headerText="Method" dataField="method" editable="false"/>
-								<mx:DataGridColumn headerText="Creation Time" dataField="creationTime" editable="false" width="100"/>
-							</mx:columns>
-						</mx:DataGrid>
+						<ui:ObjectListDataGrid id="objectList" width="100%" height="100%" itemDoubleClick="objectItemDoubleClickHandler(event)"/>
 					</mx:VBox>
 				</mx:TabNavigator>
 			</mx:VBox>

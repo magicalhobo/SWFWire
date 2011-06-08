@@ -18,6 +18,7 @@ package com.swfwire.debugger.injected
 		public static var showTraceStatements:Boolean = true;
 		public static var showArguments:Boolean = false;
 		public static var showReturn:Boolean = false;
+		public static var showObjectCreation:Boolean = false;
 		
 		public static var skipEnterFrame:Boolean = true;
 		public static var skipExitFrame:Boolean = true;
@@ -27,6 +28,7 @@ package com.swfwire.debugger.injected
 		public static var skipFL:Boolean = true;
 		public static var skipMX:Boolean = true;
 		public static var skipFlashX:Boolean = true;
+		public static var skipAdobe:Boolean = true;
 		
 		public static var indentString:String = '  ';
 		
@@ -87,7 +89,6 @@ package com.swfwire.debugger.injected
 			}
 			buffer += str + '\n';
 		}
-		
 
 		public static function log(... args):void
 		{
@@ -139,7 +140,8 @@ package com.swfwire.debugger.injected
 			var show3:Boolean = show2 && stack.length < maxStack &&
 				!(skipMX && methodName.substr(0, 3) == 'mx.') && 
 				!(skipFL && methodName.substr(0, 3) == 'fl.') &&
-				!(skipFlashX && methodName.substr(0, 7) == 'flashx.');
+				!(skipFlashX && methodName.substr(0, 7) == 'flashx.') &&
+				!(skipAdobe && methodName.substr(0, 10) == 'com.adobe.');
 
 			stack.push(methodName);
 			if(show3 && showMethodEntry)
@@ -193,7 +195,8 @@ package com.swfwire.debugger.injected
 			var show3:Boolean = show && stack.length < maxStack && 
 				!(skipMX && methodName.substr(0, 3) == 'mx.') && 
 				!(skipFL && methodName.substr(0, 3) == 'fl.') &&
-				!(skipFlashX && methodName.substr(0, 7) == 'flashx.');
+				!(skipFlashX && methodName.substr(0, 7) == 'flashx.') &&
+				!(skipAdobe && methodName.substr(0, 10) == 'com.adobe.');
 			
 			var n:String = 'nothing';
 			if(methodName == 'com.ffi.utils:FMSConnector/get hasAudio')
@@ -241,7 +244,10 @@ package com.swfwire.debugger.injected
 				{
 					objectReferences[object] = {creationTime: getTimer(), id: objectId++, method: stack[stack.length - 1]};
 				}
-				log('new '+getQualifiedClassName(object));
+				if(showObjectCreation)
+				{
+					_log('new '+getQualifiedClassName(object));
+				}
 			}
 		}
 		

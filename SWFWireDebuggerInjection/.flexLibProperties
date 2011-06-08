@@ -16,6 +16,8 @@
     <classEntry path="com.swfwire.debugger.injected.events.DynamicEvent"/>
     <classEntry path="com.swfwire.debugger.injected.navigateToURL"/>
     <classEntry path="com.swfwire.debugger.injected.URLStream"/>
+    <classEntry path="com.swfwire.debugger.injected.ServerSocket"/>
+    <classEntry path="com.swfwire.debugger.injected.ServerSocketConnectEvent"/>
   </includeClasses>
   <includeResources/>
   <namespaceManifests/>
