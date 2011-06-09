@@ -34,6 +34,11 @@
 					valueLabel.text = reference;
 					button.label = '';
 				}
+				if(value.access == 'writeonly')
+				{
+					valueLabel.text = '';
+				}
+				valueLabel.enabled = (value.access != 'readonly');
 			}
 			
 			protected function button_clickHandler(ev:MouseEvent):void

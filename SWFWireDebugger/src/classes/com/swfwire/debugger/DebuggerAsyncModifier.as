@@ -253,12 +253,14 @@ package com.swfwire.debugger
 					
 					var injectedNamespace:uint = wrapper.addNamespaceFromString('com.swfwire.debugger.injected');
 					
+					var cpool:ConstantPoolToken = abcTag.abcFile.cpool;
+					
 					function convert(ns:String, name:String):void
 					{
 						var index:int = wrapper.getMultinameIndex(ns, name);
 						if(index >= 0)
 						{
-							var qName:MultinameQNameToken = abcTag.abcFile.cpool.multinames[index].data as MultinameQNameToken;
+							var qName:MultinameQNameToken = cpool.multinames[index].data as MultinameQNameToken;
 							qName.ns = injectedNamespace;
 						}
 					}
@@ -266,41 +268,41 @@ package com.swfwire.debugger
 					var securityIndex:int = wrapper.getMultinameIndex('flash.system', 'Security');
 					if(securityIndex >= 0)
 					{
-						var securityQName:MultinameQNameToken = abcTag.abcFile.cpool.multinames[securityIndex].data as MultinameQNameToken;
+						var securityQName:MultinameQNameToken = cpool.multinames[securityIndex].data as MultinameQNameToken;
 						securityQName.ns = injectedNamespace;
 					}
 					var externalInterfaceIndex:int = wrapper.getMultinameIndex('flash.external', 'ExternalInterface');
 					if(externalInterfaceIndex >= 0)
 					{
-						var externalInterfaceQName:MultinameQNameToken = abcTag.abcFile.cpool.multinames[externalInterfaceIndex].data as MultinameQNameToken;
+						var externalInterfaceQName:MultinameQNameToken = cpool.multinames[externalInterfaceIndex].data as MultinameQNameToken;
 						externalInterfaceQName.ns = injectedNamespace;
 					}
 					
 					var navigateToURLIndex:int = wrapper.getMultinameIndex('flash.net', 'navigateToURL');
 					if(navigateToURLIndex >= 0)
 					{
-						var navigateToURLQName:MultinameQNameToken = abcTag.abcFile.cpool.multinames[navigateToURLIndex].data as MultinameQNameToken;
+						var navigateToURLQName:MultinameQNameToken = cpool.multinames[navigateToURLIndex].data as MultinameQNameToken;
 						navigateToURLQName.ns = injectedNamespace;
 					}
 					
 					var urlLoaderIndex:int = wrapper.getMultinameIndex('flash.net', 'URLLoader');
 					if(urlLoaderIndex >= 0)
 					{
-						var urlLoaderQName:MultinameQNameToken = abcTag.abcFile.cpool.multinames[urlLoaderIndex].data as MultinameQNameToken;
+						var urlLoaderQName:MultinameQNameToken = cpool.multinames[urlLoaderIndex].data as MultinameQNameToken;
 						urlLoaderQName.ns = injectedNamespace;
 					}
 					
 					var urlStreamIndex:int = wrapper.getMultinameIndex('flash.net', 'URLStream');
 					if(urlStreamIndex >= 0)
 					{
-						var urlStreamQName:MultinameQNameToken = abcTag.abcFile.cpool.multinames[urlStreamIndex].data as MultinameQNameToken;
+						var urlStreamQName:MultinameQNameToken = cpool.multinames[urlStreamIndex].data as MultinameQNameToken;
 						urlStreamQName.ns = injectedNamespace;
 					}
 					
 					var netConnectionIndex:int = wrapper.getMultinameIndex('flash.net', 'NetConnection');
 					if(netConnectionIndex >= 0)
 					{
-						var netConnectionQName:MultinameQNameToken = abcTag.abcFile.cpool.multinames[netConnectionIndex].data as MultinameQNameToken;
+						var netConnectionQName:MultinameQNameToken = cpool.multinames[netConnectionIndex].data as MultinameQNameToken;
 						netConnectionQName.ns = injectedNamespace;
 					}
 					
@@ -311,7 +313,7 @@ package com.swfwire.debugger
 					var loaderIndex:int = wrapper.getMultinameIndex('flash.display', 'Loader');
 					if(loaderIndex >= 0)
 					{
-						var loaderQName:MultinameQNameToken = abcTag.abcFile.cpool.multinames[loaderIndex].data as MultinameQNameToken;
+						var loaderQName:MultinameQNameToken = cpool.multinames[loaderIndex].data as MultinameQNameToken;
 						loaderQName.ns = injectedNamespace;
 					}
 					
@@ -391,7 +393,7 @@ package com.swfwire.debugger
 							var qname:MultinameQNameToken;
 							if(traitsInfo.kind == TraitsInfoToken.KIND_TRAIT_METHOD)
 							{
-								qname = abcTag.abcFile.cpool.multinames[traitsInfo.name].data as MultinameQNameToken;
+								qname = cpool.multinames[traitsInfo.name].data as MultinameQNameToken;
 								enumerateMethodsInstructions.push(new Instruction_pushstring(qname.name));
 								enumerateMethodsInstructions.push(new Instruction_getlocal0);
 								enumerateMethodsInstructions.push(new Instruction_getproperty(traitsInfo.name));
@@ -400,20 +402,27 @@ package com.swfwire.debugger
 									traitsInfo.kind == TraitsInfoToken.KIND_TRAIT_GETTER ||
 									traitsInfo.kind == TraitsInfoToken.KIND_TRAIT_SETTER)
 							{
-								qname = abcTag.abcFile.cpool.multinames[traitsInfo.name].data as MultinameQNameToken;
-								if(!hits[qname.name])
+								qname = cpool.multinames[traitsInfo.name].data as MultinameQNameToken;
+								var kind:uint = cpool.namespaces[qname.ns].kind;
+								if(kind == NamespaceToken.KIND_Namespace ||
+								   kind == NamespaceToken.KIND_PrivateNs ||
+								   kind == NamespaceToken.KIND_ProtectedNamespace ||
+								   kind == NamespaceToken.KIND_PackageInternalNs)
 								{
-									hits[qname.name] = true;
-									enumeratePropertiesInstructions.push(new Instruction_pushstring(qname.name));
-									enumeratePropertiesInstructions.push(new Instruction_getlocal0);
-									enumeratePropertiesInstructions.push(new Instruction_getproperty(traitsInfo.name));
+									if(!hits[qname.name])
+									{
+										hits[qname.name] = true;
+										enumeratePropertiesInstructions.push(new Instruction_pushstring(qname.name));
+										enumeratePropertiesInstructions.push(new Instruction_getlocal0);
+										enumeratePropertiesInstructions.push(new Instruction_getproperty(traitsInfo.name));
+									}
 								}
 							}
 						}
 						
-						var instanceQName:MultinameQNameToken = abcTag.abcFile.cpool.multinames[thisInstance.name].data as MultinameQNameToken;
-						var instanceNS:String = abcTag.abcFile.cpool.strings[abcTag.abcFile.cpool.namespaces[instanceQName.ns].name].utf8;
-						var instanceName:String = abcTag.abcFile.cpool.strings[instanceQName.name].utf8;
+						var instanceQName:MultinameQNameToken = cpool.multinames[thisInstance.name].data as MultinameQNameToken;
+						var instanceNS:String = cpool.strings[cpool.namespaces[instanceQName.ns].name].utf8;
+						var instanceName:String = cpool.strings[instanceQName.name].utf8;
 						
 						var uniqueID:String = instanceNS ? instanceNS+'::'+instanceName : instanceName;
 						
@@ -426,17 +435,17 @@ package com.swfwire.debugger
 						createMethod(abcTag, wrapper, thisInstance, 'swfWire_enumerateProperties_'+uniqueID, enumeratePropertiesInstructions, enumeratePropertiesInstructions.length);
 
 						var wildcardNSSet:NamespaceSetToken = new NamespaceSetToken();
-						for(var iterNS:int = 1; iterNS < abcTag.abcFile.cpool.namespaces.length; iterNS++)
+						for(var iterNS:int = 1; iterNS < cpool.namespaces.length; iterNS++)
 						{
 							wildcardNSSet.namespaces.push(iterNS);
 						}
 						wildcardNSSet.count = wildcardNSSet.namespaces.length;
-						var wildcardNSSetIndex:int = abcTag.abcFile.cpool.nsSets.length;
-						abcTag.abcFile.cpool.nsSets.push(wildcardNSSet);
+						var wildcardNSSetIndex:int = cpool.nsSets.length;
+						cpool.nsSets.push(wildcardNSSet);
 						
 						var wildcardMultiname:MultinameToken = new MultinameToken(MultinameToken.KIND_MultinameL, new MultinameMultinameLToken(wildcardNSSetIndex));
-						var wildcardMultinameIndex:int = abcTag.abcFile.cpool.multinames.length;
-						abcTag.abcFile.cpool.multinames.push(wildcardMultiname);
+						var wildcardMultinameIndex:int = cpool.multinames.length;
+						cpool.multinames.push(wildcardMultiname);
 						
 						var setPropertyInstructions:Vector.<IInstruction> = new Vector.<IInstruction>();
 						setPropertyInstructions.push(new Instruction_getlocal0());
@@ -474,7 +483,7 @@ package com.swfwire.debugger
 					
 					if(true)
 					{
-						var cp:ConstantPoolToken = abcTag.abcFile.cpool;
+						var cp:ConstantPoolToken = cpool;
 						var l:*;
 						const minScopeDepth:uint = 3;
 						

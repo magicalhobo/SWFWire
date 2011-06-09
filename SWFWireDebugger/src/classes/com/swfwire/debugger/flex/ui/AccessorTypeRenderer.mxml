@@ -11,16 +11,22 @@
 			[Embed(source="../assets/circle.png")]
 			public static const PUBLIC_ICON:Class;
 			
+			[Embed(source="../assets/diamond.png")]
+			public static const DYNAMIC_ICON:Class;
+			
 			override public function set data(value:Object):void
 			{
 				super.data = value;
-				switch(value.type)
+				switch(value.namespace)
 				{
 					case 'private':
 						image.source = PRIVATE_ICON;
 						break;
 					case 'public':
 						image.source = PUBLIC_ICON;
+						break;
+					case 'dynamic':
+						image.source = DYNAMIC_ICON;
 						break;
 					default:
 						image.source = null;

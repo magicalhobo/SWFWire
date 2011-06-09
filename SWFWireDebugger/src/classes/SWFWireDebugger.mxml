@@ -65,6 +65,10 @@
 			private var lastUrl:String;
 			private var isCached:Boolean;
 			private var foundMainClass:Boolean;
+			private var netObjects:Dictionary = new Dictionary(true);
+			private var currentFrameRate:Number = 0;
+			private var lastFrameRateUpdate:int = 0;
+			private var frameCount:int = 0;
 			
 			private var sanityCheck:Boolean = false;
 			private var cacheEnabled:Boolean = false;
@@ -78,13 +82,7 @@
 				
 				contextMenu.items.push(new ContextMenuItem('SWFWireDebugger Version '+Config.VERSION));
 				
-				stage.addEventListener(Event.ENTER_FRAME, function(ev:Event):void
-				{
-					if(logger)
-					{
-						logger.flushBuffer();
-					}
-				});
+				stage.addEventListener(Event.ENTER_FRAME, enterFrameHandler);
 				
 				addEventListener(Event.CLOSE, function(ev:Event):void
 				{
@@ -345,8 +343,8 @@
 				//var librarySwf:String = 'app:/library.swf';
 				//var librarySwf:String = new File(File.applicationDirectory.nativePath).resolvePath('library.swf?nocache='+Math.random()).url;
 				
-				publicPropertiesGrid.dataProvider = publicPropertiesDP;
-				publicMethodsGrid.dataProvider = publicMethodsDP;
+				publicPropertiesGrid.dataProvider = propertiesCollection;
+				publicMethodsGrid.dataProvider = methodsCollection;
 				netList.dataProvider = netDP;
 				
 				publicPropertiesGrid.addEventListener('inspectProperty', function(ev:*):void
@@ -462,10 +460,8 @@
 			
 			private var lastTarget:DisplayObject;
 			private var lastInspectTarget:Object;
-			private var publicPropertiesDP:ArrayCollection = new ArrayCollection();
-			private var privatePropertiesDP:ArrayCollection = new ArrayCollection();
-			private var publicMethodsDP:ArrayCollection = new ArrayCollection();
-			private var privateMethodsDP:ArrayCollection = new ArrayCollection();
+			private var propertiesCollection:ArrayCollection = new ArrayCollection();
+			private var methodsCollection:ArrayCollection = new ArrayCollection();
 			private var netDP:ArrayCollection = new ArrayCollection();
 			private var pathRefs:Array;
 			
@@ -523,88 +519,83 @@
 			
 			protected function inspect(target:Object):void
 			{
-				publicPropertiesDP.removeAll();
-				privatePropertiesDP.removeAll();
-				privateMethodsDP.removeAll();
-				publicMethodsDP.removeAll();
+				propertiesCollection.removeAll();
+				methodsCollection.removeAll();
 				
 				var description:XML = describeType(target);
 				var node:XML;
 				var name:String;
-				var props:Array = [];
-				var methods:Object;
+				var properties:Array = [];
 				
 				for each(node in description.variable)
 				{
 					var q:QName = new QName(node.@uri, node.@name);
-					props.push(q);
-					
-					//props.push(node.@name);
-					//inspectGridDP.addItem({name: node.@name, value: target[node.@name]});
+					properties.push({namespace: 'public', access: 'variable', label: 'Public Variable', name: String(q), value: target[q]});
 				}
 				
-				try
+				for each(node in description.accessor)
 				{
-					var methodsMethod:String = 'swfWire_enumerateMethods_'+String(description.@name);
-					methods = target[methodsMethod]();
-					for(var iter2:* in methods)
+					var value:*;
+					var access:* = node.@access;
+					name = node.@name;
+					try
 					{
-						publicMethodsDP.addItem({type: 'private', name: iter2});
-						//privateMethodsDP.addItem({name: iter2, value: ''});
+						value = target[name];
 					}
+					catch(e:*)
+					{
+						value = '<exception thrown by getter>';
+					}
+					properties.push({namespace: 'public', access: access, label: 'Public '+access, name: name, value: value});
 				}
-				catch(e:*){}
 				
 				try
 				{
 					var propertiesMethod:String = 'swfWire_enumerateProperties_'+String(description.@name);
-					methods = target[propertiesMethod]();
-					for(var iter3:* in methods)
+					var privateProperties:Object = target[propertiesMethod]();
+					for(name in privateProperties)
 					{
-						//props.push({type: 'private', name: iter3, value: methods[iter3]});
-						publicPropertiesDP.addItem({type: 'private', name: iter3, value: methods[iter3]});
-						//privatePropertiesDP.addItem({name: iter3, value: methods[iter3]});
+						properties.push({namespace: 'private', access: 'variable', label: 'Private', name: name, value: privateProperties[name]});
 					}
 				}
 				catch(e:*){}
 				
-				inspectType.text = description.@name;
-				
-				for each(name in description.accessor.(@access == 'readwrite' || @access == 'readonly').@name)
-				{
-					props.push(name);
-				}
-				
 				for(name in target)
 				{
-					props.push(name);
+					properties.push({namespace: 'dynamic', access: 'variable', label: 'Dynamic', name: name, value: target[name]});
 				}
 				
-				props.sort();
+				properties.sortOn(['namespace', 'name']);
 				
-				for(var iter:uint = 0; iter < props.length; iter++)
+				var methods:Array = [];
+				
+				try
 				{
-					try
+					var methodsMethod:String = 'swfWire_enumerateMethods_'+String(description.@name);
+					var privateMethods:Object = target[methodsMethod]();
+					for(name in privateMethods)
 					{
-						publicPropertiesDP.addItem({type: 'public', name: props[iter], value: target[props[iter]]});
-					}
-					catch(e:Error)
-					{
-						publicPropertiesDP.addItem({type: 'public', name: props[iter], value: '<exception thrown by getter>'});
+						methods.push({namespace: 'private', name: name});
 					}
 				}
-				
-				var pubMeth:Array = [];
+				catch(e:*){}
 				
 				for each(node in description.method)
 				{
-					var methodName:String = node.@name;
-					if(methodName.substr(0, 8) == 'swfWire_')
+					name = node.@name;
+					if(name.substr(0, 8) == 'swfWire_')
 					{
 						continue;
 					}
-					publicMethodsDP.addItem({type: 'public', name: node.@name, value: ''});
+					methods.push({namespace: 'public', name: name});
 				}
+				
+				methods.sortOn(['namespace', 'name']);
+				
+				inspectType.text = description.@name;
+				
+				propertiesCollection.source = properties;
+				methodsCollection.source = methods;
 				
 				lastInspectTarget = target;
 			}
@@ -618,7 +609,7 @@
 						var dp:ArrayCollection;
 						if(tabnavigator2.selectedChild == publicPropertiesGrid.parent)
 						{
-							dp = publicPropertiesDP;
+							dp = propertiesCollection;
 						}
 						
 						if(dp)
@@ -932,8 +923,6 @@
 				systemLog.text += message+'\n';
 			}
 			
-			private var netObjects:Dictionary = new Dictionary(true);
-			
 			private function logToNet(instance:URLLoader, url:String, state:String):void
 			{
 				trace(url+': '+state);
@@ -1056,11 +1045,6 @@
 				logger.logToTrace = logToTrace.selected;
 			}
 
-			protected function inspectGrid_keyDownHandler(event:KeyboardEvent):void
-			{
-				trace('key: '+event.keyCode);
-			}
-
 			protected function inspectGrid_itemDoubleClickHandler(event:ListEvent, dp:ArrayCollection):void
 			{
 				var info:Object = dp.getItemAt(event.rowIndex);
@@ -1153,7 +1137,7 @@
 			
 			protected function updateObjectCount():void
 			{
-				stats.addPoint(logger.getObjectCount());
+				stats.addPoint(logger.getObjectCount(), System.privateMemory, currentFrameRate);
 			}
 			
 			protected function updateStatsTimerHandler(event:TimerEvent):void
@@ -1177,6 +1161,23 @@
 				if(index >= 0)
 				{
 					logOut.setSelection(index, index + search.length);
+				}
+			}
+			
+			protected function enterFrameHandler(ev:Event):void
+			{
+				if(logger)
+				{
+					logger.flushBuffer();
+				}
+				frameCount++;
+				var now:int = getTimer();
+				var diff:int = now - lastFrameRateUpdate;
+				if(diff > 1000)
+				{
+					currentFrameRate = frameCount/(diff/1000);
+					lastFrameRateUpdate = now;
+					frameCount = 0;
 				}
 			}
 		]]>
@@ -1263,33 +1264,24 @@
 	<mx:HDividedBox width="100%" height="100%" id="hdividedbox1">
 		<mx:VDividedBox width="100%" height="100%">
 			<mx:HDividedBox width="100%" height="100%">
-				<!--<ui:PreviewPanel id="preview" width="100%" height="100%"/>-->
 				<mx:VBox width="400" height="100%" verticalGap="0">
 					<mx:Label id="inspectType" width="100%"/>
 					<mx:TabNavigator id="tabnavigator2" width="100%" height="100%" creationPolicy="all" backgroundAlpha="1" backgroundColor="#2C2C2C"
 									 paddingBottom="5" paddingLeft="5" paddingTop="5" paddingRight="5" chromeColor="#131313" minHeight="0">
 						<mx:Canvas width="100%" height="100%" label="Properties">
-							<mx:DataGrid id="publicPropertiesGrid" width="100%" height="100%"
-										 doubleClickEnabled="true" editable="true" horizontalScrollPolicy="auto"
-										 itemEditEnd="inspectGrid_itemEditEndHandler(event)"
-										 itemDoubleClick="inspectGrid_itemDoubleClickHandler(event, publicPropertiesDP)"
-										 keyDown="inspectGrid_keyDownHandler(event)" variableRowHeight="true">
+							<mx:DataGrid id="publicPropertiesGrid" width="100%" height="100%" horizontalScrollPolicy="auto" variableRowHeight="true">
 								<mx:columns>
-									<ui:AccessorTypeColumn headerText="" dataField="type" width="25" resizable="false"/>
-									<mx:DataGridColumn headerText="Name" dataField="name" width="180" editable="false"/>
-									<mx:DataGridColumn headerText="Value" dataField="value" editable="false"
+									<ui:AccessorTypeColumn headerText="" dataField="type" width="25" resizable="false" showDataTips="true"/>
+									<mx:DataGridColumn headerText="Name" dataField="name" width="180" showDataTips="true"/>
+									<mx:DataGridColumn headerText="Value" dataField="value"
 													   itemRenderer="com.swfwire.debugger.flex.ui.PropertyValueRenderer"/>
 								</mx:columns>
 							</mx:DataGrid>
 						</mx:Canvas>
 						<mx:Canvas width="100%" height="100%" label="Methods">
-							<mx:DataGrid id="publicMethodsGrid" width="100%" height="100%"
-										 doubleClickEnabled="true" horizontalScrollPolicy="auto"
-										 itemEditEnd="inspectGrid_itemEditEndHandler(event)"
-										 itemDoubleClick="inspectGrid_itemDoubleClickHandler(event, publicMethodsDP)"
-										 keyDown="inspectGrid_keyDownHandler(event)" variableRowHeight="true">
+							<mx:DataGrid id="publicMethodsGrid" width="100%" height="100%" horizontalScrollPolicy="auto" variableRowHeight="true">
 								<mx:columns>
-									<ui:AccessorTypeColumn headerText="" dataField="type" width="25"/>
+									<ui:AccessorTypeColumn headerText="" dataField="type" width="25" resizable="false"/>
 									<mx:DataGridColumn headerText="Name" dataField="name"/>
 								</mx:columns>
 							</mx:DataGrid>

@@ -2,17 +2,18 @@
 <mx:Canvas xmlns:fx="http://ns.adobe.com/mxml/2009" 
 				xmlns:s="library://ns.adobe.com/flex/spark" 
 				xmlns:mx="library://ns.adobe.com/flex/mx"
-				horizontalScrollPolicy="off" verticalScrollPolicy="off">
+				horizontalScrollPolicy="off" verticalScrollPolicy="off"
+				backgroundColor="#383733" backgroundAlpha="1"
+				borderColor="#000000" borderAlpha="1" borderStyle="outset" cornerRadius="5">
 	<fx:Script>
 		<![CDATA[
 			import mx.events.FlexEvent;
 			
 			private var points:Array = [];
-			private var timer:Timer;
 			
-			public function addPoint(value:Number):void
+			public function addPoint(objectCount:Number, privateMemory:Number, frameRate:Number):void
 			{
-				points.push(value);
+				points.push({objectCount: objectCount, privateMemory: privateMemory, frameRate: frameRate});
 				invalidateDisplayList();
 			}
 			
@@ -20,15 +21,34 @@
 			{
 				super.updateDisplayList(unscaledWidth, unscaledHeight);
 				
-				var start:int = Math.max(0, points.length - unscaledWidth);
-				
 				graph.graphics.clear();
-				graph.graphics.lineStyle(1, 0x999999);
 				
+				graph.graphics.lineStyle(1, 0x999999);
+				drawProperty('objectCount', unscaledWidth, unscaledHeight);
+				
+				graph.graphics.lineStyle(1, 0xFF0000);
+				drawProperty('privateMemory', unscaledWidth, unscaledHeight);
+				
+				graph.graphics.lineStyle(1, 0x00FF00);
+				drawProperty('frameRate', unscaledWidth, unscaledHeight);
+				
+				if(points.length > 0)
+				{
+					var lastPoint:Object = points[points.length - 1];
+					count.text = lastPoint['objectCount'] + ' objects';
+					memory.text = Math.round(lastPoint['privateMemory']/1000) + ' kb';
+					frameRate.text = 'FPS: '+Math.round(lastPoint['frameRate']);
+				}
+			}
+			
+			private function drawProperty(name:String, unscaledWidth:Number, unscaledHeight:Number):void
+			{
+				unscaledHeight -= 10;
+				var start:int = Math.max(0, points.length - unscaledWidth);
 				var maxPoint:int = 0;
 				for(var iter:int = start; iter < points.length; iter++)
 				{
-					maxPoint = Math.max(maxPoint, points[iter]);
+					maxPoint = Math.max(maxPoint, points[iter][name]);
 				}
 				if(maxPoint > 0)
 				{
@@ -36,19 +56,23 @@
 					{
 						if(iter2 == start)
 						{
-							graph.graphics.moveTo(iter2 - start, unscaledHeight * (1 - points[iter2]/maxPoint));
+							graph.graphics.moveTo(iter2 - start, unscaledHeight * (1 - points[iter2][name]/maxPoint));
 						}
 						else
 						{
-							graph.graphics.lineTo(iter2 - start, unscaledHeight * (1 - points[iter2]/maxPoint));
+							graph.graphics.lineTo(iter2 - start, unscaledHeight * (1 - points[iter2][name]/maxPoint));
 						}
 					}
 				}
-				
-				count.text = points[points.length - 1] + ' objects';
 			}
 		]]>
 	</fx:Script>
-	<mx:Label id="count" horizontalCenter="0" verticalCenter="0" text="Object Count" styleName="bigText" alpha="0.2"/>
-	<mx:UIComponent id="graph" width="100%" height="100%"/>
+	<mx:HBox width="100%" height="100%">
+		<mx:Label id="frameRate" color="#00FF00" text="" styleName="bigText" alpha="0.5"/>
+		<mx:Spacer width="100%"/>
+		<mx:Label id="memory" color="#FF0000" text="" styleName="bigText" alpha="0.5"/>
+		<mx:Spacer width="100%"/>
+		<mx:Label id="count" color="#999999" text="" styleName="bigText" alpha="0.5"/>
+	</mx:HBox>
+	<mx:UIComponent id="graph" width="100%" top="5" bottom="5"/>
 </mx:Canvas>
