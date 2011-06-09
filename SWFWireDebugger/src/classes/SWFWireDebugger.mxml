@@ -29,7 +29,9 @@
 			import com.swfwire.decompiler.abc.tokens.traits.TraitMethodToken;
 			import com.swfwire.decompiler.data.swf.SWF;
 			import com.swfwire.decompiler.data.swf.SWFHeader;
+			import com.swfwire.decompiler.data.swf.tags.SWFTag;
 			import com.swfwire.decompiler.data.swf.tags.SetBackgroundColorTag;
+			import com.swfwire.decompiler.data.swf8.tags.FileAttributesTag;
 			import com.swfwire.decompiler.data.swf9.tags.DoABCTag;
 			import com.swfwire.decompiler.data.swf9.tags.SymbolClassTag;
 			import com.swfwire.decompiler.events.AsyncSWFReaderEvent;
@@ -240,7 +242,10 @@
 					{
 						ev.instance.loadBytes(ev.data);
 						var data:ByteArray = ev.data as ByteArray;
+						var startPosition:uint = data.position;
+						data.position = 0;
 						var signature:String = data.readUTFBytes(3);
+						data.position = startPosition;
 						
 						if(signature == 'FWS' || signature == 'CWS')
 						{
@@ -249,8 +254,11 @@
 					});
 					loaderClass.globalEvents.addEventListener('loadBytes', function(ev:*):void
 					{
-						var bytes:ByteArray = ev.bytes as ByteArray;
-						var signature:String = bytes.readUTFBytes(3);
+						var data:ByteArray = ev.bytes as ByteArray;
+						var startPosition:uint = data.position;
+						data.position = 0;
+						var signature:String = data.readUTFBytes(3);
+						data.position = startPosition;
 						
 						if(signature == 'FWS' || signature == 'CWS')
 						{
@@ -757,25 +765,27 @@
 			{
 				var start:uint = getTimer();
 				
-				if(!instance)
-				{
-					currentState = 'reading';
-				}
-
 				var swfBytes:SWFByteArray = new SWFByteArray(bytes);
 				var swfReader:AsyncSWFReaderFiltered = new AsyncSWFReaderFiltered();
 				var result:SWFReadResult;
 				
+				save(bytes, lastUrl+'.loaded.'+(new Date().getTime())+'.swf');
+				
 				swfReader.includedTags[0] = true;
 				swfReader.includedTags[9] = true;
+				swfReader.includedTags[69] = true;
 				swfReader.includedTags[76] = true;
 				swfReader.includedTags[82] = true;
-				swfReader.addEventListener(AsyncSWFReaderEvent.TAG_READ, function(ev:AsyncSWFReaderEvent):void
+				if(!instance)
 				{
-					var current:uint = ev.context.bytes.getBytePosition();
-					var max:uint = ev.context.bytes.getLength();
-					readProgress.setProgress(current, max);
-				});
+					currentState = 'reading';
+					swfReader.addEventListener(AsyncSWFReaderEvent.TAG_READ, function(ev:AsyncSWFReaderEvent):void
+					{
+						var current:uint = ev.context.bytes.getBytePosition();
+						var max:uint = ev.context.bytes.getLength();
+						readProgress.setProgress(current, max);
+					});
+				}
 				swfReader.addEventListener(AsyncSWFReaderEvent.READ_COMPLETE, function(ev:AsyncSWFReaderEvent):void
 				{
 					var diff:uint = getTimer() - start;
@@ -791,35 +801,58 @@
 			{
 				var start:uint = getTimer();
 				
-				var modifier:DebuggerAsyncModifier = new DebuggerAsyncModifier(swf, metadata, instance == null);
+				swf.header.signature = SWFHeader.UNCOMPRESSED_SIGNATURE;
 				
-				if(!instance)
+				var shouldModify:Boolean = false;
+				
+				if(swf.header.fileVersion >= 9)
 				{
-					currentState = 'modifying';
-					
-					modifier.addEventListener(AsyncSWFModifierEvent.RUN, function(ev:AsyncSWFModifierEvent):void
+					for each(var iter:SWFTag in swf.tags)
 					{
-						modifyProgress.setProgress(ev.progress, 1);
-					});
+						var fileAttributes:FileAttributesTag = iter as FileAttributesTag;
+						if(fileAttributes && fileAttributes.actionScript3)
+						{
+							shouldModify = true;
+							break;
+						}
+					}
 				}
 				
-				modifier.addEventListener(AsyncSWFModifierEvent.COMPLETE, function(ev:AsyncSWFModifierEvent):void
+				if(shouldModify)
 				{
-					var diff:uint = getTimer() - start;
-					log('Modifying swf took: '+diff+'ms');
+					var modifier:DebuggerAsyncModifier = new DebuggerAsyncModifier(swf, metadata, instance == null);
 					
 					if(!instance)
 					{
-						preview.setSWFBackground(modifier.backgroundColor);
+						currentState = 'modifying';
 						
-						foundMainClass = modifier.foundMainClass;
+						modifier.addEventListener(AsyncSWFModifierEvent.RUN, function(ev:AsyncSWFModifierEvent):void
+						{
+							modifyProgress.setProgress(ev.progress, 1);
+						});
 					}
 					
+					modifier.addEventListener(AsyncSWFModifierEvent.COMPLETE, function(ev:AsyncSWFModifierEvent):void
+					{
+						var diff:uint = getTimer() - start;
+						log('Modifying swf took: '+diff+'ms');
+						
+						if(!instance)
+						{
+							preview.setSWFBackground(modifier.backgroundColor);
+							
+							foundMainClass = modifier.foundMainClass;
+						}
+						
+						write(swf, context, instance);
+					});
+					
+					modifier.start();
+				}
+				else
+				{
 					write(swf, context, instance);
-				});
-				
-				modifier.start();
-				return;
+				}
 			}
 			
 			private function write(swf:SWF, context:LoaderContext = null, instance:Loader = null):void
@@ -854,12 +887,7 @@
 						//var f:File = new File(File.applicationDirectory.nativePath).resolvePath('recompiled.swf');
 						try
 						{
-							var f:File = new File(File.applicationDirectory.nativePath).resolvePath(lastUrl+'.recompiled.'+lastFileSize+'.swf');
-							trace(f.nativePath);
-							var fs:FileStream = new FileStream();
-							fs.open(f, FileMode.WRITE);
-							fs.writeBytes(result.bytes);
-							fs.close();
+							save(result.bytes, lastUrl+'.recompiled.'+lastFileSize+'.swf');
 						}
 						catch(e:*)
 						{
@@ -914,6 +942,16 @@
 					context.parameters = parameters;
 					preview.loadBytes(bytes, context);
 				}
+			}
+			
+			private function save(bytes:ByteArray, location:String):void
+			{
+				var f:File = new File(File.applicationDirectory.nativePath).resolvePath(location);
+				trace(f.nativePath);
+				var fs:FileStream = new FileStream();
+				fs.open(f, FileMode.WRITE);
+				fs.writeBytes(bytes);
+				fs.close();
 			}
 			
 			private function log(message:String):void
@@ -1147,7 +1185,7 @@
 			
 			protected function stats_creationCompleteHandler(event:FlexEvent):void
 			{
-				updateStatsTimer = new Timer(100);
+				updateStatsTimer = new Timer(500);
 				updateStatsTimer.addEventListener(TimerEvent.TIMER, updateStatsTimerHandler);
 				updateStatsTimer.start();
 			}			
