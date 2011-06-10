@@ -262,11 +262,20 @@
 						
 						if(signature == 'FWS' || signature == 'CWS')
 						{
-							read(ev.bytes, ev.context, ev.instance);
+							save(data, lastUrl+'.loaded.'+(new Date().getTime())+'.swf');
+							
+							if(modifyChildren.selected)
+							{
+								read(ev.bytes, ev.context, ev.instance);
+							}
+							else
+							{
+								ev.instance['swfWire_loadBytes'](ev.bytes, ev.context);
+							}
 						}
 						else
 						{
-							ev.instance.swfWire_loadBytes(ev.bytes);
+							ev.instance['swfWire_loadBytes'](ev.bytes, ev.context);
 						}
 					});
 					
@@ -769,8 +778,6 @@
 				var swfReader:AsyncSWFReaderFiltered = new AsyncSWFReaderFiltered();
 				var result:SWFReadResult;
 				
-				save(bytes, lastUrl+'.loaded.'+(new Date().getTime())+'.swf');
-				
 				swfReader.includedTags[0] = true;
 				swfReader.includedTags[9] = true;
 				swfReader.includedTags[69] = true;
@@ -946,12 +953,19 @@
 			
 			private function save(bytes:ByteArray, location:String):void
 			{
-				var f:File = new File(File.applicationDirectory.nativePath).resolvePath(location);
-				trace(f.nativePath);
-				var fs:FileStream = new FileStream();
-				fs.open(f, FileMode.WRITE);
-				fs.writeBytes(bytes);
-				fs.close();
+				try
+				{
+					var f:File = new File(File.applicationDirectory.nativePath).resolvePath(location);
+					trace(f.nativePath);
+					var fs:FileStream = new FileStream();
+					fs.open(f, FileMode.WRITE);
+					fs.writeBytes(bytes);
+					fs.close();
+				}
+				catch(e:*)
+				{
+					log('Error writing file to: '+location);
+				}
 			}
 			
 			private function log(message:String):void
@@ -1185,7 +1199,7 @@
 			
 			protected function stats_creationCompleteHandler(event:FlexEvent):void
 			{
-				updateStatsTimer = new Timer(500);
+				updateStatsTimer = new Timer(250);
 				updateStatsTimer.addEventListener(TimerEvent.TIMER, updateStatsTimerHandler);
 				updateStatsTimer.start();
 			}			
@@ -1294,6 +1308,9 @@
 				<mx:FormItem label="Use Cached: ">
 					<mx:CheckBox id="useCached"/>
 				</mx:FormItem>
+				<mx:FormItem label="Modify Loaded SWF files: ">
+					<mx:CheckBox id="modifyChildren"/>
+				</mx:FormItem>
 			</mx:Form>
 			<mx:Button label="Debug" click="button3_clickHandler(event)" styleName="bigText"/>
 		</mx:VBox>
@@ -1309,8 +1326,8 @@
 						<mx:Canvas width="100%" height="100%" label="Properties">
 							<mx:DataGrid id="publicPropertiesGrid" width="100%" height="100%" horizontalScrollPolicy="auto" variableRowHeight="true">
 								<mx:columns>
-									<ui:AccessorTypeColumn headerText="" dataField="type" width="25" resizable="false" showDataTips="true"/>
-									<mx:DataGridColumn headerText="Name" dataField="name" width="180" showDataTips="true"/>
+									<ui:AccessorTypeColumn headerText="" dataField="type" width="25" resizable="false"/>
+									<mx:DataGridColumn headerText="Name" dataField="name" width="180"/>
 									<mx:DataGridColumn headerText="Value" dataField="value"
 													   itemRenderer="com.swfwire.debugger.flex.ui.PropertyValueRenderer"/>
 								</mx:columns>
