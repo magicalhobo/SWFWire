@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<update xmlns="http://ns.adobe.com/air/framework/update/description/2.6">
-	<version>2.19</version>
+<update xmlns="http://ns.adobe.com/air/framework/update/description/2.5">
+	<versionNumber>2.19</versionNumber>
 	<url>https://github.com/downloads/magicalhobo/SWFWire/SWFWireInspector-2.19.air</url>
 	<description>Updated config, fixed swap opcode.</description>
 </update>
