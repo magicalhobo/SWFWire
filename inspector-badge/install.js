@@ -1,12 +1,12 @@
 (function()
 {
 	var flashvars = {};
-	flashvars.airversion = '2.0';
+	flashvars.airversion = '2.6';
 	flashvars.appname = 'SWFWire Inspector';
-	flashvars.appurl = 'https://github.com/downloads/magicalhobo/SWFWire/SWFWireInspector-2.18.air';
+	flashvars.appurl = 'https://github.com/downloads/magicalhobo/SWFWire/SWFWireInspector-2.19.air';
 	flashvars.imageurl = 'inspector-badge/logo.png';
 	flashvars.appid = 'SWFWireInspector';
-	flashvars.appversion = '2.18';
+	flashvars.appversion = '2.19';
 	flashvars.hidehelp = 'true';
 	flashvars.skiptransition = 'false';
 	flashvars.titlecolor = '#ffffff';

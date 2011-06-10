@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<update xmlns="http://ns.adobe.com/air/framework/update/description/1.0">
+<update xmlns="http://ns.adobe.com/air/framework/update/description/2.6">
 	<version>1.5.20</version>
 	<url>https://github.com/downloads/magicalhobo/SWFWire/SWFWireDebugger-1.5.20.air</url>
 	<description>More UI updates, and option to not debug loaded SWF files.</description>
