@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?> 
 <configuration xmlns="http://ns.adobe.com/air/framework/update/configuration/1.0"> 
-	<url>http://apprepo.adobe.com/updates/com.swfwire.SWFWireInspector/update.xml</url> 
+	<url>http://www.swfwire.com/updates/inspector.xml</url> 
 	<delay>0.5</delay> 
 	<defaultUI>
 		<dialog name="checkForUpdate" visible="false" /> 

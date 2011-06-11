@@ -12,6 +12,8 @@
 	<mx:Script>
 		<![CDATA[
 			import air.update.ApplicationUpdaterUI;
+			import air.update.events.DownloadErrorEvent;
+			import air.update.events.StatusUpdateErrorEvent;
 			import air.update.events.UpdateEvent;
 			
 			import com.swfwire.debugger.Config;
@@ -1308,7 +1310,7 @@
 				<mx:FormItem label="Use Cached: ">
 					<mx:CheckBox id="useCached"/>
 				</mx:FormItem>
-				<mx:FormItem label="Modify Loaded SWF files: ">
+				<mx:FormItem label="Debug Loaded SWF files: ">
 					<mx:CheckBox id="modifyChildren"/>
 				</mx:FormItem>
 			</mx:Form>
