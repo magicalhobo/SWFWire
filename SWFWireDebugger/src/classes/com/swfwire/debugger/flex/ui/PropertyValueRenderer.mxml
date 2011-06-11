@@ -55,7 +55,11 @@
 				event.value = valueLabel.text;
 				event.success = false;
 				dispatchEvent(event);
-				if(!event.success)
+				if(event.success)
+				{
+					data.value = valueLabel.text;
+				}
+				else
 				{
 					valueLabel.text = data.value;
 				}

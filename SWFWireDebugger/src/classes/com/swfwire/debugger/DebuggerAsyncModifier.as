@@ -614,6 +614,38 @@ package com.swfwire.debugger
 							}
 						}
 						
+						l = new Vector.<InstructionLocation>;
+						l = l.concat(wrapper.findInstruction(new InstructionTemplate(Instruction_construct, {})));
+						//l = l.concat(wrapper.findInstruction(new InstructionTemplate(Instruction_constructsuper, {})));
+						l = l.concat(wrapper.findInstruction(new InstructionTemplate(Instruction_constructprop, {})));
+						
+						l = l.concat(wrapper.findInstruction(new InstructionTemplate(Instruction_newclass, {})));
+						l = l.concat(wrapper.findInstruction(new InstructionTemplate(Instruction_newobject, {})));
+						l = l.concat(wrapper.findInstruction(new InstructionTemplate(Instruction_newarray, {})));
+						//l = l.concat(wrapper.findInstruction(new InstructionTemplate(Instruction_newactivation, {})));
+						
+						//l = l.concat(wrapper.findInstruction(new InstructionTemplate(Instruction_dxns, {})));
+						//l = l.concat(wrapper.findInstruction(new InstructionTemplate(Instruction_dxnslate, {})));
+						
+						for(var iter7:* in l)
+						{
+							abcTag.abcFile.methodBodies[l[iter7].methodBody].maxStack += 1;
+						}
+						
+						wrapper.replaceInstruction2(l, function(z:InstructionLocation, a:Vector.<IInstruction>):Vector.<IInstruction>
+						{
+							var mb:MethodBodyInfoToken = abcTag.abcFile.methodBodies[z.methodBody];
+							if(mb.initScopeDepth >= minScopeDepth)
+							{
+								a.push(new Instruction_dup());
+								a.push(new Instruction_getlex(loggerClassIndex));
+								a.push(new Instruction_swap());
+								a.push(new Instruction_callpropvoid(newObjectIndex, 1));
+							}
+							wrapper.redirectReferences(z.methodBody, a[a.length - 1], a[0]);
+							return a;
+						});
+
 						l = wrapper.findInstruction(new InstructionTemplate(Instruction_newfunction, {}));
 						
 						for(var i15:int = 0; i15 < l.length; i15++)
@@ -631,8 +663,6 @@ package com.swfwire.debugger
 							}
 							nameFromMethodId[newfinst.index] = anonMethodName;
 						}
-						
-						//Debug.dump(nameFromMethodId, 20);
 						
 						for(var i9:int = 0; i9 < abcTag.abcFile.methodBodies.length; i9++)
 						{
@@ -744,28 +774,6 @@ package com.swfwire.debugger
 								a.unshift(new Instruction_swap());
 								a.unshift(new Instruction_getlex(loggerClassIndex));
 								a.unshift(new Instruction_dup());
-							}
-							wrapper.redirectReferences(z.methodBody, a[a.length - 1], a[0]);
-							return a;
-						});
-						
-						
-						l = wrapper.findInstruction(new InstructionTemplate(Instruction_constructprop, {}));
-						
-						for(var iter7:* in l)
-						{
-							abcTag.abcFile.methodBodies[l[iter7].methodBody].maxStack += 1;
-						}
-						
-						wrapper.replaceInstruction2(l, function(z:InstructionLocation, a:Vector.<IInstruction>):Vector.<IInstruction>
-						{
-							var mb:MethodBodyInfoToken = abcTag.abcFile.methodBodies[z.methodBody];
-							if(mb.initScopeDepth >= minScopeDepth)
-							{
-								a.push(new Instruction_dup());
-								a.push(new Instruction_getlex(loggerClassIndex));
-								a.push(new Instruction_swap());
-								a.push(new Instruction_callpropvoid(newObjectIndex, 1));
 							}
 							wrapper.redirectReferences(z.methodBody, a[a.length - 1], a[0]);
 							return a;
