@@ -44,7 +44,7 @@
 			protected function button_clickHandler(ev:MouseEvent):void
 			{
 				var event:DynamicEvent = new DynamicEvent('inspectProperty', true);
-				event.info = data;
+				event.info = data.value;
 				dispatchEvent(event);
 			}
 			

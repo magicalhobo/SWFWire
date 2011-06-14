@@ -18,6 +18,7 @@
     <classEntry path="com.swfwire.debugger.injected.URLStream"/>
     <classEntry path="com.swfwire.debugger.injected.ServerSocket"/>
     <classEntry path="com.swfwire.debugger.injected.ServerSocketConnectEvent"/>
+    <classEntry path="com.swfwire.debugger.injected.Globals"/>
   </includeClasses>
   <includeResources/>
   <namespaceManifests/>

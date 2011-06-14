@@ -161,6 +161,7 @@
 					if(!sanityCheck)
 					{
 						var a:* = preview.loader.content;
+						logger.newObject(a);
 						try
 						{
 							a.deferredConstructor();
@@ -316,6 +317,16 @@
 					{
 						//logToNet(ev.host+':'+ev.port+': socket closed by server');
 					});
+					
+					
+					var globals:* = injectedAppDomain.getDefinition('com.swfwire.debugger.injected.Globals');
+					globals.stage = preview.stage;
+					
+					//injectedAppDomain.getDefinition('com.swfwire.debugger.injected').output = logOut;
+					if(Config.TESTING)
+					{
+						loadDefault();
+					}
 				});
 				
 				var librarySwf:String = 'app:/library.swf';
@@ -328,7 +339,7 @@
 				
 				publicPropertiesGrid.addEventListener('inspectProperty', function(ev:*):void
 				{
-					inspect(ev.info.value);
+					inspect(ev.info);
 				});
 				publicPropertiesGrid.addEventListener('editProperty', function(ev:*):void
 				{
@@ -444,6 +455,8 @@
 				var description:XML = describeType(target);
 				var node:XML;
 				var name:String;
+				var key:*;
+				
 				var properties:Array = [];
 				
 				for each(node in description.variable)
@@ -470,18 +483,27 @@
 				
 				try
 				{
-					var propertiesMethod:String = 'swfWire_enumerateProperties_'+String(description.@name);
-					var privateProperties:Object = target[propertiesMethod]();
-					for(name in privateProperties)
+					var hierarchy:Array = [description.@name];
+					for each(var superClass:String in description.extendsClass.@type)
 					{
-						properties.push({namespace: 'private', access: 'variable', label: 'Private', name: name, value: privateProperties[name]});
+						hierarchy.push(superClass);
+					}
+					for(var iter:int = 0; iter < hierarchy.length; iter++)
+					{
+						var className:String = hierarchy[iter];
+						var propertiesMethod:String = 'swfWire_enumerateProperties_'+className;
+						var privateProperties:Object = target[propertiesMethod]();
+						for(name in privateProperties)
+						{
+							properties.push({namespace: 'private', access: 'variable', label: 'Private', name: name, value: privateProperties[name]});
+						}
 					}
 				}
 				catch(e:*){}
 				
-				for(name in target)
+				for(key in target)
 				{
-					properties.push({namespace: 'dynamic', access: 'variable', label: 'Dynamic', name: name, value: target[name]});
+					properties.push({namespace: 'dynamic', access: 'variable', label: 'Dynamic', name: key, value: target[key]});
 				}
 				
 				properties.sortOn(['namespace', 'name']);
@@ -675,7 +697,7 @@
 				
 				if(shouldModify)
 				{
-					var modifier:DebuggerAsyncModifier = new DebuggerAsyncModifier(swf, metadata, instance == null);
+					var modifier:DebuggerAsyncModifier = new DebuggerAsyncModifier(swf, metadata, false && instance == null);
 					
 					if(!instance)
 					{
@@ -1163,7 +1185,8 @@
 							<mx:DataGrid id="publicPropertiesGrid" width="100%" height="100%" horizontalScrollPolicy="auto" variableRowHeight="true">
 								<mx:columns>
 									<ui:AccessorTypeColumn headerText="" dataField="type" width="25" resizable="false"/>
-									<mx:DataGridColumn headerText="Name" dataField="name" width="180"/>
+									<mx:DataGridColumn headerText="Name" dataField="name" width="180"
+													   itemRenderer="com.swfwire.debugger.flex.ui.PropertyNameRenderer"/>
 									<mx:DataGridColumn headerText="Value" dataField="value"
 													   itemRenderer="com.swfwire.debugger.flex.ui.PropertyValueRenderer"/>
 								</mx:columns>
@@ -1200,6 +1223,7 @@
 						<mx:VBox height="100%" id="vbox2" paddingRight="5" minHeight="0" horizontalScrollPolicy="off" width="200">
 							<mx:CheckBox id="logToOutput"			 label="Log to console"			 click="logToOutput_clickHandler(event)"/>
 							<mx:CheckBox id="logToTrace"			 label="Log to trace"			 click="logToTrace_clickHandler(event)" styleName="smallText"/>
+							<mx:CheckBox id="showTrace"				 label="Show trace"				 click="showTrace_clickHandler(event)" styleName="smallText"/>
 							<mx:CheckBox id="showMethodEntry"		 label="Show method entry"		 click="showMethodEntry_clickHandler(event)" styleName="smallText"/>
 							<mx:CheckBox id="dumpArguments"			 label="Show arguments"			 click="dumpArguments_clickHandler(event)" styleName="smallText"/>
 							<mx:CheckBox id="showReturn"			 label="Show return values"		 click="showReturn_clickHandler(event)" styleName="smallText"/>
@@ -1210,7 +1234,6 @@
 							<mx:CheckBox id="skipRender"			 label="Skip RENDER"			 click="skipRender_clickHandler(event)" styleName="smallText"/>
 							<mx:CheckBox id="skipFrameConstructed"	 label="Skip FRAME_CONSTRUCTED"	 click="skipFrameConstructed_clickHandler(event)" styleName="smallText"/>
 							<mx:CheckBox id="skipTimer"				 label="Skip TIMER"				 click="skipTimer_clickHandler(event)" styleName="smallText"/>
-							<mx:CheckBox id="showTrace"				 label="Show trace"				 click="showTrace_clickHandler(event)" styleName="smallText"/>
 							<mx:HBox id="hbox1" height="50" verticalAlign="middle">
 								<mx:Label text="Max Stack Depth:" styleName="smallText" paddingTop="2"/>
 								<mx:NumericStepper id="maxStackDepth" value="10" change="maxStackDepth_changeHandler(event)" minimum="0" maximum="100"/>

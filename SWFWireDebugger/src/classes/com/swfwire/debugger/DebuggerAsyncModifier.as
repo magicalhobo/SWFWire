@@ -367,7 +367,7 @@ package com.swfwire.debugger
 						}
 					}
 					
-					if(mainInst && deferConstructor)
+					if(false && mainInst && deferConstructor)
 					{
 						var mainMB:MethodBodyInfoToken = wrapper.findMethodBody(mainInst.iinit);
 						
@@ -392,6 +392,39 @@ package com.swfwire.debugger
 						abcTag.abcFile.methodBodies.push(emptyMethod);
 						
 						mainInst.iinit = defcmi;
+					}
+					if(true && mainInst)
+					{
+						var mainMB:MethodBodyInfoToken = wrapper.findMethodBody(mainInst.iinit);
+						
+						var globalClassIndex:int = wrapper.addQName(
+							wrapper.addNamespaceFromString('com.swfwire.debugger.injected'), 
+							wrapper.addString('Globals'));
+						
+						var stageIndex:int = wrapper.addQName(
+							wrapper.addNamespaceFromString(''), 
+							wrapper.addString('stage'));
+						
+						var addChildIndex:int = wrapper.addQName(
+							wrapper.addNamespaceFromString(''), 
+							wrapper.addString('addChild'));
+						
+						mainMB.instructions.splice(0, 0,
+							new Instruction_getlex(globalClassIndex),
+							new Instruction_getproperty(stageIndex),
+							new Instruction_getlocal0(),
+							new Instruction_callpropvoid(addChildIndex, 1));
+					}
+					
+					function getUniqueID(multinameIndex:int):String
+					{
+						var qname:MultinameQNameToken = cpool.multinames[multinameIndex].data as MultinameQNameToken;
+						var ns:String = cpool.strings[cpool.namespaces[qname.ns].name].utf8;
+						var name:String = cpool.strings[qname.name].utf8;
+						
+						var uniqueID:String = ns ? ns+'::'+name : name;
+						
+						return uniqueID;
 					}
 					
 					//createClass();
@@ -442,11 +475,7 @@ package com.swfwire.debugger
 							}
 						}
 						
-						var instanceQName:MultinameQNameToken = cpool.multinames[thisInstance.name].data as MultinameQNameToken;
-						var instanceNS:String = cpool.strings[cpool.namespaces[instanceQName.ns].name].utf8;
-						var instanceName:String = cpool.strings[instanceQName.name].utf8;
-						
-						var uniqueID:String = instanceNS ? instanceNS+'::'+instanceName : instanceName;
+						var uniqueID:String = getUniqueID(thisInstance.name);
 						
 						enumerateMethodsInstructions.push(new Instruction_newobject(enumerateMethodsInstructions.length * 1 / 3));
 						enumerateMethodsInstructions.push(new Instruction_returnvalue());

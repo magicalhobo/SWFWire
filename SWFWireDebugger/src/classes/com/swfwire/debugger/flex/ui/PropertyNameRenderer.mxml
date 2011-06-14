@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:HBox xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		  xmlns:s="library://ns.adobe.com/flex/spark" 
+		  xmlns:mx="library://ns.adobe.com/flex/mx"
+		  paddingLeft="4" paddingRight="4"
+		  horizontalScrollPolicy="off" verticalScrollPolicy="off"
+		  verticalAlign="middle" implements="mx.controls.listClasses.IDropInListItemRenderer">
+	<fx:Script>
+		<![CDATA[
+			import avmplus.getQualifiedClassName;
+			
+			import mx.controls.dataGridClasses.DataGridBase;
+			import mx.controls.dataGridClasses.DataGridItemRenderer;
+			import mx.controls.dataGridClasses.DataGridListData;
+			import mx.controls.listClasses.BaseListData;
+			import mx.events.DynamicEvent;
+			import mx.events.FlexEvent;
+			
+			override public function set data(value:Object):void
+			{
+				super.data = value;
+				var reference:* = value.name;
+				var type:String = typeof(reference);
+				if(reference && type == 'object')
+				{
+					valueLabel.visible = false;
+					valueLabel.includeInLayout = false;
+					button.visible = true;
+					button.includeInLayout = true;
+					button.label = getQualifiedClassName(reference);
+				}
+				else
+				{
+					button.visible = false;
+					button.includeInLayout = false;
+					valueLabel.visible = true;
+					valueLabel.includeInLayout = true;
+					valueLabel.text = reference;
+					button.label = '';
+				}
+			}
+			
+			private var _listData:DataGridListData;
+			
+			public function get listData():BaseListData
+			{
+				return _listData;
+			}
+			
+			public function set listData(value:BaseListData):void
+			{
+				_listData = DataGridListData(value);
+			}
+			
+			override public function validateNow():void
+			{
+				if(data && parent)
+				{
+					var newColor:Number;
+					
+					if(DataGridBase(_listData.owner).isItemHighlighted(_listData.uid))
+					{
+						newColor = getStyle("textRollOverColor");
+					}
+					else if(DataGridBase(_listData.owner).isItemSelected(_listData.uid))
+					{
+						newColor = getStyle("textSelectedColor");
+					}
+					else
+					{
+						newColor = getStyle("color");
+					}
+					valueLabel.setStyle('color', newColor);
+				}
+				
+				super.validateNow();
+			}
+			
+			protected function button_clickHandler(ev:MouseEvent):void
+			{
+				var event:DynamicEvent = new DynamicEvent('inspectProperty', true);
+				event.info = data.name;
+				dispatchEvent(event);
+			}
+		]]>
+	</fx:Script>
+	<mx:Label id="valueLabel" width="100%"/>
+	<mx:Button id="button" click="button_clickHandler(event)"/>
+</mx:HBox>
