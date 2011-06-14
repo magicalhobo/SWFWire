@@ -27,13 +27,6 @@
 				stage.scaleMode = StageScaleMode.SHOW_ALL;
 				stage.align = StageAlign.TOP_LEFT;
 				
-				trace('loaderCompleteHandler');
-				
-				/*
-				stage.scaleMode = StageScaleMode.NO_SCALE;
-				stage.align = StageAlign.TOP_LEFT;
-				*/
-				
 				resetSWFPosition();
 				
 				dispatchEvent(new Event('loaderComplete'));
@@ -43,7 +36,6 @@
 			
 			private function previewMiddleDownHandler(ev:MouseEvent):void
 			{
-				//stopInspection();
 				loader.mouseEnabled = false;
 				loader.mouseChildren = false;
 				stage.addEventListener(MouseEvent.MIDDLE_MOUSE_UP, previewMiddleUpHandler, false, 0, true);
@@ -82,30 +74,6 @@
 				
 				loader.x -= newMousePosition.x - previousMousePosition.x;
 				loader.y -= newMousePosition.y - previousMousePosition.y;
-			}
-			
-			override protected function updateDisplayList(unscaledWidth:Number, unscaledHeight:Number):void
-			{
-				super.updateDisplayList(unscaledWidth, unscaledHeight);
-				return;
-				if(loader)
-				{
-					loader.scaleX = 1;
-					loader.scaleY = 1;
-					
-					var rawBounds:Rectangle = loader.getBounds(this);
-					
-					var offset:Point = new Point(rawBounds.x - loader.x, rawBounds.y - loader.y);
-					
-					var scaledBounds:Rectangle = DisplayUtil.scaleToFit(rawBounds.width, rawBounds.height, unscaledWidth, unscaledHeight);
-					loader.x = scaledBounds.x;
-					loader.y = scaledBounds.y;
-					loader.width = scaledBounds.width;
-					loader.height = scaledBounds.height;
-					
-					loader.x += -offset.x * loader.scaleX;
-					loader.y += -offset.y * loader.scaleY;
-				}
 			}
 			
 			public function loadBytes(bytes:ByteArray, context:LoaderContext):void
@@ -153,20 +121,6 @@
 				
 				loader.x = 0
 				loader.y = 0
-				
-				/*
-				loader.scaleX = 1;
-				loader.scaleY = 1;
-				
-				var ratioX:Number = loader.width/swfWidth;
-				var ratioY:Number = loader.height/swfHeight;
-				
-				var scaledBounds:Rectangle = DisplayUtil.scaleToFit(swfWidth, swfHeight, unscaledWidth, unscaledHeight);
-				loader.x = scaledBounds.x;
-				loader.y = scaledBounds.y;
-				loader.width = scaledBounds.width * ratioX;
-				loader.height = scaledBounds.height * ratioY;
-				*/
 			}
 			
 			public function clearOverlay():void

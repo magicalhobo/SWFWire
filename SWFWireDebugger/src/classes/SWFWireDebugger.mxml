@@ -12,8 +12,6 @@
 	<mx:Script>
 		<![CDATA[
 			import air.update.ApplicationUpdaterUI;
-			import air.update.events.DownloadErrorEvent;
-			import air.update.events.StatusUpdateErrorEvent;
 			import air.update.events.UpdateEvent;
 			
 			import com.swfwire.debugger.Config;
@@ -23,37 +21,24 @@
 			import com.swfwire.debugger.flex.ui.PreviewWindow;
 			import com.swfwire.debugger.utils.*;
 			import com.swfwire.decompiler.*;
-			import com.swfwire.decompiler.abc.ABCInstructions;
 			import com.swfwire.decompiler.abc.ABCReaderMetadata;
 			import com.swfwire.decompiler.abc.instructions.*;
 			import com.swfwire.decompiler.abc.tokens.*;
-			import com.swfwire.decompiler.abc.tokens.multinames.MultinameQNameToken;
-			import com.swfwire.decompiler.abc.tokens.traits.TraitMethodToken;
 			import com.swfwire.decompiler.data.swf.SWF;
 			import com.swfwire.decompiler.data.swf.SWFHeader;
 			import com.swfwire.decompiler.data.swf.tags.SWFTag;
-			import com.swfwire.decompiler.data.swf.tags.SetBackgroundColorTag;
 			import com.swfwire.decompiler.data.swf8.tags.FileAttributesTag;
-			import com.swfwire.decompiler.data.swf9.tags.DoABCTag;
-			import com.swfwire.decompiler.data.swf9.tags.SymbolClassTag;
 			import com.swfwire.decompiler.events.AsyncSWFReaderEvent;
 			import com.swfwire.decompiler.events.AsyncSWFWriterEvent;
-			import com.swfwire.utils.ArrayUtil;
 			import com.swfwire.utils.Debug;
-			import com.swfwire.utils.DisplayUtil;
 			import com.swfwire.utils.ObjectUtil;
 			import com.swfwire.utils.air.WindowTracker;
-			
-			import flash.utils.describeType;
-			import flash.utils.getTimer;
 			
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
 			import mx.controls.TextInput;
 			import mx.core.IUIComponent;
 			import mx.core.UIComponent;
-			import mx.events.DataGridEvent;
-			import mx.events.DataGridEventReason;
 			import mx.events.DynamicEvent;
 			import mx.events.FlexEvent;
 			import mx.events.ListEvent;
@@ -75,7 +60,6 @@
 			private var frameCount:int = 0;
 			
 			private var sanityCheck:Boolean = false;
-			private var cacheEnabled:Boolean = false;
 			
 			private var preview:PreviewWindow = new PreviewWindow();
 			
@@ -134,7 +118,6 @@
 				swfDropTarget.addEventListener(NativeDragEvent.NATIVE_DRAG_DROP,	 dragDropHandler);
 				
 				preview.addEventListener(MouseEvent.MIDDLE_MOUSE_DOWN, previewMiddleDownHandler);
-				//preview.addEventListener(MouseEvent.MOUSE_WHEEL, previewMiddleScrollHandler);
 				
 				loaderInfo.uncaughtErrorEvents.addEventListener(UncaughtErrorEvent.UNCAUGHT_ERROR, function(ev:UncaughtErrorEvent):void
 				{
@@ -146,8 +129,6 @@
 					log(ObjectUtil.objectToString(ev.error, 2, 2, 50, 50, true, '	'));
 				});
 				
-				//preview.addEventListener(MouseEvent.CONTEXT_MENU, inspectHandler);
-				//preview.addEventListener(MouseEvent.MOUSE_MOVE, inspectHandler);
 				preview.addEventListener('loaderComplete', function(ev:Event):void
 				{
 					preview.visible = true;
@@ -162,22 +143,7 @@
 						log('Uncaught error in child.');
 						log(ObjectUtil.objectToString(ev.error, 2, 2, 50, 50, true, '	'));
 					});
-					/*
-					var parameters:Object = {};
-					var flashvarParser:URLVariables;
-					try
-					{
-						flashvarParser = new URLVariables(flashvars.text);
-						for(var iter:String in flashvarParser)
-						{
-							parameters[iter] = flashvarParser[iter];
-						}
-					}
-					catch(e:Error)
-					{
-						log('Error parsing flashvars');
-					}
-					*/
+					
 					var loaderClass:* = injectedAppDomain.getDefinition('com.swfwire.debugger.injected.Loader');
 					loaderClass.overrideApplicationDomain = preview.loader.contentLoaderInfo.applicationDomain;
 					
@@ -268,7 +234,7 @@
 							
 							if(modifyChildren.selected)
 							{
-								read(ev.bytes, ev.context, ev.instance);
+								read(ev.bytes, ev.context, ev.instance, swfId++);
 							}
 							else
 							{
@@ -350,12 +316,6 @@
 					{
 						//logToNet(ev.host+':'+ev.port+': socket closed by server');
 					});
-					
-					//injectedAppDomain.getDefinition('com.swfwire.debugger.injected').output = logOut;
-					if(Config.TESTING)
-					{
-						loadDefault();
-					}
 				});
 				
 				var librarySwf:String = 'app:/library.swf';
@@ -401,7 +361,6 @@
 				});
 				
 				injectionLoader.load(new URLRequest(librarySwf), context);
-				//loadDefault();
 			}
 			
 			private var previewStartDown:Point;
@@ -409,46 +368,6 @@
 			private function previewMiddleDownHandler(ev:MouseEvent):void
 			{
 				stopInspection();
-				/*
-				preview.loader.mouseEnabled = false;
-				preview.loader.mouseChildren = false;
-				stage.addEventListener(MouseEvent.MIDDLE_MOUSE_UP, previewMiddleUpHandler);
-				stage.addEventListener(MouseEvent.MOUSE_MOVE, previewMoveHandler);
-				previewStartDown = new Point(stage.mouseX - preview.loader.x, stage.mouseY - preview.loader.y);
-				*/
-			}
-			
-			private function previewMoveHandler(ev:MouseEvent):void
-			{
-				if(previewStartDown)
-				{
-					preview.loader.x = stage.mouseX - previewStartDown.x;
-					preview.loader.y = stage.mouseY - previewStartDown.y;
-				}
-			}
-			
-			private function previewMiddleUpHandler(ev:MouseEvent):void
-			{
-				stage.removeEventListener(MouseEvent.MOUSE_MOVE, previewMoveHandler);
-				stage.removeEventListener(MouseEvent.MIDDLE_MOUSE_UP, previewMiddleUpHandler);
-				preview.loader.mouseChildren = true;
-				preview.loader.mouseEnabled = true;
-			}
-			
-			private function previewMiddleScrollHandler(ev:MouseEvent):void
-			{
-				var scaleFactor:Number = Math.pow(1.05, ev.delta);
-				
-				var mouseNow:Point = new Point(preview.loader.mouseX, preview.loader.mouseY);
-				var previousMousePosition:Point = preview.loader.localToGlobal(mouseNow);
-				
-				preview.loader.scaleX *= scaleFactor;
-				preview.loader.scaleY *= scaleFactor;
-				
-				var newMousePosition:Point = preview.loader.localToGlobal(mouseNow);
-				
-				preview.loader.x -= newMousePosition.x - previousMousePosition.x;
-				preview.loader.y -= newMousePosition.y - previousMousePosition.y;
 			}
 			
 			private function swfwireRel(url:String):String
@@ -457,25 +376,6 @@
 			}
 			
 			private var injectionLoader:Loader;
-			
-			private function loadDefault():void
-			{
-				//load('http://localhost/workspaces/fb4_swfwire/SWFCorpseP1Container/bin-debug/SWFCorpseP1Container.swf');
-				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpseAIR/bin-debug/SWFCorpseAIR.swf').url);
-				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpseP1Container/bin-debug/SWFCorpseP1Container.swf').url);
-				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpseFlex4-1/bin-debug/Main.swf').url);
-				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpse/bin-debug/SWFCorpse.swf').url);
-				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpse/bin-release/SWFCorpse.swf').url);
-				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFWireInspector/bin-debug/SWFWireInspector.swf').url);
-				//load(new File(File.applicationDirectory.nativePath).parent.parent.resolvePath('SWFCorpseFlex3-5/bin-debug/Main.swf').url);
-				//load('temp.swf');
-				//load('SlowMoPlayer.swf');
-				//load('cs5-5_pfflib.swf');
-				//load('frees.swf');
-				//load('cs5-5_corpse.swf');
-				//load('watch_as3.swf');
-				//load('Main_112710.swf');
-			}
 			
 			private var lastTarget:DisplayObject;
 			private var lastInspectTarget:Object;
@@ -619,44 +519,6 @@
 				lastInspectTarget = target;
 			}
 			
-			protected function inspectGrid_itemEditEndHandler(event:DataGridEvent):void
-			{
-				if(event.reason != DataGridEventReason.CANCELLED)
-				{
-					if(lastInspectTarget)
-					{
-						var dp:ArrayCollection;
-						if(tabnavigator2.selectedChild == publicPropertiesGrid.parent)
-						{
-							dp = propertiesCollection;
-						}
-						
-						if(dp)
-						{
-							var info:Object = dp.getItemAt(event.rowIndex);
-							try
-							{
-								lastInspectTarget[info.name] = TextInput(event.currentTarget.itemEditorInstance).text;
-							}
-							catch(e:*)
-							{
-								var description:XML = describeType(lastInspectTarget);
-								var setPropertyMethod:String = 'swfWire_setProperty_'+String(description.@name);
-								try
-								{
-									var result:* = lastInspectTarget[setPropertyMethod](info.name, TextInput(event.currentTarget.itemEditorInstance).text);
-									trace('set result: '+result);
-								}
-								catch(e:*)
-								{
-									logOut.text += 'Error setting property: '+e+'\n';
-								}
-							}
-						}
-					}
-				}
-			}
-			
 			private function loadProgressHandler(ev:ProgressEvent):void
 			{
 				loadProgress.setProgress(ev.bytesLoaded, ev.bytesTotal);
@@ -673,18 +535,6 @@
 						modifyProgress.setProgress(1, 1);
 						writeProgress.setProgress(1, 1);
 						run(bytes);
-						/*
-						var context:LoaderContext = new LoaderContext();
-						context.allowLoadBytesCodeExecution = true;
-						//context.applicationDomain = new ApplicationDomain();
-						context.applicationDomain = new ApplicationDomain(injectedAppDomain);
-						preview.loadBytes(bytes, context);
-						preview.loader.contentLoaderInfo.addEventListener(Event.COMPLETE, function(ev:*):void
-						{
-							var temp:* = preview.loader.contentLoaderInfo.applicationDomain.hasDefinition('com.swfwire.debugger.injected.Logger');
-							Debug.dump({temp: temp});
-						});
-						*/
 					}
 					else
 					{
@@ -732,29 +582,19 @@
 			private var lastFileSize:uint;
 			private var lastRunBytes:ByteArray;
 			private var updateStatsTimer:Timer;
+			private var swfId:int = 1;
 			
 			public function load(url:String):void
 			{
 				log('Attempting to load: '+url);
 				
-				//var orig:File = new File(url);//File.applicationDirectory.resolvePath(url);
-				
 				lastUrl = url;
 				
-				//Caching has problems right now and prevents urls from working.
-				isCached = false;
-				
-				/*
-				lastFileSize = orig.size;
-				
-				var newUrl:String = url+'.recompiled.'+orig.size+'.swf';
-				*/
-				var newUrl:String = url+'.recompiled.0.swf';
-				var f:File = File.applicationDirectory.resolvePath(newUrl);
-				cacheEnabled = useCached.selected;
-				if(f.exists && cacheEnabled)
+				var recompiledFileUrl:String = url+'.recompiled.0.swf';
+				var recompiledFile:File = File.applicationDirectory.resolvePath(recompiledFileUrl);
+				if(recompiledFile.exists && useCached.selected)
 				{
-					url = newUrl;
+					url = recompiledFileUrl;
 					isCached = true;
 				}
 				else
@@ -762,17 +602,22 @@
 					isCached = false;
 				}
 				
-				currentState = 'loading';
-				
 				log('Loading: '+url);
 				
 				loadProgress.setProgress(0, 0);
 				readProgress.setProgress(0, 0);
 				writeProgress.setProgress(0, 0);
+				
+				var swfName:String = lastUrl.substr(lastUrl.lastIndexOf('/') + 1);
+				
+				preview.title = swfName;
+				
+				currentState = 'loading';
+				
 				urlLoader.load(new URLRequest(url));
 			}
 			
-			private function read(bytes:ByteArray, context:LoaderContext = null, instance:Loader = null):void
+			private function read(bytes:ByteArray, context:LoaderContext = null, instance:Loader = null, swfId:int = -1):void
 			{
 				var start:uint = getTimer();
 				
@@ -800,13 +645,14 @@
 					var diff:uint = getTimer() - start;
 					log('Reading swf took: '+diff+'ms');
 
-					modify(ev.result.swf, ev.result.abcMetadata, context, instance);
+					modify(ev.result.swf, ev.result.abcMetadata, context, instance, swfId);
 				});
 				
 				result = swfReader.read(swfBytes);
 			}
 			
-			private function modify(swf:SWF, metadata:Vector.<ABCReaderMetadata>, context:LoaderContext = null, instance:Loader = null):void
+			private function modify(swf:SWF, metadata:Vector.<ABCReaderMetadata>, context:LoaderContext = null,
+									instance:Loader = null, swfId:int = -1):void
 			{
 				var start:uint = getTimer();
 				
@@ -853,7 +699,7 @@
 							foundMainClass = modifier.foundMainClass;
 						}
 						
-						write(swf, context, instance);
+						write(swf, context, instance, swfId);
 					});
 					
 					modifier.start();
@@ -864,7 +710,7 @@
 				}
 			}
 			
-			private function write(swf:SWF, context:LoaderContext = null, instance:Loader = null):void
+			private function write(swf:SWF, context:LoaderContext = null, instance:Loader = null, swfId:int = -1):void
 			{
 				var start:uint = getTimer();
 				
@@ -892,16 +738,16 @@
 						debug.dump(result, 4);
 						
 						preview.setSWFSize((swf.header.frameSize.xMax - swf.header.frameSize.xMin)/20, (swf.header.frameSize.yMax - swf.header.frameSize.yMin)/20);
-					
-						//var f:File = new File(File.applicationDirectory.nativePath).resolvePath('recompiled.swf');
-						try
-						{
-							save(result.bytes, lastUrl+'.recompiled.'+lastFileSize+'.swf');
-						}
-						catch(e:*)
-						{
-							log('Could not write cached file');
-						}
+						
+						swfId = 0;
+					}
+					try
+					{
+						save(result.bytes, lastUrl+'.recompiled.'+swfId+'.swf');
+					}
+					catch(e:*)
+					{
+						log('Could not write cached file');
 					}
 					
 					run(result.bytes, context, instance);
@@ -949,6 +795,7 @@
 					}
 					
 					context.parameters = parameters;
+					
 					preview.loadBytes(bytes, context);
 				}
 			}
@@ -1097,19 +944,6 @@
 			protected function logToTrace_clickHandler(event:MouseEvent):void
 			{
 				logger.logToTrace = logToTrace.selected;
-			}
-
-			protected function inspectGrid_itemDoubleClickHandler(event:ListEvent, dp:ArrayCollection):void
-			{
-				var info:Object = dp.getItemAt(event.rowIndex);
-				try
-				{
-					inspect(info.value);
-				}
-				catch(e:*)
-				{
-					logOut.text += 'Error inspecting property.\n';
-				}
 			}
 
 			protected function objectItemDoubleClickHandler(event:ListEvent):void
@@ -1364,8 +1198,8 @@
 							<ui:HighlightedTextArea id="logOut" width="100%" height="100%" editable="false" fontFamily="Courier New" fontSize="11"/>
 						</mx:VBox>
 						<mx:VBox height="100%" id="vbox2" paddingRight="5" minHeight="0" horizontalScrollPolicy="off" width="200">
-							<mx:CheckBox id="logToOutput" label="Log to output" click="logToOutput_clickHandler(event)" styleName="smallText"/>
-							<mx:CheckBox id="logToTrace" label="Log to trace" click="logToTrace_clickHandler(event)" styleName="smallText"/>
+							<mx:CheckBox id="logToOutput"			 label="Log to console"			 click="logToOutput_clickHandler(event)"/>
+							<mx:CheckBox id="logToTrace"			 label="Log to trace"			 click="logToTrace_clickHandler(event)" styleName="smallText"/>
 							<mx:CheckBox id="showMethodEntry"		 label="Show method entry"		 click="showMethodEntry_clickHandler(event)" styleName="smallText"/>
 							<mx:CheckBox id="dumpArguments"			 label="Show arguments"			 click="dumpArguments_clickHandler(event)" styleName="smallText"/>
 							<mx:CheckBox id="showReturn"			 label="Show return values"		 click="showReturn_clickHandler(event)" styleName="smallText"/>

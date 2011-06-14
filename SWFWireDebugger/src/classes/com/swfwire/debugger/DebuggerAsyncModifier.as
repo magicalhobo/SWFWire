@@ -181,6 +181,26 @@ package com.swfwire.debugger
 			*/
 		}
 		
+		private function createClass(abcTag:DoABCTag, wrapper:ABCWrapper, name:String, superName:String):InstanceToken
+		{
+			wrapper.addQName(wrapper.addNamespaceFromString(''), wrapper.addString('Test'));
+			
+			var instance:InstanceToken = new InstanceToken();
+			
+			var constructorInstructions:Vector.<IInstruction> = Vector.<IInstruction>([
+				new Instruction_getlocal0(),
+				new Instruction_pushscope(),
+				new Instruction_getlocal0(),
+				new Instruction_constructsuper(),
+				new Instruction_returnvoid()
+			]);
+			
+			createMethod(abcTag, wrapper, instance, 'constructor', constructorInstructions, constructorInstructions.length);
+			
+			
+			return instance;
+		}
+		
 		protected function createMethod(abcTag:DoABCTag, wrapper:ABCWrapper, instance:InstanceToken, 
 										name:String, instructions:Vector.<IInstruction>, maxStack:int,
 										attributes:uint = 0):void
@@ -373,6 +393,8 @@ package com.swfwire.debugger
 						
 						mainInst.iinit = defcmi;
 					}
+					
+					//createClass();
 					
 					for(var iterInstance:int = 0; iterInstance < abcTag.abcFile.instances.length; iterInstance++)
 					{
