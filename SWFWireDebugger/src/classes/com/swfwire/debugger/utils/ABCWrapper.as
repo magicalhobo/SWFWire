@@ -12,6 +12,7 @@ package com.swfwire.debugger.utils
 	import com.swfwire.decompiler.abc.tokens.NamespaceToken;
 	import com.swfwire.decompiler.abc.tokens.StringToken;
 	import com.swfwire.decompiler.abc.tokens.TraitsInfoToken;
+	import com.swfwire.decompiler.abc.tokens.cpool.CPoolIndex;
 	import com.swfwire.decompiler.abc.tokens.multinames.MultinameQNameToken;
 	import com.swfwire.decompiler.abc.tokens.traits.TraitMethodToken;
 	import com.swfwire.utils.Debug;
@@ -447,6 +448,24 @@ package com.swfwire.debugger.utils
 			return index;
 		}
 		
+		public function getInstance(index:int):InstanceToken
+		{
+			var instance:InstanceToken;
+			if(index >= 0)
+			{
+				for(var iter:uint = 0; iter < abcFile.instances.length; iter++)
+				{
+					var thisInstance:InstanceToken = abcFile.instances[iter];
+					if(thisInstance.name == index)
+					{
+						instance = thisInstance;
+						break;
+					}
+				}
+			}
+			return instance;
+		}
+		
 		public function getEmptyConstructorInstructions():Vector.<IInstruction>
 		{
 			return Vector.<IInstruction>([
@@ -506,6 +525,18 @@ package com.swfwire.debugger.utils
 			multinames.push(new MultinameToken(MultinameToken.KIND_QName, new MultinameQNameToken(namespace, name)));
 			
 			return index;
+		}
+		
+		public function getQNameString(multinameIndex:int, separator:String = '.'):String
+		{
+			var cpool:ConstantPoolToken = abcFile.cpool;
+			var qname:MultinameQNameToken = cpool.multinames[multinameIndex].data as MultinameQNameToken;
+			var ns:String = cpool.strings[cpool.namespaces[qname.ns].name].utf8;
+			var name:String = cpool.strings[qname.name].utf8;
+			
+			var result:String = ns ? ns + separator + name : name;
+			
+			return result;
 		}
 	}
 }

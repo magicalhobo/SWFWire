@@ -164,21 +164,6 @@ package com.swfwire.debugger
 					}
 				}
 			}
-			/*
-			var index:int = wrapper.getMultinameIndex(ns, name);
-			if(index >= 0)
-			{
-				var qName:MultinameQNameToken = abcTag.abcFile.cpool.multinames[index].data as MultinameQNameToken;
-				if(newNs >= 0)
-				{
-					qName.ns = newNs;
-				}
-				if(newName >= 0)
-				{
-					qName.name = newName;
-				}
-			}
-			*/
 		}
 		
 		private function createClass(abcTag:DoABCTag, wrapper:ABCWrapper, name:String, superName:String):InstanceToken
@@ -270,10 +255,9 @@ package com.swfwire.debugger
 				if(abcTag)
 				{
 					var wrapper:ABCWrapper = new ABCWrapper(abcTag.abcFile, metadata[iTag]);
+					var cpool:ConstantPoolToken = abcTag.abcFile.cpool;
 					
 					var injectedNamespace:uint = wrapper.addNamespaceFromString('com.swfwire.debugger.injected');
-					
-					var cpool:ConstantPoolToken = abcTag.abcFile.cpool;
 					
 					function convert(ns:String, name:String):void
 					{
@@ -285,117 +269,19 @@ package com.swfwire.debugger
 						}
 					}
 					
-					var securityIndex:int = wrapper.getMultinameIndex('flash.system', 'Security');
-					if(securityIndex >= 0)
-					{
-						var securityQName:MultinameQNameToken = cpool.multinames[securityIndex].data as MultinameQNameToken;
-						securityQName.ns = injectedNamespace;
-					}
-					var externalInterfaceIndex:int = wrapper.getMultinameIndex('flash.external', 'ExternalInterface');
-					if(externalInterfaceIndex >= 0)
-					{
-						var externalInterfaceQName:MultinameQNameToken = cpool.multinames[externalInterfaceIndex].data as MultinameQNameToken;
-						externalInterfaceQName.ns = injectedNamespace;
-					}
+					convert('flash.system', 'Security');
+					convert('flash.external', 'ExternalInterface');
+					convert('flash.net', 'navigateToURL');
+					convert('flash.net', 'URLLoader');
+					convert('flash.net', 'URLStream');
+					convert('flash.net', 'NetConnection');
+					convert('flash.display', 'Loader');
 					
-					var navigateToURLIndex:int = wrapper.getMultinameIndex('flash.net', 'navigateToURL');
-					if(navigateToURLIndex >= 0)
+					var rootInstance:InstanceToken = wrapper.getInstance(wrapper.getMultinameIndex(mainClassPackage, mainClassName));
+					
+					if(rootInstance)
 					{
-						var navigateToURLQName:MultinameQNameToken = cpool.multinames[navigateToURLIndex].data as MultinameQNameToken;
-						navigateToURLQName.ns = injectedNamespace;
-					}
-					
-					var urlLoaderIndex:int = wrapper.getMultinameIndex('flash.net', 'URLLoader');
-					if(urlLoaderIndex >= 0)
-					{
-						var urlLoaderQName:MultinameQNameToken = cpool.multinames[urlLoaderIndex].data as MultinameQNameToken;
-						urlLoaderQName.ns = injectedNamespace;
-					}
-					
-					var urlStreamIndex:int = wrapper.getMultinameIndex('flash.net', 'URLStream');
-					if(urlStreamIndex >= 0)
-					{
-						var urlStreamQName:MultinameQNameToken = cpool.multinames[urlStreamIndex].data as MultinameQNameToken;
-						urlStreamQName.ns = injectedNamespace;
-					}
-					
-					var netConnectionIndex:int = wrapper.getMultinameIndex('flash.net', 'NetConnection');
-					if(netConnectionIndex >= 0)
-					{
-						var netConnectionQName:MultinameQNameToken = cpool.multinames[netConnectionIndex].data as MultinameQNameToken;
-						netConnectionQName.ns = injectedNamespace;
-					}
-					
-					//convert('flash.net', 'Socket');
-					//convert('flash.net', 'ServerSocket');
-					//convert('flash.events', 'ServerSocketConnectEvent');
-					
-					var loaderIndex:int = wrapper.getMultinameIndex('flash.display', 'Loader');
-					if(loaderIndex >= 0)
-					{
-						var loaderQName:MultinameQNameToken = cpool.multinames[loaderIndex].data as MultinameQNameToken;
-						loaderQName.ns = injectedNamespace;
-					}
-					
-					/*
-					update(wrapper, abcTag, 'flash.display', 'Loader', injectedNamespace, -1);
-					update(wrapper, abcTag, 'flash.display', 'Sprite', injectedNamespace, wrapper.addString('SWFWire_Sprite'));
-					update(wrapper, abcTag, 'flash.display', 'MovieClip', injectedNamespace, wrapper.addString('SWFWire_MovieClip'));
-					
-					//update(wrapper, abcTag, '', 'loaderInfo', -1, wrapper.addString('swfWire_loaderInfo'));
-					update(wrapper, abcTag, 'flash.display', 'LoaderInfo', injectedNamespace, wrapper.addString('SWFWire_LoaderInfo'));
-
-					//update(wrapper, abcTag, '', 'stage', -1, wrapper.addString('swfWire_stage'));
-					update(wrapper, abcTag, 'flash.display', 'Stage', injectedNamespace, wrapper.addString('SWFWire_Stage'));
-
-					updatePublic(wrapper, abcTag, 'loaderInfo', wrapper.addString('swfWire_loaderInfo'));
-					updatePublic(wrapper, abcTag, 'stage', wrapper.addString('swfWire_stage'));
-					*/
-					var mainIndex:int = wrapper.getMultinameIndex(mainClassPackage, mainClassName);
-					var mainInst:InstanceToken = null;
-					
-					if(mainIndex >= 0)
-					{
-						for(var i:uint = 0; i < abcTag.abcFile.instances.length; i++)
-						{
-							var inst:InstanceToken = abcTag.abcFile.instances[i];
-							if(inst.name == mainIndex)
-							{
-								mainInst = inst;
-								break;
-							}
-						}
-					}
-					
-					if(false && mainInst && deferConstructor)
-					{
-						var mainMB:MethodBodyInfoToken = wrapper.findMethodBody(mainInst.iinit);
-						
-						//Create method deferredConstructor on main class
-						var defcmni:int = wrapper.addQName(
-							wrapper.addNamespaceFromString(''), 
-							wrapper.addString('deferredConstructor'));
-						
-						var mainTrait:TraitsInfoToken = new TraitsInfoToken(defcmni,
-							TraitsInfoToken.KIND_TRAIT_METHOD,
-							0,
-							new TraitMethodToken(0, mainInst.iinit));
-						
-						mainInst.traits.push(mainTrait);
-						
-						var defcmi:uint = abcTag.abcFile.methods.push(new MethodInfoToken()) - 1;
-						
-						var emptyMethod:MethodBodyInfoToken = new MethodBodyInfoToken(
-							defcmi, 1, 1, mainMB.initScopeDepth, mainMB.initScopeDepth + 1);
-						emptyMethod.instructions = wrapper.getEmptyConstructorInstructions();
-						
-						abcTag.abcFile.methodBodies.push(emptyMethod);
-						
-						mainInst.iinit = defcmi;
-					}
-					if(true && mainInst)
-					{
-						var mainMB:MethodBodyInfoToken = wrapper.findMethodBody(mainInst.iinit);
+						var rootConstructor:MethodBodyInfoToken = wrapper.findMethodBody(rootInstance.iinit);
 						
 						var globalClassIndex:int = wrapper.addQName(
 							wrapper.addNamespaceFromString('com.swfwire.debugger.injected'), 
@@ -409,25 +295,12 @@ package com.swfwire.debugger
 							wrapper.addNamespaceFromString(''), 
 							wrapper.addString('addChild'));
 						
-						mainMB.instructions.splice(0, 0,
+						rootConstructor.instructions.splice(0, 0,
 							new Instruction_getlex(globalClassIndex),
 							new Instruction_getproperty(stageIndex),
 							new Instruction_getlocal0(),
 							new Instruction_callpropvoid(addChildIndex, 1));
 					}
-					
-					function getUniqueID(multinameIndex:int):String
-					{
-						var qname:MultinameQNameToken = cpool.multinames[multinameIndex].data as MultinameQNameToken;
-						var ns:String = cpool.strings[cpool.namespaces[qname.ns].name].utf8;
-						var name:String = cpool.strings[qname.name].utf8;
-						
-						var uniqueID:String = ns ? ns+'::'+name : name;
-						
-						return uniqueID;
-					}
-					
-					//createClass();
 					
 					for(var iterInstance:int = 0; iterInstance < abcTag.abcFile.instances.length; iterInstance++)
 					{
@@ -475,7 +348,7 @@ package com.swfwire.debugger
 							}
 						}
 						
-						var uniqueID:String = getUniqueID(thisInstance.name);
+						var uniqueID:String = wrapper.getQNameString(thisInstance.name, '::');
 						
 						enumerateMethodsInstructions.push(new Instruction_newobject(enumerateMethodsInstructions.length * 1 / 3));
 						enumerateMethodsInstructions.push(new Instruction_returnvalue());
@@ -513,28 +386,10 @@ package com.swfwire.debugger
 							setPropertyInstructions.length,
 							0,
 							Vector.<String>([':String', ':Object']));
-						
-						/*
-						var getPropertyInstructions:Vector.<IInstruction> = new Vector.<IInstruction>();
-						getPropertyInstructions.push(new Instruction_newobject(getPropertyInstructions.length * 1 / 3));
-						getPropertyInstructions.push(new Instruction_returnvalue());
-						createMethodWithArguments(abcTag,
-							wrapper,
-							thisInstance, 
-							'swfWire_getProperty',
-							getPropertyInstructions,
-							getPropertyInstructions.length,
-							Vector.<String>([':String']));
-						*/
 					}
-					
-					//Debug.log('test', 'after', mainInst.traits);
-					
-					//mainInst.iinit--;
 					
 					if(true)
 					{
-						var cp:ConstantPoolToken = cpool;
 						var l:*;
 						const minScopeDepth:uint = 3;
 						
@@ -592,10 +447,10 @@ package com.swfwire.debugger
 						function qnameToString(instance:String, index:uint):String
 						{
 							var result:String = '<Not a QName>';
-							var mq:MultinameQNameToken = cp.multinames[index].data as MultinameQNameToken;
+							var mq:MultinameQNameToken = cpool.multinames[index].data as MultinameQNameToken;
 							if(mq)
 							{
-								var ns:String = cp.strings[cp.namespaces[mq.ns].name].utf8;
+								var ns:String = cpool.strings[cpool.namespaces[mq.ns].name].utf8;
 								if(ns == instance)
 								{
 									ns = '';
@@ -604,7 +459,7 @@ package com.swfwire.debugger
 								{
 									ns = ns + ':';
 								}
-								result = ns + cp.strings[mq.name].utf8;
+								result = ns + cpool.strings[mq.name].utf8;
 							}
 							return result;
 						}
@@ -667,16 +522,11 @@ package com.swfwire.debugger
 						
 						l = new Vector.<InstructionLocation>;
 						l = l.concat(wrapper.findInstruction(new InstructionTemplate(Instruction_construct, {})));
-						//l = l.concat(wrapper.findInstruction(new InstructionTemplate(Instruction_constructsuper, {})));
 						l = l.concat(wrapper.findInstruction(new InstructionTemplate(Instruction_constructprop, {})));
 						
 						l = l.concat(wrapper.findInstruction(new InstructionTemplate(Instruction_newclass, {})));
 						l = l.concat(wrapper.findInstruction(new InstructionTemplate(Instruction_newobject, {})));
 						l = l.concat(wrapper.findInstruction(new InstructionTemplate(Instruction_newarray, {})));
-						//l = l.concat(wrapper.findInstruction(new InstructionTemplate(Instruction_newactivation, {})));
-						
-						//l = l.concat(wrapper.findInstruction(new InstructionTemplate(Instruction_dxns, {})));
-						//l = l.concat(wrapper.findInstruction(new InstructionTemplate(Instruction_dxnslate, {})));
 						
 						for(var iter7:* in l)
 						{

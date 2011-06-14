@@ -34,6 +34,8 @@
 			import com.swfwire.utils.ObjectUtil;
 			import com.swfwire.utils.air.WindowTracker;
 			
+			import flash.utils.getTimer;
+			
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
 			import mx.controls.TextInput;
@@ -160,16 +162,7 @@
 					
 					if(!sanityCheck)
 					{
-						var a:* = preview.loader.content;
-						logger.newObject(a);
-						try
-						{
-							a.deferredConstructor();
-						}
-						catch(e:Error)
-						{
-							trace('Error calling deferredConstructor: '+e.getStackTrace());
-						}
+						logger.newObject(preview.loader.content);
 						preview.invalidateDisplayList();
 						preview.validateDisplayList();
 					}
@@ -318,15 +311,8 @@
 						//logToNet(ev.host+':'+ev.port+': socket closed by server');
 					});
 					
-					
 					var globals:* = injectedAppDomain.getDefinition('com.swfwire.debugger.injected.Globals');
 					globals.stage = preview.stage;
-					
-					//injectedAppDomain.getDefinition('com.swfwire.debugger.injected').output = logOut;
-					if(Config.TESTING)
-					{
-						loadDefault();
-					}
 				});
 				
 				var librarySwf:String = 'app:/library.swf';
@@ -1057,7 +1043,7 @@
 			
 			protected function stats_creationCompleteHandler(event:FlexEvent):void
 			{
-				updateStatsTimer = new Timer(250);
+				updateStatsTimer = new Timer(500);
 				updateStatsTimer.addEventListener(TimerEvent.TIMER, updateStatsTimerHandler);
 				updateStatsTimer.start();
 			}			
