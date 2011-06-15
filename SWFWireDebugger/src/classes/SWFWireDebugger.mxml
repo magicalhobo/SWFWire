@@ -45,6 +45,7 @@
 			import mx.events.FlexEvent;
 			import mx.events.ListEvent;
 			import mx.events.NumericStepperEvent;
+			import mx.graphics.codec.PNGEncoder;
 			import mx.managers.DragManager;
 			
 			private var windowTracker:WindowTracker;
@@ -119,7 +120,7 @@
 				swfDropTarget.addEventListener(NativeDragEvent.NATIVE_DRAG_ENTER,	 dragEnterHandler);
 				swfDropTarget.addEventListener(NativeDragEvent.NATIVE_DRAG_DROP,	 dragDropHandler);
 				
-				preview.addEventListener(MouseEvent.MIDDLE_MOUSE_DOWN, previewMiddleDownHandler);
+				preview.addEventListener(MouseEvent.MIDDLE_MOUSE_DOWN, previewMiddleDownHandler, true, int.MAX_VALUE, true);
 				
 				loaderInfo.uncaughtErrorEvents.addEventListener(UncaughtErrorEvent.UNCAUGHT_ERROR, function(ev:UncaughtErrorEvent):void
 				{
@@ -321,6 +322,7 @@
 				
 				publicPropertiesGrid.dataProvider = propertiesCollection;
 				publicMethodsGrid.dataProvider = methodsCollection;
+				stylesGrid.dataProvider = stylesCollection;
 				netList.dataProvider = netDP;
 				
 				publicPropertiesGrid.addEventListener('inspectProperty', function(ev:*):void
@@ -352,6 +354,22 @@
 					ev.success = success;
 				});
 				
+				stylesGrid.addEventListener('editProperty', function(ev:*):void
+				{
+					var info:* = ev.info;
+					var success:Boolean = true;
+					try
+					{
+						lastInspectTarget.setStyle(info.name, ev.value);
+					}
+					catch(e:*)
+					{
+						success = false;
+						log('Error setting style: '+e);
+					}
+					ev.success = success;
+				});
+				
 				breadCrumb.addEventListener('breadCrumbClick', function(ev:DynamicEvent):void
 				{
 					inspect(pathRefs[ev.index]);
@@ -378,6 +396,7 @@
 			private var lastInspectTarget:Object;
 			private var propertiesCollection:ArrayCollection = new ArrayCollection();
 			private var methodsCollection:ArrayCollection = new ArrayCollection();
+			private var stylesCollection:ArrayCollection = new ArrayCollection();
 			private var netDP:ArrayCollection = new ArrayCollection();
 			private var pathRefs:Array;
 			
@@ -437,11 +456,13 @@
 			{
 				propertiesCollection.removeAll();
 				methodsCollection.removeAll();
+				stylesCollection.removeAll();
 				
 				var description:XML = describeType(target);
 				var node:XML;
 				var name:String;
 				var key:*;
+				var value:*;
 				
 				var properties:Array = [];
 				
@@ -453,7 +474,6 @@
 				
 				for each(node in description.accessor)
 				{
-					var value:*;
 					var access:* = node.@access;
 					name = node.@name;
 					try
@@ -519,10 +539,57 @@
 				
 				methods.sortOn(['namespace', 'name']);
 				
-				inspectType.text = description.@name;
+				var factoryStyles:Object = {};
+				try
+				{
+					target.styleDeclaration.defaultFactory.apply(factoryStyles);
+				}
+				catch(e:*){}
+				try
+				{
+					target.styleDeclaration.factory.apply(factoryStyles);
+				}
+				catch(e:*){}
+				
+				for(name in factoryStyles)
+				{
+					value = null;
+					try
+					{
+						value = target.getStyle(name);
+					}
+					catch(e:*){}
+					stylesCollection.addItem({name: name, value: value});
+				}
+				
+				var styleNames:Array = ['left', 'top', 'right', 'bottom', 'horizontalCenter', 'verticalCenter',
+					'paddingBottom', 'paddingLeft', 'paddingRight', 'paddingTop', 'horizontalGap', 'verticalGap',
+					'backgroundAlpha', 'backgroundColor',
+					'baseline', 'color', 'direction', 'disabledColor', 'errorColor', 'focusAlpha', 'focusBlendMode',
+					'focusRoundedCorners', 'focusThickness', 'fontAntiAliasType', 'fontFamily', 'fontGridFitType',
+					'fontSharpness', 'fontSize', 'fontStyle', 'fontThickness', 'fontWeight', 'interactionMode',
+					'kerning', 'layoutDirection', 'leading', 'letterSpacing', 'textAlign', 'textDecoration',
+					'textFieldClass', 'textIndent', 'textRollOverColor', 'textSelectedColor'];
+				
+				for each(name in styleNames)
+				{
+					if(factoryStyles.hasOwnProperty(name))
+					{
+						continue;
+					}
+					value = null;
+					try
+					{
+						value = target.getStyle(name);
+					}
+					catch(e:*){}
+					stylesCollection.addItem({name: name, value: value});
+				}
 				
 				propertiesCollection.source = properties;
 				methodsCollection.source = methods;
+				
+				inspectType.text = description.@name;
 				
 				lastInspectTarget = target;
 			}
@@ -1076,6 +1143,16 @@
 					frameCount = 0;
 				}
 			}
+			
+			protected function button4_clickHandler(ev:MouseEvent):void
+			{
+				var bitmapData:BitmapData = new BitmapData(preview.width, preview.height);
+				bitmapData.draw(preview);
+				var encoder:PNGEncoder = new PNGEncoder();
+				var bytes:ByteArray = encoder.encode(bitmapData);
+				var file:File = File.applicationStorageDirectory.resolvePath('snapshot.'+(new Date().getTime())+'.png');
+				file.save(bytes);
+			}
 		]]>
 	</mx:Script>
 	<mx:states>
@@ -1186,14 +1263,25 @@
 								</mx:columns>
 							</mx:DataGrid>
 						</mx:Canvas>
+						<mx:Canvas width="100%" height="100%" label="Styles">
+							<mx:DataGrid id="stylesGrid" width="100%" height="100%" horizontalScrollPolicy="auto" variableRowHeight="true">
+								<mx:columns>
+									<mx:DataGridColumn headerText="Name" dataField="name" width="200"/>
+									<mx:DataGridColumn headerText="Value" dataField="value"
+													   itemRenderer="com.swfwire.debugger.flex.ui.PropertyValueRenderer"/>
+								</mx:columns>
+							</mx:DataGrid>
+						</mx:Canvas>
 					</mx:TabNavigator>
 				</mx:VBox>
 			</mx:HDividedBox>
 			<mx:VBox width="100%" height="100%">
-				<mx:HBox height="40">
-					<mx:Button id="inspectButton" label="Inspect" click="startInspection()" height="100%"/>
-					<mx:Button id="resetButton" label="Reset Position" click="preview.resetSWFPosition()" height="100%"/>
-					<mx:Button id="reloadButton" label="Reload" click="button2_clickHandler(event)" height="100%"/>
+				<mx:HBox height="40" width="100%">
+					<mx:Button id="inspectButton" label="Inspect" click="inspectButton.selected ? stopInspection() : startInspection()" height="100%"/>
+					<mx:Button label="Reset Position" click="preview.resetSWFPosition()" height="100%"/>
+					<mx:Button label="Snapshot" click="button4_clickHandler(event)" height="100%"/>
+					<mx:Spacer width="100%"/>
+					<mx:Button label="Reload" click="button2_clickHandler(event)" height="100%"/>
 				</mx:HBox>
 				<mx:TabNavigator id="tabnavigator1" width="100%" height="100%" creationPolicy="all" backgroundAlpha="1" backgroundColor="#2C2C2C"
 								 paddingBottom="5" paddingLeft="5" paddingTop="5" paddingRight="5" chromeColor="#131313" minHeight="0">

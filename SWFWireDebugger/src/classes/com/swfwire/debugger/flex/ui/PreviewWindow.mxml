@@ -18,15 +18,12 @@
 			
 			private function main():void
 			{
-				addEventListener(MouseEvent.MIDDLE_MOUSE_DOWN, previewMiddleDownHandler, false, 0, true);
-				addEventListener(MouseEvent.MOUSE_WHEEL, previewMiddleScrollHandler, false, 0, true);
+				addEventListener(MouseEvent.MIDDLE_MOUSE_DOWN, previewMiddleDownHandler, true, int.MAX_VALUE, true);
+				addEventListener(MouseEvent.MOUSE_WHEEL, previewMiddleScrollHandler, true, int.MAX_VALUE, true);
 			}
 			
 			private function loaderCompleteHandler(ev:Event):void
 			{
-				stage.scaleMode = StageScaleMode.SHOW_ALL;
-				stage.align = StageAlign.TOP_LEFT;
-				
 				resetSWFPosition();
 				
 				dispatchEvent(new Event('loaderComplete'));
@@ -62,6 +59,8 @@
 			
 			private function previewMiddleScrollHandler(ev:MouseEvent):void
 			{
+				ev.stopImmediatePropagation();
+				
 				var scaleFactor:Number = Math.pow(1.05, ev.delta);
 				
 				var mouseNow:Point = new Point(loader.mouseX, loader.mouseY);
