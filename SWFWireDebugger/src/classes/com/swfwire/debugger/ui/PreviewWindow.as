@@ -1,7 +1,9 @@
-package com.swfwire.debugger.flex.ui
+package com.swfwire.debugger.ui
 {
 	import com.swfwire.utils.DisplayUtil;
 	
+	import flash.display.DisplayObject;
+	import flash.display.Graphics;
 	import flash.display.Loader;
 	import flash.display.NativeWindow;
 	import flash.display.NativeWindowInitOptions;
@@ -11,6 +13,7 @@ package com.swfwire.debugger.flex.ui
 	import flash.events.Event;
 	import flash.events.MouseEvent;
 	import flash.geom.Point;
+	import flash.geom.Rectangle;
 	import flash.system.LoaderContext;
 	import flash.utils.ByteArray;
 	
@@ -20,8 +23,8 @@ package com.swfwire.debugger.flex.ui
 		public var content:Sprite;
 		public var overlay:Shape;
 		
-		private var swfWidth:Number;
-		private var swfHeight:Number;
+		private var previewStartDown:Point;
+		private var overlayGraphics:Graphics;
 		
 		public function PreviewWindow(owner:NativeWindow)
 		{
@@ -31,6 +34,8 @@ package com.swfwire.debugger.flex.ui
 			
 			content = new Sprite();
 			overlay = new Shape();
+			
+			overlayGraphics = overlay.graphics;
 			
 			stage.addChild(content);
 			stage.addChild(overlay);
@@ -45,8 +50,6 @@ package com.swfwire.debugger.flex.ui
 			
 			dispatchEvent(new Event('loaderComplete'));
 		}
-		
-		private var previewStartDown:Point;
 		
 		private function previewMiddleDownHandler(ev:MouseEvent):void
 		{
@@ -123,11 +126,8 @@ package com.swfwire.debugger.flex.ui
 		
 		public function setSWFSize(width:Number, height:Number):void
 		{
-			swfWidth = width;
-			swfHeight = height;
-			
-			width = swfWidth;
-			height = swfHeight;
+			this.width = width;
+			this.height = height;
 		}
 		
 		public function resetSWFPosition():void
@@ -139,9 +139,18 @@ package com.swfwire.debugger.flex.ui
 			loader.y = 0
 		}
 		
-		public function clearOverlay():void
+		public function highlight(target:DisplayObject, clear:Boolean = true):void
 		{
-			overlay.graphics.clear();
+			if(clear)
+			{
+				overlayGraphics.clear();
+			}
+			if(target)
+			{
+				overlayGraphics.lineStyle(4, 0x00FF00, 0.5);
+				var bounds:Rectangle = target.getRect(overlay);
+				overlayGraphics.drawRect(bounds.x, bounds.y, bounds.width, bounds.height);
+			}
 		}
 	}
 }

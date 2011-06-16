@@ -3,6 +3,7 @@ package com.swfwire.debugger
 	import com.swfwire.debugger.utils.ABCWrapper;
 	import com.swfwire.debugger.utils.InstructionLocation;
 	import com.swfwire.debugger.utils.InstructionTemplate;
+	import com.swfwire.decompiler.AsyncSWFModifier;
 	import com.swfwire.decompiler.abc.ABCReaderMetadata;
 	import com.swfwire.decompiler.abc.instructions.*;
 	import com.swfwire.decompiler.abc.tokens.*;
@@ -15,9 +16,6 @@ package com.swfwire.debugger
 	
 	import flash.utils.getTimer;
 
-	[Event(type="com.swfwire.debugger.events.AsyncSWFModifierEvent", name="run")]
-	[Event(type="com.swfwire.debugger.events.AsyncSWFModifierEvent", name="complete")]
-	
 	public class DebuggerAsyncModifier extends AsyncSWFModifier
 	{
 		private var phase:uint;

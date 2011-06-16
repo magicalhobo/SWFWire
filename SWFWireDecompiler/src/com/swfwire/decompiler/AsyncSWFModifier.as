@@ -1,11 +1,14 @@
-package com.swfwire.debugger
+package com.swfwire.decompiler
 {
-	import com.swfwire.debugger.events.AsyncSWFModifierEvent;
+	import com.swfwire.decompiler.events.AsyncSWFModifierEvent;
 	
 	import flash.events.EventDispatcher;
 	import flash.events.TimerEvent;
 	import flash.utils.Timer;
 	import flash.utils.getTimer;
+	
+	[Event(type="com.swfwire.decompiler.events.AsyncSWFModifierEvent", name="run")]
+	[Event(type="com.swfwire.decompiler.events.AsyncSWFModifierEvent", name="complete")]
 	
 	public class AsyncSWFModifier extends EventDispatcher
 	{
@@ -82,6 +85,7 @@ package com.swfwire.debugger
 		
 		protected function finish():void
 		{
+			timer.stop();
 			_active = false;
 		}
 	}

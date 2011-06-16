@@ -5,7 +5,7 @@ global
 {
 	color: #B7BABC;
 	chrome-color: #222222;
-	accent-color: #FF0000;
+	accent-color: #999999;
 	text-roll-over-color: #999999;
 	text-selected-color: #AAAAAA;
 	focus-color: #a4da0a;
@@ -73,11 +73,6 @@ mx|Button
 mx|NumericStepper
 {
 	content-background-alpha: 0;
-	/*
-	font-family: PixelFont;
-	font-lookup: embeddedCFF;
-	font-size: 10px;
-	*/
 	font-anti-alias-type: normal;
 	font-grid-fit-type: pixel;
 }

@@ -1,4 +1,4 @@
-package com.swfwire.debugger.events
+package com.swfwire.decompiler.events
 {
 	import flash.events.Event;
 

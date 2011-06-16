@@ -1,4 +1,4 @@
-package com.swfwire.debugger.flex.ui
+package com.swfwire.debugger.ui
 {
 	import mx.controls.TextArea;
 	import mx.events.FlexEvent;

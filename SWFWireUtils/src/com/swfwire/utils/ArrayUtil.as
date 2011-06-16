@@ -26,5 +26,24 @@ package com.swfwire.utils
 				return sortNumeric(a[prop], b[prop]);
 			}
 		}
+		
+		public static function compare(array1:Array, array2:Array):Boolean
+		{
+			var equal:Boolean = false;
+			var size:int = array1.length;
+			if(size == array2.length)
+			{
+				equal = true;
+				for(var iter:int = 0; iter < size; iter++)
+				{
+					if(array1[iter] !== array2[iter])
+					{
+						equal = false;
+						break;
+					}
+				}
+			}
+			return equal;
+		}
 	}
 }

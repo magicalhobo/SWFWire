@@ -21,7 +21,8 @@
 			}
 		]]>
 	</fx:Script>
-	<s:VGroup x="377" y="637" width="200" height="200" horizontalCenter="0" verticalCenter="0">
+	<s:VGroup x="377" y="637" width="200" height="200" contentBackgroundAlpha="1.0"
+			  contentBackgroundColor="#862D2D" horizontalCenter="0" verticalCenter="0">
 		<s:Button label="Click Me" click="button1_clickHandler(event)"/>
 		<mx:AdvancedDataGrid id="adg1" designViewDataType="tree">
 			<mx:columns>
