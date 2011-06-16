@@ -1,38 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mx:HBox xmlns:fx="http://ns.adobe.com/mxml/2009"
 		 xmlns:s="library://ns.adobe.com/flex/spark"
-		 xmlns:mx="library://ns.adobe.com/flex/mx">
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 initialize="initializeHandler(event)">
 	<fx:Script>
 		<![CDATA[
+			import mx.collections.ArrayCollection;
 			import mx.events.DynamicEvent;
+			import mx.events.FlexEvent;
 			
-			[Bindable]
-			public var history:Array;
+			public var collection:ArrayCollection;
+			
+			protected function initializeHandler(event:FlexEvent):void
+			{
+				collection = new ArrayCollection();
+				buttonRepeater.dataProvider = collection;
+			}
 			
 			protected function button1_clickHandler(ev:MouseEvent):void
 			{
 				var event:DynamicEvent = new DynamicEvent('breadCrumbClick');
-				event.index = Button(ev.currentTarget).repeaterIndex;
+				event.data = Button(ev.currentTarget).getRepeaterItem().reference;
 				dispatchEvent(event);
 			}
 			
 			protected function button1_rollOverHandler(ev:MouseEvent):void
 			{
 				var event:DynamicEvent = new DynamicEvent('breadCrumbRollOver');
-				event.index = Button(ev.currentTarget).repeaterIndex;
+				event.data = Button(ev.currentTarget).getRepeaterItem().reference;
 				dispatchEvent(event);
 			}
 			
 			protected function button1_rollOutHandler(ev:MouseEvent):void
 			{
 				var event:DynamicEvent = new DynamicEvent('breadCrumbRollOut');
-				event.index = Button(ev.currentTarget).repeaterIndex;
+				event.data = Button(ev.currentTarget).getRepeaterItem().reference;
 				dispatchEvent(event);
 			}
+			
+			protected function buttonRepeater_repeatEndHandler(event:FlexEvent):void
+			{
+				if(button)
+				{
+					for(var iter:int = 0; iter < Object(button).length; iter++)
+					{
+						button[iter].label = button[iter].getRepeaterItem().name;
+					}
+				}
+			}
+			
 		]]>
 	</fx:Script>
-	<mx:Repeater id="buttonRepeater" dataProvider="{history}">
-		<mx:Button height="100%" minWidth="0" label="{buttonRepeater.currentItem}"
+	<mx:Repeater id="buttonRepeater" repeatEnd="buttonRepeater_repeatEndHandler(event)">
+		<mx:Button id="button" height="100%" minWidth="0"
 				   click="button1_clickHandler(event)" rollOut="button1_rollOutHandler(event)"
 				   rollOver="button1_rollOverHandler(event)"/>
 	</mx:Repeater>

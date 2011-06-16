@@ -176,12 +176,13 @@
 					
 					//loaderClass.overrideApplicationDomain = new ApplicationDomain(preview.loader.contentLoaderInfo.applicationDomain);
 					
-					if(!sanityCheck)
-					{
-						logger.newObject(preview.loader.content);
-					}
+					var target:DisplayObject = preview.loader.content;
 					
-					inspect(preview.loader.content);
+					logger.newObject(target);
+					inspect(target);
+					var name:String = getQualifiedClassName(target);
+					name = name.split('::').pop();
+					breadCrumb.collection.addItem({name: name, reference: target});
 				});
 				
 				var context:LoaderContext = new LoaderContext();
@@ -395,11 +396,11 @@
 				
 				breadCrumb.addEventListener('breadCrumbClick', function(ev:DynamicEvent):void
 				{
-					inspect(lastHits[ev.index]);
+					inspect(ev.data);
 				});
 				breadCrumb.addEventListener('breadCrumbRollOver', function(ev:DynamicEvent):void
 				{
-					preview.highlight(lastHits[ev.index]);
+					preview.highlight(ev.data);
 				});
 				breadCrumb.addEventListener('breadCrumbRollOut', function(ev:DynamicEvent):void
 				{
@@ -418,28 +419,35 @@
 			{
 				var point:Point = new Point(preview.stage.mouseX, preview.stage.mouseY);
 				var hits:Array = preview.stage.getObjectsUnderPoint(point);
+				hits.unshift(preview.loader.content);
 				
 				var changed:Boolean = !ArrayUtil.compare(hits, lastHits);
 				
 				if(changed)
 				{
 					var path:Array = [];
-					lastHits = [];
 					
 					preview.highlight(null);
 					
 					var target:DisplayObject;
 					var rect:Rectangle;
 					
+					breadCrumb.collection.removeAll();
+					
 					for(var iter:int = 0; iter < hits.length; iter++)
 					{
 						target = hits[iter];
-						preview.highlight(target, false);
-						path.push(target.name);
-						lastHits.push(target);
+						if(preview.loader.contains(target))
+						{
+							preview.highlight(target, false);
+							var name:String = getQualifiedClassName(target);
+							name = name.split('::').pop();
+							breadCrumb.collection.addItem({name: name, reference: target});
+						}
 					}
 					
-					breadCrumb.history = path;
+					breadCrumb.collection.refresh();
+					lastHits = hits;
 					
 					if(target)
 					{
@@ -523,6 +531,8 @@
 				}
 				catch(e:*){}
 				
+				var hasGetStyle:Boolean = false;
+				
 				for each(node in description.method)
 				{
 					name = node.@name;
@@ -530,56 +540,75 @@
 					{
 						continue;
 					}
+					if(name == 'getStyle')
+					{
+						hasGetStyle = true;
+					}
 					methods.push({namespace: 'public', name: name});
 				}
 				
 				methods.sortOn(['namespace', 'name']);
 				
-				var factoryStyles:Object = {};
-				try
+				if(hasGetStyle)
 				{
-					target.styleDeclaration.defaultFactory.apply(factoryStyles);
-				}
-				catch(e:*){}
-				try
-				{
-					target.styleDeclaration.factory.apply(factoryStyles);
-				}
-				catch(e:*){}
-				
-				for(name in factoryStyles)
-				{
-					value = null;
+					if(stylesCanvas.parent != inspectTabs)
+					{
+						inspectTabs.addChild(stylesCanvas);
+					}
+
+					var factoryStyles:Object = {};
 					try
 					{
-						value = target.getStyle(name);
+						target.styleDeclaration.defaultFactory.apply(factoryStyles);
 					}
 					catch(e:*){}
-					stylesCollection.addItem({name: name, value: value});
-				}
-				
-				var styleNames:Array = ['left', 'top', 'right', 'bottom', 'horizontalCenter', 'verticalCenter',
-					'paddingBottom', 'paddingLeft', 'paddingRight', 'paddingTop', 'horizontalGap', 'verticalGap',
-					'backgroundAlpha', 'backgroundColor', 'contentBackgroundAlpha', 'contentBackgroundColor',
-					'baseline', 'color', 'direction', 'disabledColor', 'errorColor', 'focusAlpha', 'focusBlendMode',
-					'focusRoundedCorners', 'focusThickness', 'fontAntiAliasType', 'fontFamily', 'fontGridFitType',
-					'fontSharpness', 'fontSize', 'fontStyle', 'fontThickness', 'fontWeight', 'interactionMode',
-					'kerning', 'layoutDirection', 'leading', 'letterSpacing', 'textAlign', 'textDecoration',
-					'textFieldClass', 'textIndent', 'textRollOverColor', 'textSelectedColor'];
-				
-				for each(name in styleNames)
-				{
-					if(factoryStyles.hasOwnProperty(name))
-					{
-						continue;
-					}
-					value = null;
 					try
 					{
-						value = target.getStyle(name);
+						target.styleDeclaration.factory.apply(factoryStyles);
 					}
 					catch(e:*){}
-					stylesCollection.addItem({name: name, value: value});
+					
+					for(name in factoryStyles)
+					{
+						value = null;
+						try
+						{
+							value = target.getStyle(name);
+						}
+						catch(e:*){}
+						stylesCollection.addItem({name: name, value: value});
+					}
+					
+					var styleNames:Array = ['left', 'top', 'right', 'bottom', 'horizontalCenter', 'verticalCenter',
+						'paddingBottom', 'paddingLeft', 'paddingRight', 'paddingTop', 'horizontalGap', 'verticalGap',
+						'backgroundAlpha', 'backgroundColor', 'contentBackgroundAlpha', 'contentBackgroundColor',
+						'baseline', 'color', 'direction', 'disabledColor', 'errorColor', 'focusAlpha', 'focusBlendMode',
+						'focusRoundedCorners', 'focusThickness', 'fontAntiAliasType', 'fontFamily', 'fontGridFitType',
+						'fontSharpness', 'fontSize', 'fontStyle', 'fontThickness', 'fontWeight', 'interactionMode',
+						'kerning', 'layoutDirection', 'leading', 'letterSpacing', 'textAlign', 'textDecoration',
+						'textFieldClass', 'textIndent', 'textRollOverColor', 'textSelectedColor'];
+					
+					for each(name in styleNames)
+					{
+						if(factoryStyles.hasOwnProperty(name))
+						{
+							continue;
+						}
+						value = null;
+						try
+						{
+							value = target.getStyle(name);
+						}
+						catch(e:*){}
+						stylesCollection.addItem({name: name, value: value});
+					}
+				}
+				else
+				{
+					if(stylesCanvas.parent == inspectTabs)
+					{
+						inspectTabs.removeChild(stylesCanvas);
+					}
 				}
 				
 				propertiesCollection.source = properties;
@@ -741,7 +770,7 @@
 				
 				if(shouldModify)
 				{
-					var modifier:DebuggerAsyncModifier = new DebuggerAsyncModifier(swf, metadata, false && instance == null);
+					var modifier:DebuggerAsyncModifier = new DebuggerAsyncModifier(swf, metadata, instance == null);
 					
 					if(!instance)
 					{
@@ -1150,7 +1179,6 @@
 			<mx:RemoveChild target="{modifyProgress}"/>
 			<mx:RemoveChild target="{writeProgress}"/>
 			<mx:RemoveChild target="{systemLog}"/>
-			<mx:RemoveChild target="{breadCrumb}"/>
 			<mx:RemoveChild target="{stats}"/>
 		</mx:State>
 		<mx:State name="loading">
@@ -1159,7 +1187,6 @@
 			<mx:RemoveChild target="{modifyProgress}"/>
 			<mx:RemoveChild target="{writeProgress}"/>
 			<mx:RemoveChild target="{swfDropTarget}"/>
-			<mx:RemoveChild target="{breadCrumb}"/>
 			<mx:RemoveChild target="{stats}"/>
 		</mx:State>
 		<mx:State name="reading">
@@ -1168,7 +1195,6 @@
 			<mx:RemoveChild target="{loadProgress}"/>
 			<mx:RemoveChild target="{writeProgress}"/>
 			<mx:RemoveChild target="{modifyProgress}"/>
-			<mx:RemoveChild target="{breadCrumb}"/>
 			<mx:RemoveChild target="{stats}"/>
 		</mx:State>
 		<mx:State name="modifying">
@@ -1177,7 +1203,6 @@
 			<mx:RemoveChild target="{loadProgress}"/>
 			<mx:RemoveChild target="{readProgress}"/>
 			<mx:RemoveChild target="{writeProgress}"/>
-			<mx:RemoveChild target="{breadCrumb}"/>
 			<mx:RemoveChild target="{stats}"/>
 		</mx:State>
 		<mx:State name="writing">
@@ -1186,7 +1211,6 @@
 			<mx:RemoveChild target="{loadProgress}"/>
 			<mx:RemoveChild target="{readProgress}"/>
 			<mx:RemoveChild target="{modifyProgress}"/>
-			<mx:RemoveChild target="{breadCrumb}"/>
 			<mx:RemoveChild target="{stats}"/>
 		</mx:State>
 		<mx:State name="loaded">
@@ -1202,7 +1226,6 @@
 		<mx:Button styleName="logo"/>
 		<ui:StatsGraph id="stats" width="100%" height="100%" creationComplete="stats_creationCompleteHandler(event)"/>
 	</mx:HBox>
-	<ui:BreadCrumb id="breadCrumb" width="100%" minWidth="0"/>
 	<mx:Canvas width="100%" height="100%" id="swfDropTarget" backgroundColor="#000000" backgroundAlpha="0">
 		<mx:VBox horizontalCenter="0" verticalCenter="0" horizontalAlign="center" id="vbox1" width="100%">
 			<mx:Label text="Drop File Here" styleName="bigText"/>
@@ -1228,8 +1251,9 @@
 		<mx:VDividedBox width="100%" height="100%">
 			<mx:HDividedBox width="100%" height="100%">
 				<mx:VBox width="400" height="100%" verticalGap="0">
+					<ui:BreadCrumb id="breadCrumb" width="100%" minWidth="0"/>
 					<mx:Label id="inspectType" width="100%"/>
-					<mx:TabNavigator id="tabnavigator2" width="100%" height="100%" creationPolicy="all" backgroundAlpha="1" backgroundColor="#2C2C2C"
+					<mx:TabNavigator id="inspectTabs" width="100%" height="100%" creationPolicy="all" backgroundAlpha="1" backgroundColor="#2C2C2C"
 									 paddingBottom="5" paddingLeft="5" paddingTop="5" paddingRight="5" chromeColor="#131313" minHeight="0">
 						<mx:Canvas width="100%" height="100%" label="Properties">
 							<mx:DataGrid id="publicPropertiesGrid" width="100%" height="100%" horizontalScrollPolicy="auto" variableRowHeight="true">
@@ -1250,7 +1274,7 @@
 								</mx:columns>
 							</mx:DataGrid>
 						</mx:Canvas>
-						<mx:Canvas width="100%" height="100%" label="Styles">
+						<mx:Canvas id="stylesCanvas" width="100%" height="100%" label="Styles">
 							<mx:DataGrid id="stylesGrid" width="100%" height="100%" horizontalScrollPolicy="auto" variableRowHeight="true">
 								<mx:columns>
 									<mx:DataGridColumn headerText="Name" dataField="name" width="200"/>

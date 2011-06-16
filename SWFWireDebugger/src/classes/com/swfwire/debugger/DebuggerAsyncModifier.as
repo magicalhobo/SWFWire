@@ -19,22 +19,22 @@ package com.swfwire.debugger
 	public class DebuggerAsyncModifier extends AsyncSWFModifier
 	{
 		private var phase:uint;
-		private var iTag:uint;
+		private var currentTagId:uint;
 		private var swf:SWF;
 		private var metadata:Vector.<ABCReaderMetadata>;
-		private var deferConstructor:Boolean;
+		private var addToStage:Boolean;
 		public var foundMainClass:Boolean;
 		public var mainClassPackage:String;
 		public var mainClassName:String;
 		public var backgroundColor:uint;
 		
-		public function DebuggerAsyncModifier(swf:SWF, metadata:Vector.<ABCReaderMetadata>, deferConstructor:Boolean = true, timeLimit:uint = 100)
+		public function DebuggerAsyncModifier(swf:SWF, metadata:Vector.<ABCReaderMetadata>, addToStage:Boolean = true, timeLimit:uint = 100)
 		{
 			super(timeLimit);
 			
 			this.swf = swf;
 			this.metadata = metadata;
-			this.deferConstructor = deferConstructor;
+			this.addToStage = addToStage;
 		}
 		
 		override public function start():Boolean
@@ -42,7 +42,7 @@ package com.swfwire.debugger
 			if(super.start())
 			{
 				phase = 1;
-				iTag = 0;
+				currentTagId = 0;
 				return true;
 			}
 			return false;
@@ -65,7 +65,7 @@ package com.swfwire.debugger
 					break;
 			}
 			
-			return iTag/swf.tags.length;
+			return currentTagId/swf.tags.length;
 		}
 		
 		protected function phase1():void
@@ -247,12 +247,12 @@ package com.swfwire.debugger
 		
 		protected function phase3():void
 		{
-			if(iTag < swf.tags.length)
+			if(currentTagId < swf.tags.length)
 			{
-				var abcTag:DoABCTag = swf.tags[iTag] as DoABCTag;
+				var abcTag:DoABCTag = swf.tags[currentTagId] as DoABCTag;
 				if(abcTag)
 				{
-					var wrapper:ABCWrapper = new ABCWrapper(abcTag.abcFile, metadata[iTag]);
+					var wrapper:ABCWrapper = new ABCWrapper(abcTag.abcFile, metadata[currentTagId]);
 					var cpool:ConstantPoolToken = abcTag.abcFile.cpool;
 					
 					var injectedNamespace:uint = wrapper.addNamespaceFromString('com.swfwire.debugger.injected');
@@ -275,29 +275,31 @@ package com.swfwire.debugger
 					convert('flash.net', 'NetConnection');
 					convert('flash.display', 'Loader');
 					
-					var rootInstance:InstanceToken = wrapper.getInstance(wrapper.getMultinameIndex(mainClassPackage, mainClassName));
-					
-					if(rootInstance)
+					if(addToStage)
 					{
-						var rootConstructor:MethodBodyInfoToken = wrapper.findMethodBody(rootInstance.iinit);
-						
-						var globalClassIndex:int = wrapper.addQName(
-							wrapper.addNamespaceFromString('com.swfwire.debugger.injected'), 
-							wrapper.addString('Globals'));
-						
-						var stageIndex:int = wrapper.addQName(
-							wrapper.addNamespaceFromString(''), 
-							wrapper.addString('stage'));
-						
-						var addChildIndex:int = wrapper.addQName(
-							wrapper.addNamespaceFromString(''), 
-							wrapper.addString('addChild'));
-						
-						rootConstructor.instructions.splice(0, 0,
-							new Instruction_getlex(globalClassIndex),
-							new Instruction_getproperty(stageIndex),
-							new Instruction_getlocal0(),
-							new Instruction_callpropvoid(addChildIndex, 1));
+						var rootInstance:InstanceToken = wrapper.getInstance(wrapper.getMultinameIndex(mainClassPackage, mainClassName));
+						if(rootInstance)
+						{
+							var rootConstructor:MethodBodyInfoToken = wrapper.findMethodBody(rootInstance.iinit);
+							
+							var globalClassIndex:int = wrapper.addQName(
+								wrapper.addNamespaceFromString('com.swfwire.debugger.injected'), 
+								wrapper.addString('Globals'));
+							
+							var stageIndex:int = wrapper.addQName(
+								wrapper.addNamespaceFromString(''), 
+								wrapper.addString('stage'));
+							
+							var addChildIndex:int = wrapper.addQName(
+								wrapper.addNamespaceFromString(''), 
+								wrapper.addString('addChild'));
+							
+							rootConstructor.instructions.splice(0, 0,
+								new Instruction_getlex(globalClassIndex),
+								new Instruction_getproperty(stageIndex),
+								new Instruction_getlocal0(),
+								new Instruction_callpropvoid(addChildIndex, 1));
+						}
 					}
 					
 					for(var iterInstance:int = 0; iterInstance < abcTag.abcFile.instances.length; iterInstance++)
@@ -356,16 +358,23 @@ package com.swfwire.debugger
 						enumeratePropertiesInstructions.push(new Instruction_returnvalue());
 						createMethod(abcTag, wrapper, thisInstance, 'swfWire_enumerateProperties_'+uniqueID, enumeratePropertiesInstructions, enumeratePropertiesInstructions.length);
 
-						var wildcardNSSet:NamespaceSetToken = new NamespaceSetToken();
+						var instanceNamespace:String = wrapper.getQNameString(thisInstance.name, ':');
+						var instanceNamespaceIndex:int = wrapper.addString(instanceNamespace);
+						
+						var instanceNSSet:NamespaceSetToken = new NamespaceSetToken();
+						instanceNSSet.namespaces.push(cpool.namespaces.length);
+						cpool.namespaces.push(new NamespaceToken(NamespaceToken.KIND_PrivateNs, instanceNamespaceIndex));
+						cpool.namespaces.push(new NamespaceToken(NamespaceToken.KIND_ProtectedNamespace, instanceNamespaceIndex));
+						
 						for(var iterNS:int = 1; iterNS < cpool.namespaces.length; iterNS++)
 						{
-							wildcardNSSet.namespaces.push(iterNS);
+							instanceNSSet.namespaces.push(iterNS);
 						}
-						wildcardNSSet.count = wildcardNSSet.namespaces.length;
-						var wildcardNSSetIndex:int = cpool.nsSets.length;
-						cpool.nsSets.push(wildcardNSSet);
+						instanceNSSet.count = instanceNSSet.namespaces.length;
+						var instanceNSSetIndex:int = cpool.nsSets.length;
+						cpool.nsSets.push(instanceNSSet);
 						
-						var wildcardMultiname:MultinameToken = new MultinameToken(MultinameToken.KIND_MultinameL, new MultinameMultinameLToken(wildcardNSSetIndex));
+						var wildcardMultiname:MultinameToken = new MultinameToken(MultinameToken.KIND_MultinameL, new MultinameMultinameLToken(instanceNSSetIndex));
 						var wildcardMultinameIndex:int = cpool.multinames.length;
 						cpool.multinames.push(wildcardMultiname);
 						
@@ -608,7 +617,7 @@ package com.swfwire.debugger
 								
 								j9.unshift(new Instruction_getlocal0());
 								
-								var methodId:int = wrapper.addString(iTag+'.'+String(i9));
+								var methodId:int = wrapper.addString(currentTagId+'.'+String(i9));
 								var methodName:String = nameFromMethodId[mb.method];
 								if(methodName)
 								{
@@ -633,7 +642,7 @@ package com.swfwire.debugger
 							{
 								a.unshift(new Instruction_callpropvoid(exitFunctionIndex, 1));
 								
-								var methodId:int =  wrapper.addString(iTag+'.'+z.methodBody);
+								var methodId:int =  wrapper.addString(currentTagId+'.'+z.methodBody);
 								var methodName:String = nameFromMethodId[mb.method];
 								if(methodName)
 								{
@@ -662,7 +671,7 @@ package com.swfwire.debugger
 								a.unshift(new Instruction_callpropvoid(exitFunctionIndex, 2));
 								a.unshift(new Instruction_swap());
 								
-								var methodId:int =  wrapper.addString(iTag+'.'+z.methodBody);
+								var methodId:int =  wrapper.addString(currentTagId+'.'+z.methodBody);
 								var methodName:String = nameFromMethodId[mb.method];
 								if(methodName)
 								{
@@ -679,7 +688,7 @@ package com.swfwire.debugger
 						});
 					}
 				}
-				iTag++;
+				currentTagId++;
 			}
 			else
 			{
