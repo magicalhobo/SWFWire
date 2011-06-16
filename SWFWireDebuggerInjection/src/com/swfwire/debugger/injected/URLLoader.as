@@ -9,12 +9,14 @@ package com.swfwire.debugger.injected
 	import flash.events.SecurityErrorEvent;
 	import flash.net.URLLoader;
 	import flash.net.URLRequest;
+	import flash.net.URLRequestHeader;
 	import flash.utils.Dictionary;
 	
 	public class URLLoader extends flash.net.URLLoader
 	{
 		public static var globalEvents:EventDispatcher = new EventDispatcher();
 		public static var applicationRoot:String = '';
+		public static var referer:String = '';
 		
 		private static var urlMap:Dictionary = new Dictionary(true);
 		
@@ -61,7 +63,9 @@ package com.swfwire.debugger.injected
 				}
 				request.url = applicationRoot + request.url;
 			}
-			//request.url = 'http://localhost/proxy?url='+encodeURIComponent(request.url);
+			
+			request.requestHeaders.push(new URLRequestHeader('Referer', referer));
+			
 			super.load(request);
 		}
 		
