@@ -34,6 +34,7 @@
 			import com.swfwire.utils.ObjectUtil;
 			import com.swfwire.utils.air.WindowTracker;
 			
+			import flash.utils.getQualifiedClassName;
 			import flash.utils.getTimer;
 			
 			import mx.collections.ArrayCollection;
@@ -64,7 +65,7 @@
 			
 			private var sanityCheck:Boolean = false;
 			
-			private var preview:PreviewWindow = new PreviewWindow();
+			private var preview:PreviewWindow = new PreviewWindow(nativeWindow);
 			
 			private function main():void
 			{
@@ -94,7 +95,6 @@
 					}
 				});
 				preview.alwaysInFront = true;
-				preview.open();
 				
 				appUpdater = new ApplicationUpdaterUI();
 				appUpdater.configurationFile = new File('app:/updateConfig.xml');
@@ -120,7 +120,7 @@
 				swfDropTarget.addEventListener(NativeDragEvent.NATIVE_DRAG_ENTER,	 dragEnterHandler);
 				swfDropTarget.addEventListener(NativeDragEvent.NATIVE_DRAG_DROP,	 dragDropHandler);
 				
-				preview.addEventListener(MouseEvent.MIDDLE_MOUSE_DOWN, previewMiddleDownHandler, true, int.MAX_VALUE, true);
+				preview.stage.addEventListener(MouseEvent.MIDDLE_MOUSE_DOWN, previewMiddleDownHandler, true, int.MAX_VALUE, true);
 				
 				loaderInfo.uncaughtErrorEvents.addEventListener(UncaughtErrorEvent.UNCAUGHT_ERROR, function(ev:UncaughtErrorEvent):void
 				{
@@ -164,8 +164,6 @@
 					if(!sanityCheck)
 					{
 						logger.newObject(preview.loader.content);
-						preview.invalidateDisplayList();
-						preview.validateDisplayList();
 					}
 					
 					inspect(preview.loader.content);
@@ -203,13 +201,16 @@
 					var loaderClass:* = injectedAppDomain.getDefinition('com.swfwire.debugger.injected.Loader');
 					loaderClass.globalEvents.addEventListener('loadComplete', function(ev:*):void
 					{
-						ev.instance.loadBytes(ev.data);
 						var data:ByteArray = ev.data as ByteArray;
-						var startPosition:uint = data.position;
-						data.position = 0;
-						var signature:String = data.readUTFBytes(3);
-						data.position = startPosition;
-						
+						ev.instance.loadBytes(data);
+						var signature:String;
+						if(data.length > 3)
+						{
+							var startPosition:uint = data.position;
+							data.position = 0;
+							signature = data.readUTFBytes(3);
+							data.position = startPosition;
+						}
 						if(signature == 'FWS' || signature == 'CWS')
 						{
 							log('[SWF] '+ev.request.url+' - Load complete');
@@ -218,10 +219,14 @@
 					loaderClass.globalEvents.addEventListener('loadBytes', function(ev:*):void
 					{
 						var data:ByteArray = ev.bytes as ByteArray;
-						var startPosition:uint = data.position;
-						data.position = 0;
-						var signature:String = data.readUTFBytes(3);
-						data.position = startPosition;
+						var signature:String;
+						if(data.length > 3)
+						{
+							var startPosition:uint = data.position;
+							data.position = 0;
+							signature = data.readUTFBytes(3);
+							data.position = startPosition;
+						}
 						
 						if(signature == 'FWS' || signature == 'CWS')
 						{
@@ -345,6 +350,11 @@
 						{
 							success = lastInspectTarget[setPropertyMethod](info.name, ev.value);
 						}
+						catch(e2:ReferenceError)
+						{
+							success = false;
+							logOut.text += 'Error setting property: '+e+'\n';
+						}
 						catch(e:*)
 						{
 							success = false;
@@ -374,6 +384,14 @@
 				{
 					inspect(pathRefs[ev.index]);
 				});
+				breadCrumb.addEventListener('breadCrumbRollOver', function(ev:DynamicEvent):void
+				{
+					highlight(pathRefs[ev.index]);
+				});
+				breadCrumb.addEventListener('breadCrumbRollOut', function(ev:DynamicEvent):void
+				{
+					highlight(null);
+				});
 				
 				injectionLoader.load(new URLRequest(librarySwf), context);
 			}
@@ -398,57 +416,74 @@
 			private var methodsCollection:ArrayCollection = new ArrayCollection();
 			private var stylesCollection:ArrayCollection = new ArrayCollection();
 			private var netDP:ArrayCollection = new ArrayCollection();
-			private var pathRefs:Array;
+			private var pathRefs:Array = [];
+			
+			private function arraysEqual(r1:Array, r2:Array):Boolean
+			{
+				var equal:Boolean = false;
+				if(r1.length == r2.length)
+				{
+					equal = true;
+					for(var iter:int = 0; iter < r1.length; iter++)
+					{
+						if(r1[iter] !== r2[iter])
+						{
+							equal = false;
+							break;
+						}
+					}
+				}
+				return equal;
+			}
 			
 			private function inspectHandler(ev:MouseEvent):void
 			{
-				var previewOverlay:UIComponent = preview.overlay;
+				var previewOverlay:Shape = preview.overlay;
 				
-				//var point:Point = new Point(stage.mouseX, stage.mouseY);
 				var point:Point = new Point(preview.stage.mouseX, preview.stage.mouseY);
 				var hits:Array = preview.stage.getObjectsUnderPoint(point);
 				
-				var target:DisplayObject = hits.pop();
-				if(target == previewOverlay)
+				var target:DisplayObject;
+				var rect:Rectangle;
+				
+				var changed:Boolean = !arraysEqual(hits, pathRefs);
+				
+				if(changed)
 				{
-					target = hits.pop();
-				}
-				if(target && !preview.loader.contains(target))
-				{
-					target = preview.loader.content;
-				}
-
-				if(target != lastTarget)
-				{
-					lastTarget = target;
+					var path:Array = [];
+					pathRefs = [];
 					
 					var overlayGraphics:Graphics = previewOverlay.graphics;
 					overlayGraphics.clear();
-					var path:Array = [];
-					pathRefs = [];
-					if(target)
+					overlayGraphics.lineStyle(4, 0x00FF00, 0.5);
+					
+					for(var iter:int = 0; iter < hits.length; iter++)
 					{
-						var rect:Rectangle = target.getRect(previewOverlay);
-						overlayGraphics.lineStyle(4, 0x00FF00, 0.5);
+						target = hits[iter];
+						rect = target.getRect(previewOverlay);
 						overlayGraphics.drawRect(rect.x, rect.y, rect.width, rect.height);
-						
-						while(target && target.parent)
-						{
-							if(target == preview.loader)
-							{
-								break;
-							}
-							path.push(target.name);
-							pathRefs.push(target);
-							target = target.parent;
-						}
-						path.reverse();
-						pathRefs.reverse();
-						//path = DisplayUtil.getDisplayObjectPath(target, preview.loader.content);
-						inspect(lastTarget);
+						path.push(target.name);
+						pathRefs.push(target);
 					}
+					
 					breadCrumb.history = path;
-					//inspectOut.text += ObjectUtil.objectToString(lowT, 2, 3, 50, 50, '  ');
+					
+					if(target && target != lastTarget)
+					{
+						inspect(target);
+					}
+				}
+			}
+			
+			private function highlight(target:DisplayObject):void
+			{
+				var overlayGraphics:Graphics = preview.overlay.graphics;
+				overlayGraphics.clear();
+				if(target)
+				{
+					overlayGraphics.lineStyle(4, 0x00FF00, 0.5);
+					var rect:Rectangle = target.getRect(preview.overlay);
+					overlayGraphics.drawRect(rect.x, rect.y, rect.width, rect.height);
 				}
 			}
 			
@@ -564,7 +599,7 @@
 				
 				var styleNames:Array = ['left', 'top', 'right', 'bottom', 'horizontalCenter', 'verticalCenter',
 					'paddingBottom', 'paddingLeft', 'paddingRight', 'paddingTop', 'horizontalGap', 'verticalGap',
-					'backgroundAlpha', 'backgroundColor',
+					'backgroundAlpha', 'backgroundColor', 'contentBackgroundAlpha', 'contentBackgroundColor',
 					'baseline', 'color', 'direction', 'disabledColor', 'errorColor', 'focusAlpha', 'focusBlendMode',
 					'focusRoundedCorners', 'focusThickness', 'fontAntiAliasType', 'fontFamily', 'fontGridFitType',
 					'fontSharpness', 'fontSize', 'fontStyle', 'fontThickness', 'fontWeight', 'interactionMode',
@@ -996,16 +1031,16 @@
 				inspectButton.selected = true;
 				preview.loader.mouseEnabled = false;
 				preview.loader.mouseChildren = false;
-				preview.addEventListener(MouseEvent.MOUSE_MOVE, inspectHandler);
-				preview.addEventListener(MouseEvent.MOUSE_UP, inspect_mouseUpHandler);
+				preview.stage.addEventListener(MouseEvent.MOUSE_MOVE, inspectHandler);
+				preview.stage.addEventListener(MouseEvent.MOUSE_UP, inspect_mouseUpHandler);
 				preview.clearOverlay();
 			}
 			
 			protected function stopInspection():void
 			{
 				inspectButton.selected = false;
-				preview.removeEventListener(MouseEvent.MOUSE_UP, inspect_mouseUpHandler);
-				preview.removeEventListener(MouseEvent.MOUSE_MOVE, inspectHandler);
+				preview.stage.removeEventListener(MouseEvent.MOUSE_UP, inspect_mouseUpHandler);
+				preview.stage.removeEventListener(MouseEvent.MOUSE_MOVE, inspectHandler);
 				preview.loader.mouseChildren = true;
 				preview.loader.mouseEnabled = true;
 				preview.clearOverlay();
@@ -1147,10 +1182,10 @@
 			protected function button4_clickHandler(ev:MouseEvent):void
 			{
 				var bitmapData:BitmapData = new BitmapData(preview.width, preview.height);
-				bitmapData.draw(preview);
+				bitmapData.draw(preview.stage);
 				var encoder:PNGEncoder = new PNGEncoder();
 				var bytes:ByteArray = encoder.encode(bitmapData);
-				var file:File = File.applicationStorageDirectory.resolvePath('snapshot.'+(new Date().getTime())+'.png');
+				var file:File = File.documentsDirectory.resolvePath('snapshot.'+(new Date().getTime())+'.png');
 				file.save(bytes);
 			}
 		]]>
@@ -1215,7 +1250,7 @@
 		<mx:Button styleName="logo"/>
 		<ui:StatsGraph id="stats" width="100%" height="100%" creationComplete="stats_creationCompleteHandler(event)"/>
 	</mx:HBox>
-	<ui:BreadCrumb id="breadCrumb" width="100%" height="26"/>
+	<ui:BreadCrumb id="breadCrumb" width="100%" minWidth="0"/>
 	<mx:Canvas width="100%" height="100%" id="swfDropTarget" backgroundColor="#000000" backgroundAlpha="0">
 		<mx:VBox horizontalCenter="0" verticalCenter="0" horizontalAlign="center" id="vbox1" width="100%">
 			<mx:Label text="Drop File Here" styleName="bigText"/>
