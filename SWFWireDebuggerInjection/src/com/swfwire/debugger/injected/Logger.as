@@ -236,6 +236,18 @@ package com.swfwire.debugger.injected
 			return;
 		}
 		
+		public static function getClassName(object:*):String
+		{
+			var result:String = getQualifiedClassName(object);
+			switch(result)
+			{
+				case 'com.swfwire.debugger.injected::URLLoader':
+					result = 'flash.net::URLLoader';
+					break;
+			}
+			return result;
+		}
+		
 		public static function newObject(object:*):void
 		{
 			if(object)
@@ -249,18 +261,6 @@ package com.swfwire.debugger.injected
 					_log('new '+getQualifiedClassName(object));
 				}
 			}
-		}
-		
-		public static function getClassName(object:*):String
-		{
-			var result:String = getQualifiedClassName(object);
-			switch(result)
-			{
-				case 'com.swfwire.debugger.injected::URLLoader':
-					result = 'flash.net::URLLoader';
-					break;
-			}
-			return result;
 		}
 		
 		public static function enumerateObjects():Array
@@ -297,6 +297,11 @@ package com.swfwire.debugger.injected
 				}
 			}
 			return result;
+		}
+		
+		public static function getObjectData(object:*):Object
+		{
+			return objectReferences[object];
 		}
 		
 		public static function uncaughtError(e:* = null):void

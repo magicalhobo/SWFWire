@@ -65,7 +65,7 @@
 			
 			private var sanityCheck:Boolean = false;
 			
-			private var preview:PreviewWindow = new PreviewWindow(nativeWindow);
+			private var preview:PreviewWindow = new PreviewWindow();
 			private var injectionLoader:Loader;
 			
 			private var propertiesCollection:ArrayCollection = new ArrayCollection();
@@ -615,7 +615,17 @@
 				propertiesCollection.source = properties;
 				methodsCollection.source = methods;
 				
-				inspectType.text = description.@name;
+				var objectData:Object = logger.getObjectData(target);
+				
+				if(objectData)
+				{
+					var method:String = objectData.method ? ' in ' + objectData.method : '';
+					inspectType.text = '#' + objectData.id + '  ' + description.@name + ' created' + method + ' at ' + objectData.creationTime + 'ms';
+				}
+				else
+				{
+					inspectType.text = description.@name;
+				}
 				
 				lastInspectTarget = target;
 			}

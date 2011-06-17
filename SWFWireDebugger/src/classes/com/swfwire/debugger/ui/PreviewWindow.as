@@ -10,6 +10,8 @@ package com.swfwire.debugger.ui
 	import flash.display.NativeWindowType;
 	import flash.display.Shape;
 	import flash.display.Sprite;
+	import flash.display.StageAlign;
+	import flash.display.StageScaleMode;
 	import flash.events.Event;
 	import flash.events.MouseEvent;
 	import flash.geom.Point;
@@ -26,11 +28,13 @@ package com.swfwire.debugger.ui
 		private var previewStartDown:Point;
 		private var overlayGraphics:Graphics;
 		
-		public function PreviewWindow(owner:NativeWindow)
+		public function PreviewWindow()
 		{
 			var initOptions:NativeWindowInitOptions = new NativeWindowInitOptions();
-			
 			super(initOptions);
+			
+			stage.scaleMode = StageScaleMode.NO_SCALE;
+			stage.align = StageAlign.TOP_LEFT;
 			
 			content = new Sprite();
 			overlay = new Shape();

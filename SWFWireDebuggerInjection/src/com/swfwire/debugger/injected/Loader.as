@@ -5,6 +5,8 @@ package com.swfwire.debugger.injected
 	import flash.display.Loader;
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
+	import flash.events.HTTPStatusEvent;
+	import flash.events.IOErrorEvent;
 	import flash.net.URLLoaderDataFormat;
 	import flash.net.URLRequest;
 	import flash.system.ApplicationDomain;
@@ -19,6 +21,7 @@ package com.swfwire.debugger.injected
 		override public function load(request:URLRequest, context:LoaderContext = null):void
 		{
 			trace('Loader.load("'+request.url+'")');
+			
 			var instance:* = this;
 			
 			var ul:URLLoader = new URLLoader(request);
@@ -26,7 +29,11 @@ package com.swfwire.debugger.injected
 			ul.addEventListener(Event.COMPLETE, function(ev:Event):void
 			{
 				ul.removeEventListener(Event.COMPLETE, arguments.callee);
-				globalEvents.dispatchEvent(new DynamicEvent('loadComplete', {request: request, data: ul.data, context: context, instance: instance}));
+				var data:ByteArray = ul.data as ByteArray;
+				if(data.length > 0)
+				{
+					globalEvents.dispatchEvent(new DynamicEvent('loadComplete', {request: request, data: data, context: context, instance: instance}));
+				}
 				ul = null;
 			});
 			ul.load(request);
