@@ -231,50 +231,15 @@
 					var loaderClass:* = injectedAppDomain.getDefinition('com.swfwire.debugger.injected.Loader');
 					loaderClass.globalEvents.addEventListener('loadComplete', function(ev:*):void
 					{
-						var data:ByteArray = ev.data as ByteArray;
-						ev.instance.loadBytes(data);
-						var signature:String;
-						if(data.length >= 4)
-						{
-							var startPosition:uint = data.position;
-							data.position = 0;
-							signature = data.readUTFBytes(3);
-							data.position = startPosition;
-						}
-						if(signature == 'FWS' || signature == 'CWS')
+						var isSWF:Boolean = loadSWFBytes(ev.data, ev.context, ev.instance);
+						if(isSWF)
 						{
 							log('[SWF] '+ev.request.url+' - Load complete');
 						}
 					});
 					loaderClass.globalEvents.addEventListener('loadBytes', function(ev:*):void
 					{
-						var data:ByteArray = ev.bytes as ByteArray;
-						var signature:String;
-						if(data.length >= 4)
-						{
-							var startPosition:uint = data.position;
-							data.position = 0;
-							signature = data.readUTFBytes(3);
-							data.position = startPosition;
-						}
-						
-						if(signature == 'FWS' || signature == 'CWS')
-						{
-							save(data, lastUrl+'.loaded.'+(new Date().getTime())+'.swf');
-							
-							if(modifyChildren.selected)
-							{
-								read(ev.bytes, ev.context, ev.instance, swfId++);
-							}
-							else
-							{
-								ev.instance['swfWire_loadBytes'](ev.bytes, ev.context);
-							}
-						}
-						else
-						{
-							ev.instance['swfWire_loadBytes'](ev.bytes, ev.context);
-						}
+						loadSWFBytes(ev.data, ev.context, ev.instance);
 					});
 					
 					var urlLoaderClass:* = injectedAppDomain.getDefinition('com.swfwire.debugger.injected.URLLoader');
@@ -424,11 +389,56 @@
 				{
 					preview.highlight(null);
 				});
-				
+				/*
+				displayListHierarchy.addEventListener('breadCrumbClick', function(ev:DynamicEvent):void
+				{
+					inspect(ev.data);
+				});
+				displayListHierarchy.addEventListener('breadCrumbRollOver', function(ev:DynamicEvent):void
+				{
+					preview.highlight(ev.data);
+				});
+				displayListHierarchy.addEventListener('breadCrumbRollOut', function(ev:DynamicEvent):void
+				{
+					preview.highlight(null);
+				});
+				*/
 				netCollection.filterFunction = netFilter;
 				objectCollection.filterFunction = objectFilter;
 				
 				injectionLoader.load(new URLRequest(librarySwf), context);
+			}
+			
+			private function loadSWFBytes(data:ByteArray, context:LoaderContext, instance:Loader):Boolean
+			{
+				var signature:String;
+				if(data.length >= 4)
+				{
+					var startPosition:uint = data.position;
+					data.position = 0;
+					signature = data.readUTFBytes(3);
+					data.position = startPosition;
+				}
+				var isSWF:Boolean = (signature == 'FWS' || signature == 'CWS');
+				
+				if(isSWF)
+				{
+					save(data, lastUrl+'.loaded.'+(new Date().getTime())+'.swf');
+					
+					if(modifyChildren.selected)
+					{
+						read(data, context, instance, swfId++);
+					}
+					else
+					{
+						instance['swfWire_loadBytes'](data, context);
+					}
+				}
+				else
+				{
+					instance['swfWire_loadBytes'](data, context);
+				}
+				return isSWF;
 			}
 			
 			private function netFilter(item:Object):Boolean 
@@ -658,7 +668,36 @@
 						inspectTabs.removeChild(stylesCanvas);
 					}
 				}
+				/*
+				displayListHierarchy.collection.removeAll();
 				
+				if(target is DisplayObject)
+				{
+					if(displayListHierarchy.parent != displayList)
+					{
+						displayList.addChild(displayListHierarchy);
+					}
+					
+					var currentTarget:DisplayObject = target as DisplayObject;
+					var ancestors:Array = [];
+					while(currentTarget && currentTarget != preview.loader)
+					{
+						name = getQualifiedClassName(currentTarget);
+						name = name.split('::').pop();
+						ancestors.push({name: name, reference: currentTarget});
+						currentTarget = currentTarget.parent;
+					}
+					ancestors.reverse();
+					displayListHierarchy.collection.source = ancestors;
+				}
+				else
+				{
+					if(displayListHierarchy.parent == displayList)
+					{
+						displayList.removeChild(displayListHierarchy);
+					}
+				}
+				*/
 				propertiesCollection.source = properties;
 				methodsCollection.source = methods;
 				
@@ -955,6 +994,12 @@
 			{
 				try
 				{
+					if(location.substr(0, 7) == 'http://')
+					{
+						location = location.substr(7).replace(/[^0-9A-Z.]/gi, '-');
+						location = File.applicationStorageDirectory.resolvePath(location).url;
+					}
+					
 					var f:File = new File(File.applicationDirectory.nativePath).resolvePath(location);
 					var fs:FileStream = new FileStream();
 					log('Writing to: '+f.nativePath);
@@ -1349,7 +1394,6 @@
 		<mx:VDividedBox width="100%" height="100%">
 			<mx:HDividedBox width="100%" height="100%">
 				<mx:VBox width="400" height="100%" verticalGap="0">
-					<ui:BreadCrumb id="breadCrumb" width="100%" minWidth="0"/>
 					<mx:Label id="inspectType" width="100%"/>
 					<mx:TabNavigator id="inspectTabs" width="100%" height="100%" creationPolicy="all" backgroundAlpha="1" backgroundColor="#2C2C2C"
 									 paddingBottom="5" paddingLeft="5" paddingTop="5" paddingRight="5" chromeColor="#131313" minHeight="0">
@@ -1392,6 +1436,7 @@
 					<mx:Spacer width="100%"/>
 					<mx:Button label="Reload" click="reload_clickHandler(event)" height="100%"/>
 				</mx:HBox>
+				<ui:BreadCrumb id="breadCrumb" width="100%" minWidth="0"/>
 				<mx:TabNavigator id="tabnavigator1" width="100%" height="100%" creationPolicy="all" backgroundAlpha="1" backgroundColor="#2C2C2C"
 								 paddingBottom="5" paddingLeft="5" paddingTop="5" paddingRight="5" chromeColor="#131313" minHeight="0">
 					<mx:HBox label="Console" width="100%" height="100%" horizontalGap="5">
@@ -1423,9 +1468,12 @@
 							</mx:HBox>
 						</mx:VBox>
 					</mx:HBox>
-					<mx:Canvas label="Display List">
+<!--
+					<mx:VBox id="displayList" label="Display List">
+						<ui:BreadCrumb id="displayListHierarchy"/>
 						<mx:TextArea id="tempDisplayList" width="100%" height="100%" editable="false"/>
-					</mx:Canvas>
+					</mx:VBox>
+-->
 					<mx:VBox label="Network" width="100%">
 						<mx:HBox width="100%">
 							<mx:TextInput id="netListSearch" width="250" change="netListSearch_changeHandler(event)"/>
