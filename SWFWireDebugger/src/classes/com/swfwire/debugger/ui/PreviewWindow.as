@@ -22,7 +22,6 @@ package com.swfwire.debugger.ui
 	public class PreviewWindow extends NativeWindow
 	{
 		public var loader:Loader;
-		public var content:Sprite;
 		public var overlay:Shape;
 		
 		private var previewStartDown:Point;
@@ -36,13 +35,16 @@ package com.swfwire.debugger.ui
 			stage.scaleMode = StageScaleMode.NO_SCALE;
 			stage.align = StageAlign.TOP_LEFT;
 			
-			content = new Sprite();
+			loader = new Loader();
 			overlay = new Shape();
 			
+
 			overlayGraphics = overlay.graphics;
 			
-			stage.addChild(content);
+			stage.addChild(loader);
 			stage.addChild(overlay);
+			
+			loader.contentLoaderInfo.addEventListener(Event.INIT, loaderCompleteHandler, false, 0, true);
 			
 			stage.addEventListener(MouseEvent.MIDDLE_MOUSE_DOWN, previewMiddleDownHandler, true, int.MAX_VALUE, true);
 			stage.addEventListener(MouseEvent.MOUSE_WHEEL, previewMiddleScrollHandler, true, int.MAX_VALUE, true);
@@ -101,26 +103,13 @@ package com.swfwire.debugger.ui
 		
 		public function loadBytes(bytes:ByteArray, context:LoaderContext):void
 		{
-			if(loader)
-			{
-				loader.unloadAndStop();
-			}
-			else
-			{
-				loader = new Loader();
-				loader.contentLoaderInfo.addEventListener(Event.INIT, loaderCompleteHandler, false, 0, true);
-				content.addChild(loader);
-			}
+			loader.unloadAndStop();
 			loader.loadBytes(bytes, context);
 		}
 		
 		public function unload():void
 		{
-			if(loader)
-			{
-				loader.unloadAndStop();
-				loader = null;
-			}
+			loader.unloadAndStop();
 		}
 		
 		public function setSWFBackground(color:uint):void

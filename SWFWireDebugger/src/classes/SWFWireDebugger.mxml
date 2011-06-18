@@ -72,6 +72,7 @@
 			private var methodsCollection:ArrayCollection = new ArrayCollection();
 			private var stylesCollection:ArrayCollection = new ArrayCollection();
 			private var netCollection:ArrayCollection = new ArrayCollection();
+			private var objectCollection:ArrayCollection = new ArrayCollection();
 			
 			private var lastTarget:DisplayObject;
 			private var lastInspectTarget:Object;
@@ -103,7 +104,7 @@
 					if(!nativeWindow.closed)
 					{
 						ev.preventDefault();
-						objectList.dataProvider = null;
+						objectCollection.removeAll();
 						preview.unload();
 						preview.visible = false;
 						currentState = 'waiting';
@@ -147,20 +148,22 @@
 					log(ObjectUtil.objectToString(ev.error, 2, 2, 50, 50, true, '	'));
 				});
 				
+				preview.loader.contentLoaderInfo.uncaughtErrorEvents.addEventListener(UncaughtErrorEvent.UNCAUGHT_ERROR, function(ev:UncaughtErrorEvent):void
+				{
+					ev.preventDefault();
+					ev.stopPropagation();
+					ev.stopImmediatePropagation();
+					logger.uncaughtError(ev.error);
+					log('Uncaught error in child.');
+					log(ObjectUtil.objectToString(ev.error, 2, 2, 50, 50, true, '	'));
+				});
+				
 				preview.addEventListener('loaderComplete', function(ev:Event):void
 				{
+					updateStatus('Successfully loaded '+lastUrl);
+					
 					preview.visible = true;
 					preview.activate();
-					
-					preview.loader.contentLoaderInfo.uncaughtErrorEvents.addEventListener(UncaughtErrorEvent.UNCAUGHT_ERROR, function(ev:UncaughtErrorEvent):void
-					{
-						ev.preventDefault();
-						ev.stopPropagation();
-						ev.stopImmediatePropagation();
-						logger.uncaughtError(ev.error);
-						log('Uncaught error in child.');
-						log(ObjectUtil.objectToString(ev.error, 2, 2, 50, 50, true, '	'));
-					});
 					
 					var loaderClass:* = injectedAppDomain.getDefinition('com.swfwire.debugger.injected.Loader');
 					loaderClass.overrideApplicationDomain = preview.loader.contentLoaderInfo.applicationDomain;
@@ -176,6 +179,14 @@
 					//loaderInfoClass.defaultParameters = parameters;
 					
 					//loaderClass.overrideApplicationDomain = new ApplicationDomain(preview.loader.contentLoaderInfo.applicationDomain);
+					
+					/*
+					if(rootSWF)
+					{
+						var RootClass:* = injectedAppDomain.getDefinition(rootClassName);
+						var rootInstance:* = new RootClass();
+					}
+					*/
 					
 					var target:DisplayObject = preview.loader.content;
 					
@@ -199,6 +210,7 @@
 					
 					logger = injectedAppDomain.getDefinition('com.swfwire.debugger.injected.Logger');
 					logger.output = console;
+					
 					logToTrace.selected = logger.logToTrace;
 					logToOutput.selected = logger.logToOutput;
 					logToTrace.selected = logger.logToTrace;
@@ -221,7 +233,7 @@
 						var data:ByteArray = ev.data as ByteArray;
 						ev.instance.loadBytes(data);
 						var signature:String;
-						if(data.length > 3)
+						if(data.length >= 4)
 						{
 							var startPosition:uint = data.position;
 							data.position = 0;
@@ -237,7 +249,7 @@
 					{
 						var data:ByteArray = ev.bytes as ByteArray;
 						var signature:String;
-						if(data.length > 3)
+						if(data.length >= 4)
 						{
 							var startPosition:uint = data.position;
 							data.position = 0;
@@ -344,6 +356,7 @@
 				publicMethodsGrid.dataProvider = methodsCollection;
 				stylesGrid.dataProvider = stylesCollection;
 				netList.dataProvider = netCollection;
+				objectList.dataProvider = objectCollection;
 				
 				publicPropertiesGrid.addEventListener('inspectProperty', function(ev:*):void
 				{
@@ -369,11 +382,13 @@
 						{
 							success = false;
 							console.text += 'Error setting property: '+e+'\n';
+							updateStatus('Error setting property (#'+e.errorID+').');
 						}
 						catch(e:*)
 						{
 							success = false;
 							console.text += 'Error setting property: '+e+'\n';
+							updateStatus('Error setting property (#'+e.errorID+').');
 						}
 					}
 					ev.success = success;
@@ -387,10 +402,11 @@
 					{
 						lastInspectTarget.setStyle(info.name, ev.value);
 					}
-					catch(e:*)
+					catch(e:Error)
 					{
 						success = false;
 						log('Error setting style: '+e);
+						updateStatus('Error setting style (#'+e.errorID+').');
 					}
 					ev.success = success;
 				});
@@ -408,7 +424,27 @@
 					preview.highlight(null);
 				});
 				
+				objectCollection.filterFunction = objectFilter;
+				
 				injectionLoader.load(new URLRequest(librarySwf), context);
+			}
+			
+			private function objectFilter(item:Object):Boolean 
+			{
+				var match:Boolean = true;
+				if(item)
+				{
+					var re:RegExp = new RegExp(objectListSearch.text, 'i');
+					if(item.type)
+					{
+						match = (item.type.search(re) != -1)
+					}
+					if(!match && item.method)
+					{
+						match = (item.method.search(re) != -1);
+					}
+				}
+				return match;
 			}
 			
 			private function previewMiddleDownHandler(ev:MouseEvent):void
@@ -416,7 +452,7 @@
 				stopInspection();
 			}
 			
-			private function inspectHandler(ev:MouseEvent):void
+			private function inspect_mouseMoveHandler(ev:MouseEvent):void
 			{
 				var point:Point = new Point(preview.stage.mouseX, preview.stage.mouseY);
 				var hits:Array = preview.stage.getObjectsUnderPoint(point);
@@ -449,11 +485,6 @@
 					
 					breadCrumb.collection.refresh();
 					lastHits = hits;
-					
-					if(target)
-					{
-						inspect(target);
-					}
 				}
 			}
 			
@@ -870,7 +901,7 @@
 				else
 				{
 					lastInspectTarget = null;
-					objectList.dataProvider = null;
+					objectCollection.removeAll();
 					netCollection.removeAll();
 					
 					currentState = 'loaded';
@@ -948,12 +979,17 @@
 				netCollection.itemUpdated(data);
 			}
 			
+			private function updateStatus(message:String):void
+			{
+				statusLabel.htmlText = message;
+			}
+			
 			protected function startInspection():void
 			{
 				inspectButton.selected = true;
 				preview.loader.mouseEnabled = false;
 				preview.loader.mouseChildren = false;
-				preview.stage.addEventListener(MouseEvent.MOUSE_MOVE, inspectHandler);
+				preview.stage.addEventListener(MouseEvent.MOUSE_MOVE, inspect_mouseMoveHandler);
 				preview.stage.addEventListener(MouseEvent.MOUSE_UP, inspect_mouseUpHandler);
 				preview.highlight(null);
 			}
@@ -962,7 +998,7 @@
 			{
 				inspectButton.selected = false;
 				preview.stage.removeEventListener(MouseEvent.MOUSE_UP, inspect_mouseUpHandler);
-				preview.stage.removeEventListener(MouseEvent.MOUSE_MOVE, inspectHandler);
+				preview.stage.removeEventListener(MouseEvent.MOUSE_MOVE, inspect_mouseMoveHandler);
 				preview.loader.mouseChildren = true;
 				preview.loader.mouseEnabled = true;
 				preview.highlight(null);
@@ -977,8 +1013,6 @@
 			
 			protected function refreshObjectList():void
 			{
-				var objectCollection:ArrayCollection = ArrayCollection(objectList.dataProvider);
-				
 				var existed:Object = {};
 				var objects:Array = [];
 				
@@ -1012,7 +1046,7 @@
 				
 				objects.sortOn('id', Array.NUMERIC);
 				
-				objectList.dataProvider = new ArrayCollection(objects);
+				objectCollection.source = objects;
 			}
 			
 			protected function updateStats():void
@@ -1102,14 +1136,14 @@
 
 			protected function objectList_itemDoubleClickHandler(event:ListEvent):void
 			{
-				var info:Object = objectList.dataProvider.getItemAt(event.rowIndex);
+				var info:Object = objectCollection.getItemAt(event.rowIndex);
 				try
 				{
 					inspect(logger.getObjectById(info.id));
 				}
 				catch(e:*)
 				{
-					console.text += 'Error inspecting property.\n';
+					updateStatus('Error inspecting object.');
 				}
 			}
 
@@ -1178,7 +1212,12 @@
 				var bytes:ByteArray = encoder.encode(bitmapData);
 				var url:String = File.documentsDirectory.resolvePath('snapshot.'+(new Date().getTime())+'.png').url;
 				save(bytes, url);
-				log('Saved snapshot to: '+url);
+				updateStatus('Saved snapshot.  <a href="'+url+'">'+url+'</a>');
+			}
+			
+			protected function objectListSearch_changeHandler(ev:Event):void
+			{
+				objectCollection.refresh();
 			}
 		]]>
 	</mx:Script>
@@ -1348,14 +1387,18 @@
 							</mx:columns>
 						</mx:DataGrid>
 					</mx:Canvas>
-					<mx:VBox label="Objects">
-						<mx:HBox>
-							<mx:Button label="Run Garbage Collector" click="runGC()"/>
+					<mx:VBox label="Objects" width="100%">
+						<mx:HBox width="100%">
+							<mx:TextInput id="objectListSearch" width="250" change="objectListSearch_changeHandler(event)"/>
+							<mx:Spacer width="100%"/>
 							<mx:Button label="Refresh" click="refreshObjectList()"/>
+							<mx:Button label="Run Garbage Collector" click="runGC()"/>
 						</mx:HBox>
-						<ui:ObjectListDataGrid id="objectList" width="100%" height="100%" itemDoubleClick="objectList_itemDoubleClickHandler(event)"/>
+						<ui:ObjectListDataGrid id="objectList" width="100%" height="100%"
+											   itemDoubleClick="objectList_itemDoubleClickHandler(event)"/>
 					</mx:VBox>
 				</mx:TabNavigator>
+				<mx:Label id="statusLabel" width="100%" selectable="true"/>
 			</mx:VBox>
 		</mx:VDividedBox>
 	</mx:HDividedBox>

@@ -33,6 +33,7 @@ package com.swfwire.debugger.injected
 		public static var indentString:String = '  ';
 		
 		public static var maxStack:uint = 50;
+		public static var methodTimeLimit:uint = 3000;
 		
 		public static var output:*;
 		public static var buffer:String = '';
@@ -68,8 +69,8 @@ package com.swfwire.debugger.injected
 						str = ObjectUtil.objectToString(message, 1, 3, 100, 1000, '	');
 					}
 					*/
-					output.text += buffer;
 					var shouldScroll:Boolean = output.verticalScrollPosition == output.maxVerticalScrollPosition;
+					output.text += buffer;
 					if(shouldScroll)
 					{
 						output.validateNow();
@@ -198,12 +199,6 @@ package com.swfwire.debugger.injected
 				!(skipFlashX && methodName.substr(0, 7) == 'flashx.') &&
 				!(skipAdobe && methodName.substr(0, 10) == 'com.adobe.');
 			
-			var n:String = 'nothing';
-			if(methodName == 'com.ffi.utils:FMSConnector/get hasAudio')
-			{
-				trace('found it');
-			}
-			
 			if(showReturn && returnValue !== null && show3)
 			{
 				_log('return '+ObjectUtil.objectToString(returnValue, 2, 2, 50, 50, false, indentString));
@@ -225,7 +220,7 @@ package com.swfwire.debugger.injected
 				
 				_log('< '+methodName+' ('+diff+'ms)');
 				
-				if(diff > 3000)
+				if(diff > methodTimeLimit)
 				{
 					showMethodEntry = false;
 					_log('Show method entry disabled for performance');

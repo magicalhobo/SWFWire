@@ -30,10 +30,11 @@ package com.swfwire.debugger.injected
 			{
 				ul.removeEventListener(Event.COMPLETE, arguments.callee);
 				var data:ByteArray = ul.data as ByteArray;
-				if(data.length > 0)
+				if(data.length == 0)
 				{
-					globalEvents.dispatchEvent(new DynamicEvent('loadComplete', {request: request, data: data, context: context, instance: instance}));
+					data.writeByte(0);
 				}
+				globalEvents.dispatchEvent(new DynamicEvent('loadComplete', {request: request, data: data, context: context, instance: instance}));
 				ul = null;
 			});
 			ul.load(request);
