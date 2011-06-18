@@ -3,10 +3,10 @@
 	var flashvars = {};
 	flashvars.airversion = '2.6';
 	flashvars.appname = 'SWFWire Debugger';
-	flashvars.appurl = 'https://github.com/downloads/magicalhobo/SWFWire/SWFWireDebugger-1.5.20.air';
+	flashvars.appurl = 'https://github.com/downloads/magicalhobo/SWFWire/SWFWireDebugger-1.6.23.air';
 	flashvars.imageurl = 'debugger-badge/logo.png';
 	flashvars.appid = 'SWFWireDebugger';
-	flashvars.appversion = '1.5.20';
+	flashvars.appversion = '1.6.23';
 	flashvars.hidehelp = 'true';
 	flashvars.skiptransition = 'false';
 	flashvars.titlecolor = '#ffffff';

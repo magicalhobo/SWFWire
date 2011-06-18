@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <update xmlns="http://ns.adobe.com/air/framework/update/description/2.5">
-	<versionNumber>1.5.20</versionNumber>
-	<url>https://github.com/downloads/magicalhobo/SWFWire/SWFWireDebugger-1.5.20.air</url>
-	<description>More UI updates, and option to not debug loaded SWF files.</description>
+	<versionNumber>1.6.23</versionNumber>
+	<url>https://github.com/downloads/magicalhobo/SWFWire/SWFWireDebugger-1.6.23.air</url>
+	<description>Added search boxes, and a Flex style inspector.</description>
 </update>
