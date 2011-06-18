@@ -8,7 +8,8 @@
 			override public function set data(value:Object):void
 			{
 				super.data = value;
-				progressBar.setProgress(value.current, value.total);
+				var max:Number = Math.max(value.current, value.total);
+				progressBar.setProgress(value.current, max);
 				switch(value.state)
 				{
 					case 'open':

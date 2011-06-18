@@ -104,6 +104,7 @@
 					if(!nativeWindow.closed)
 					{
 						ev.preventDefault();
+						netCollection.removeAll();
 						objectCollection.removeAll();
 						preview.unload();
 						preview.visible = false;
@@ -424,9 +425,24 @@
 					preview.highlight(null);
 				});
 				
+				netCollection.filterFunction = netFilter;
 				objectCollection.filterFunction = objectFilter;
 				
 				injectionLoader.load(new URLRequest(librarySwf), context);
+			}
+			
+			private function netFilter(item:Object):Boolean 
+			{
+				var match:Boolean = true;
+				if(item)
+				{
+					var re:RegExp = new RegExp(netListSearch.text, 'i');
+					if(item.url)
+					{
+						match = (item.url.search(re) != -1)
+					}
+				}
+				return match;
 			}
 			
 			private function objectFilter(item:Object):Boolean 
@@ -1175,15 +1191,37 @@
 				updateStatsTimer.start();
 			}			
 			
-			protected function consoleSearch_keyUpHandler(ev:Event):void
+			protected function consoleSearch_changeHandler(ev:Event):void
 			{
-				var search:String = consoleSearch.text.substr(console.selectionEndIndex);
+				var search:String = consoleSearch.text;
 				var re:RegExp = new RegExp(search, 'i');
 				
 				var index:int = console.text.search(re);
 				if(index >= 0)
 				{
 					console.setSelection(index, index + search.length);
+				}
+				else
+				{
+					updateStatus('No match found.');
+				}
+			}
+			
+			protected function consoleSearch_enterHandler(event:FlexEvent):void
+			{
+				var search:String = consoleSearch.text;
+				var re:RegExp = new RegExp(search, 'i');
+				
+				var start:int = console.selectionEndIndex;
+				var index:int = console.text.substr(start).search(re);
+				if(index >= 0)
+				{
+					console.setSelection(start + index, start + index + search.length);
+				}
+				else
+				{
+					updateStatus('Reached end of text.');
+					console.setSelection(0, 0);
 				}
 			}
 			
@@ -1218,6 +1256,16 @@
 			protected function objectListSearch_changeHandler(ev:Event):void
 			{
 				objectCollection.refresh();
+			}
+			
+			protected function netListSearch_changeHandler(ev:Event):void
+			{
+				netCollection.refresh();
+			}
+			
+			protected function netListClear_clickHandler(ev:MouseEvent):void
+			{
+				netCollection.removeAll();
 			}
 		]]>
 	</mx:Script>
@@ -1349,7 +1397,7 @@
 					<mx:HBox label="Console" width="100%" height="100%" horizontalGap="5">
 						<mx:VBox width="100%" height="100%">
 							<mx:HBox width="100%" verticalAlign="middle">
-								<mx:TextInput id="consoleSearch" width="250" change="consoleSearch_keyUpHandler(event)"/>
+								<mx:TextInput id="consoleSearch" width="250" change="consoleSearch_changeHandler(event)" enter="consoleSearch_enterHandler(event)"/>
 								<mx:Spacer width="100%"/>
 								<mx:Button label="Clear Console" click="clearConsole_clickHandler(event)"/>
 							</mx:HBox>
@@ -1378,7 +1426,12 @@
 					<mx:Canvas label="Display List">
 						<mx:TextArea id="tempDisplayList" width="100%" height="100%" editable="false"/>
 					</mx:Canvas>
-					<mx:Canvas label="Net">
+					<mx:VBox label="Network" width="100%">
+						<mx:HBox width="100%">
+							<mx:TextInput id="netListSearch" width="250" change="netListSearch_changeHandler(event)"/>
+							<mx:Spacer width="100%"/>
+							<mx:Button label="Clear" click="netListClear_clickHandler(event)"/>
+						</mx:HBox>
 						<mx:DataGrid id="netList" width="100%" height="100%" horizontalScrollPolicy="auto">
 							<mx:columns>
 								<mx:DataGridColumn headerText="URL" dataField="url" width="500"/>
@@ -1386,7 +1439,7 @@
 												   itemRenderer="com.swfwire.debugger.ui.NetProgressRenderer"/>
 							</mx:columns>
 						</mx:DataGrid>
-					</mx:Canvas>
+					</mx:VBox>
 					<mx:VBox label="Objects" width="100%">
 						<mx:HBox width="100%">
 							<mx:TextInput id="objectListSearch" width="250" change="objectListSearch_changeHandler(event)"/>

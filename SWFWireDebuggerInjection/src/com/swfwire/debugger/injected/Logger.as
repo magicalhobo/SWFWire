@@ -70,7 +70,7 @@ package com.swfwire.debugger.injected
 					}
 					*/
 					var shouldScroll:Boolean = output.verticalScrollPosition == output.maxVerticalScrollPosition;
-					output.text += buffer;
+					output.appendText(buffer);
 					if(shouldScroll)
 					{
 						output.validateNow();
