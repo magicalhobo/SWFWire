@@ -51,7 +51,7 @@
 			
 		]]>
 	</fx:Script>
-	<mx:Repeater id="buttonRepeater" repeatEnd="buttonRepeater_repeatEndHandler(event)">
+	<mx:Repeater id="buttonRepeater" repeatEnd="buttonRepeater_repeatEndHandler(event)" recycleChildren="true">
 		<mx:Button id="button" height="100%" minWidth="0"
 				   click="button1_clickHandler(event)" rollOut="button1_rollOutHandler(event)"
 				   rollOver="button1_rollOverHandler(event)"/>

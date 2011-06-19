@@ -1,5 +1,6 @@
 @namespace mx "library://ns.adobe.com/flex/mx";
 @namespace s "library://ns.adobe.com/flex/spark";
+@namespace ui "com.swfwire.debugger.ui.*";
 
 global
 {
@@ -63,6 +64,7 @@ mx|Alert
 mx|TextArea
 {
 	content-background-color: #383733;
+	focus-thickness: 0;
 }
 
 mx|Button
@@ -82,25 +84,13 @@ mx|ProgressBar
 	font-weight: normal;
 }
 
-/*
-mx|List
+ui|SearchInput .button
 {
-	content-background-color: #383733;
-	roll-over-color: #a4da0a;
-	text-roll-over-color: #000000;
-	selection-color: #a4da0a;
+	skin: Embed('x_normal.png');
+	downSkin: Embed('x_over.png');
+	overSkin: Embed('x_over.png');
 }
-*/
-/*
-.smallText
-{
-	font-family: PixelFont;
-	font-lookup: embeddedCFF;
-	font-size: 10px;
-	font-anti-alias-type: normal;
-	font-grid-fit-type: pixel;
-}
-*/
+
 .bigText
 {
 	font-family: MyriadLightEmbedded;
@@ -111,6 +101,7 @@ mx|List
 	padding-bottom: 10px;
 	padding-right: 12px;
 }
+
 .logo
 {
 	skin: Embed('logo.png');

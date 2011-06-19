@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:fx="http://ns.adobe.com/mxml/2009"
+		   xmlns:s="library://ns.adobe.com/flex/spark"
+		   xmlns:mx="library://ns.adobe.com/flex/mx">
+	<fx:Metadata>
+		[Event(name="change", type="flash.events.Event")]
+		[Event(name="enter", type="mx.events.FlexEvent")]
+	</fx:Metadata>
+	<fx:Script>
+		<![CDATA[
+			public function get text():String
+			{
+				return input.text;
+			}
+			
+			public function set text(value:String):void
+			{
+				input.text = value;
+				dispatchEvent(new Event(Event.CHANGE));
+			}
+			
+			protected function clear_clickHandler(event:MouseEvent):void
+			{
+				text = '';
+				input.setFocus();
+			}
+		]]>
+	</fx:Script>
+	<mx:TextInput id="input" width="250" paddingRight="30"
+				  focusThickness="0"
+				  change="dispatchEvent(event.clone())"
+				  enter="dispatchEvent(event.clone())"/>
+	<mx:Button id="clear" right="5" styleName="button" verticalCenter="0"
+			   click="clear_clickHandler(event)"/>
+</mx:Canvas>
