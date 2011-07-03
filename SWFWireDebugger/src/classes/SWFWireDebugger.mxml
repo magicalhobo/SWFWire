@@ -88,7 +88,12 @@
 				debug = new Debug(true, 'SWFWireDebugger');
 				debug.log('main');
 				
-				contextMenu.items.push(new ContextMenuItem('SWFWireDebugger Version '+Config.VERSION));
+				var updateMenuItem:ContextMenuItem = new ContextMenuItem('SWFWireDebugger Version '+Config.VERSION);
+				updateMenuItem.addEventListener(Event.SELECT, function(ev:*):void
+				{
+					appUpdater.checkNow();
+				});
+				contextMenu.items.push(updateMenuItem);
 				
 				stage.addEventListener(Event.ENTER_FRAME, enterFrameHandler);
 				
@@ -212,6 +217,12 @@
 					logger = injectedAppDomain.getDefinition('com.swfwire.debugger.injected.Logger');
 					logger.output = console;
 					
+					logger.skipFL = true;
+					logger.skipMX = false;
+					logger.skipFlashX = true;
+					logger.skipAdobe = true;
+					logger.skipSpark = true;
+
 					logToTrace.selected = logger.logToTrace;
 					logToOutput.selected = logger.logToOutput;
 					logToTrace.selected = logger.logToTrace;
@@ -392,7 +403,7 @@
 				
 				displayListHierarchy.addEventListener('breadCrumbClick', function(ev:DynamicEvent):void
 				{
-					inspect(ev.data);
+					inspect(ev.data, false);
 				});
 				displayListHierarchy.addEventListener('breadCrumbRollOver', function(ev:DynamicEvent):void
 				{
@@ -567,7 +578,7 @@
 				}
 			}
 			
-			protected function inspect(target:Object):void
+			protected function inspect(target:Object, updateDisplayList:Boolean = true):void
 			{
 				propertiesCollection.removeAll();
 				methodsCollection.removeAll();
@@ -722,32 +733,29 @@
 					}
 				}
 				
-				displayListHierarchy.collection.removeAll();
-				
-				if(target is DisplayObject)
+				if(updateDisplayList)
 				{
-					if(displayListHierarchy.parent != displayList)
-					{
-						displayList.addChild(displayListHierarchy);
-					}
+					displayListHierarchy.collection.removeAll();
 					
-					var currentTarget:DisplayObject = target as DisplayObject;
-					var ancestors:Array = [];
-					while(currentTarget && currentTarget != preview.loader)
+					if(target is DisplayObject)
 					{
-						name = getQualifiedClassName(currentTarget);
-						name = name.split('::').pop();
-						ancestors.push({name: name, reference: currentTarget});
-						currentTarget = currentTarget.parent;
+						displayListHierarchy.visible = displayListHierarchy.includeInLayout = true;
+						
+						var currentTarget:DisplayObject = target as DisplayObject;
+						var ancestors:Array = [];
+						while(currentTarget && currentTarget != preview.loader)
+						{
+							name = getQualifiedClassName(currentTarget);
+							name = name.split('::').pop();
+							ancestors.push({name: name, reference: currentTarget});
+							currentTarget = currentTarget.parent;
+						}
+						ancestors.reverse();
+						displayListHierarchy.collection.source = ancestors;
 					}
-					ancestors.reverse();
-					displayListHierarchy.collection.source = ancestors;
-				}
-				else
-				{
-					if(displayListHierarchy.parent == displayList)
+					else
 					{
-						displayList.removeChild(displayListHierarchy);
+						displayListHierarchy.visible = displayListHierarchy.includeInLayout = false;
 					}
 				}
 				
@@ -1472,8 +1480,9 @@
 	<mx:HDividedBox width="100%" height="100%" id="hdividedbox1">
 		<mx:VDividedBox width="100%" height="100%">
 			<mx:HDividedBox width="100%" height="100%">
-				<mx:VBox width="400" height="100%" verticalGap="0">
-					<mx:Label id="inspectType" width="100%"/>
+				<mx:VBox width="400" height="100%" verticalGap="5">
+					<mx:Label id="inspectType" width="100%" paddingBottom="-5"/>
+					<ui:BreadCrumb id="displayListHierarchy" width="100%" minWidth="0"/>
 					<mx:TabNavigator id="inspectTabs" width="100%" height="100%" creationPolicy="all" backgroundAlpha="1" backgroundColor="#2C2C2C"
 									 paddingBottom="5" paddingLeft="5" paddingTop="5" paddingRight="5" chromeColor="#131313" minHeight="0">
 						<mx:VBox width="100%" height="100%" label="Properties">
@@ -1507,11 +1516,12 @@
 								</mx:columns>
 							</mx:DataGrid>
 						</mx:VBox>
+<!--
 						<mx:VBox id="displayList" label="Display List">
-							<ui:BreadCrumb id="displayListHierarchy"/>
 							<ui:SearchInput id="displayListSearch" change="displayListSearch_changeHandler(event)"/>
 							<mx:TextArea id="tempDisplayList" width="100%" height="100%" editable="false"/>
 						</mx:VBox>
+-->
 					</mx:TabNavigator>
 				</mx:VBox>
 			</mx:HDividedBox>
