@@ -1175,7 +1175,7 @@ package com.swfwire.decompiler.utils
 					{
 						tempStr = stack.pop();
 						tempStr3 = stack.pop();
-						var matches:Array = tempStr.match(/([\w]+)\((.*)\)/);
+						var matches:Array = tempStr.match(/([\w]+)\((.*)\)/s);
 						tempStr2 = '*';
 						if(matches)
 						{
@@ -1529,6 +1529,28 @@ package com.swfwire.decompiler.utils
 						
 						stack.push(tempStr);
 					}
+					else if(op is Instruction_call)
+					{
+						args = [];
+						for(tempInt2 = Instruction_call(op).argCount - 1; tempInt2 >= 0; tempInt2--)
+						{
+							args.unshift(stack.pop());
+						}
+								
+						tempStr2 = stack.pop();
+						tempStr3 = stack.pop();
+						
+						if(tempStr2 == '<global>' || tempStr2 == 'null')
+						{
+							tempStr = tempStr3+'('+args.join(', ')+')';
+						}
+						else
+						{
+							args.unshift(tempStr2);
+							tempStr = tempStr3+'.call('+args.join(', ')+')';
+						}
+						stack.push(tempStr);
+					}
 					else if(op is Instruction_callproperty)
 					{
 						tempInt = Instruction_callproperty(op).index;
@@ -1602,6 +1624,10 @@ package com.swfwire.decompiler.utils
 						
 						tempStr = 'super.'+methodName+'('+args.join(', ')+')';
 						source = tempStr+';';
+					}
+					else if(op is Instruction_callsupervoid)
+					{
+						source = 'super();';
 					}
 					else if(op is Instruction_constructprop)
 					{
@@ -1749,6 +1775,10 @@ package com.swfwire.decompiler.utils
 					else if(op is Instruction_getscopeobject)
 					{
 						stack.push(scope.values[scope.values.length - 1 - Instruction_getscopeobject(op).index]);
+					}
+					else if(op is Instruction_getglobalscope)
+					{
+						stack.push('<global>');
 					}
 					else if(op is Instruction_pushnull)
 					{
