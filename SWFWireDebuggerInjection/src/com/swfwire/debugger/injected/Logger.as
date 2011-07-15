@@ -29,6 +29,7 @@ package com.swfwire.debugger.injected
 		public static var skipMX:Boolean = true;
 		public static var skipFlashX:Boolean = true;
 		public static var skipAdobe:Boolean = true;
+		public static var skipSpark:Boolean = true;
 		
 		public static var indentString:String = '  ';
 		
@@ -142,6 +143,7 @@ package com.swfwire.debugger.injected
 				!(skipMX && methodName.substr(0, 3) == 'mx.') && 
 				!(skipFL && methodName.substr(0, 3) == 'fl.') &&
 				!(skipFlashX && methodName.substr(0, 7) == 'flashx.') &&
+				!(skipSpark && methodName.substr(0, 6) == 'spark.') &&
 				!(skipAdobe && methodName.substr(0, 10) == 'com.adobe.');
 
 			stack.push(methodName);
@@ -197,6 +199,7 @@ package com.swfwire.debugger.injected
 				!(skipMX && methodName.substr(0, 3) == 'mx.') && 
 				!(skipFL && methodName.substr(0, 3) == 'fl.') &&
 				!(skipFlashX && methodName.substr(0, 7) == 'flashx.') &&
+				!(skipSpark && methodName.substr(0, 6) == 'spark.') &&
 				!(skipAdobe && methodName.substr(0, 10) == 'com.adobe.');
 			
 			if(showReturn && returnValue !== null && show3)
@@ -238,6 +241,9 @@ package com.swfwire.debugger.injected
 			{
 				case 'com.swfwire.debugger.injected::URLLoader':
 					result = 'flash.net::URLLoader';
+					break;
+				case 'com.swfwire.debugger.injected::Loader':
+					result = 'flash.display::Loader';
 					break;
 			}
 			return result;

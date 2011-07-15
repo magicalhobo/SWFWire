@@ -894,7 +894,10 @@ package com.swfwire.decompiler.utils
 							tempStr4 = tempStr4.substr(0, 1).toLowerCase() + tempStr4.substr(1);
 							
 							var tempLocal:String = tempStr4;
-							var iterTempLocal:uint = 0;
+							var iterTempLocal:uint = 1;
+							
+							tempStr4 = tempLocal + '1';
+							
 							while(true)
 							{
 								var collision:Boolean = false;
@@ -2101,6 +2104,66 @@ package com.swfwire.decompiler.utils
 					properties.push(str);
 				}
 			}
+			
+			function startsWith(str:String, substr:String):Boolean
+			{
+				return str.substr(0, substr.length) == substr; 
+			}
+			
+			function getRanking(str:String):int
+			{
+				var offset:int = 0;
+				if(startsWith(str, 'public'))
+				{
+					offset = 3;
+				}
+				else if(startsWith(str, 'protected'))
+				{
+					offset = 2;
+				}
+				else if(startsWith(str, 'private'))
+				{
+					offset = 1;
+				}
+				
+				str = str.substr(str.indexOf(' ') + 1);
+				
+				var typeOrder:Array = [
+					'static const',
+					'static var',
+					'static function',
+					'function '+c.className.name,
+					'const',
+					'var',
+					'function get',
+					'function set',
+					'function',
+				];
+				
+				for(var iter:int = 0; iter < typeOrder.length; iter++)
+				{
+					if(startsWith(str, typeOrder[iter]))
+					{
+						return (typeOrder.length - iter) * 4 + offset;
+					}
+				}
+				return 0;
+			}
+			
+			properties.sort(function(a:String, b:String):int
+			{
+				if(a == b)
+				{
+					return 0;
+				}
+				var aRank:int = getRanking(a);
+				var bRank:int = getRanking(b);
+				if(aRank == bRank)
+				{
+					return a.toLowerCase() < b.toLowerCase() ? -1 : 1;
+				}
+				return aRank < bRank ? 1 : -1;
+			});
 			
 			var interfaces:Array = [];
 			
