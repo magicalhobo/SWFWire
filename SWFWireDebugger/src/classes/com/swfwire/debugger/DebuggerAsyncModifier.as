@@ -393,6 +393,20 @@ package com.swfwire.debugger
 							setPropertyInstructions.length,
 							0,
 							Vector.<String>([':String', ':Object']));
+						
+						var getPropertyInstructions:Vector.<IInstruction> = new Vector.<IInstruction>();
+						getPropertyInstructions.push(new Instruction_getlocal0());
+						getPropertyInstructions.push(new Instruction_getlocal1());
+						getPropertyInstructions.push(new Instruction_getproperty(wildcardMultinameIndex));
+						getPropertyInstructions.push(new Instruction_returnvalue());
+						createMethodWithArguments(abcTag,
+							wrapper,
+							thisInstance, 
+							'swfWire_getProperty_'+uniqueID,
+							getPropertyInstructions,
+							getPropertyInstructions.length,
+							0,
+							Vector.<String>([':String']));
 					}
 					
 					if(true)

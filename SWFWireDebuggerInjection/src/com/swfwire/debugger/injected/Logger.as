@@ -19,6 +19,8 @@ package com.swfwire.debugger.injected
 		public static var showArguments:Boolean = false;
 		public static var showReturn:Boolean = false;
 		public static var showObjectCreation:Boolean = false;
+		public static var watchedMethods:Array = [];
+		public static var watchedMethodsCallback:Function;
 		
 		public static var skipEnterFrame:Boolean = true;
 		public static var skipExitFrame:Boolean = true;
@@ -154,6 +156,13 @@ package com.swfwire.debugger.injected
 				//methodName = new StackInfo(1).functionName;
 				_log('> ' + methodName);
 				indent++;
+			}
+			for(var iter2:* in watchedMethods)
+			{
+				if(watchedMethods[iter2] == methodName)
+				{
+					watchedMethodsCallback(methodName);
+				}
 			}
 			//indent = stack.length;
 			if(show3 && showArguments && params)
