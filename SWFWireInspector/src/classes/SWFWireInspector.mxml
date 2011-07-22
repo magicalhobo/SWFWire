@@ -18,9 +18,12 @@
 			import com.swfwire.decompiler.abc.tokens.traits.TraitSlotToken;
 			import com.swfwire.decompiler.data.swf.*;
 			import com.swfwire.decompiler.data.swf.records.*;
+			import com.swfwire.decompiler.data.swf.structures.MatrixTranslateStructure;
 			import com.swfwire.decompiler.data.swf.tags.*;
 			import com.swfwire.decompiler.data.swf2.tags.DefineBitsJPEG2Tag;
 			import com.swfwire.decompiler.data.swf2.tags.DefineShape2Tag;
+			import com.swfwire.decompiler.data.swf3.tags.DefineBitsJPEG3Tag;
+			import com.swfwire.decompiler.data.swf3.tags.DefineBitsLossless2Tag;
 			import com.swfwire.decompiler.data.swf3.tags.DefineShape3Tag;
 			import com.swfwire.decompiler.data.swf3.tags.PlaceObject2Tag;
 			import com.swfwire.decompiler.data.swf8.tags.DefineShape4Tag;
@@ -465,12 +468,92 @@
 				loader.loadBytes(result.bytes, context);
 			}
 
-			private function getImagePreview(tag:SWFTag):void
+			private function getImagePreview(tag:SWFTag, type:uint, metadata:Object):void
 			{
+				var swfWriter:SWF10Writer = new SWF10Writer();
+				
+				var swf:SWF = new SWF();
+				swf.header = new SWFHeader();
+				swf.header.fileVersion = 10;
+				swf.header.frameCount = 1;
+				swf.header.frameRate = 24;
+				swf.header.frameSize = new RectangleRecord();
+				swf.header.frameSize.xMin = 0
+				swf.header.frameSize.xMax = 800 * 20;
+				swf.header.frameSize.yMin = 0;
+				swf.header.frameSize.yMax = 600 * 20;
+				swf.header.signature = SWFHeader.UNCOMPRESSED_SIGNATURE;
+				swf.tags = new Vector.<SWFTag>();
+				
+				var rawTag:UnknownTag = new UnknownTag();
+				rawTag.header = new TagHeaderRecord();
+				rawTag.header.type = type;
+				rawTag.content = new ByteArray();
+				rawTag.content.writeBytes(lastSource, metadata.contentStart, metadata.contentLength);
+				
+				swf.tags.push(tag);
+				
+				var characterId:int = -1;
+				
+				if(tag is DefineBitsJPEG3Tag)
+				{
+					characterId = DefineBitsJPEG3Tag(tag).characterID;
+				}
+				
+				if(characterId == -1)
+				{
+					throw new Error('Cannot preview tag.');
+				}
+				
+				/*
+				var shapeTag:DefineShapeTag = new DefineShapeTag();
+				shapeTag.header = new TagHeaderRecord(2);
+				shapeTag.shapeBounds = new RectangleRecord(0, 1440, 0, 1280);
+				shapeTag.shapeId = 100;
+				shapeTag.shapes = new ShapeWithStyleRecord();
+				shapeTag.shapes.fillStyles = new FillStyleArrayRecord(1, Vector.<FillStyleRecord>(
+					new FillStyleRecord());
+				*/
+						
+				var placeTag:PlaceObject2Tag = new PlaceObject2Tag();
+				placeTag.header = new TagHeaderRecord();
+				placeTag.header.type = 26;
+				placeTag.characterId = characterId;
+				placeTag.depth = 1;
+				placeTag.matrix = new MatrixRecord(null, null, new MatrixTranslateStructure(0, 0));
+				swf.tags.push(placeTag);
+				
+				var showTag:ShowFrameTag = new ShowFrameTag();
+				showTag.header = new TagHeaderRecord();
+				showTag.header.type = 1;
+				swf.tags.push(showTag);
+				
+				var endTag:EndTag = new EndTag();
+				endTag.header = new TagHeaderRecord();
+				endTag.header.type = 0;
+				swf.tags.push(endTag);
+				
+				var result:SWFWriteResult = swfWriter.write(swf);
+				
+				var context:LoaderContext = new LoaderContext();
+				context.allowLoadBytesCodeExecution = true;
+				
+				loader.loadBytes(result.bytes, context);
+				
+				/*
 				if(tag is DefineBitsJPEG2Tag)
 				{
 					loader.loadBytes(DefineBitsJPEG2Tag(tag).imageData);
 				}
+				*/
+			}
+			
+			private function save(bytes:ByteArray, path:String):void
+			{
+				var file:FileStream = new FileStream();
+				file.open(new File(path), FileMode.WRITE);
+				file.writeBytes(bytes);
+				file.close();
 			}
 
 			private function saveOnClick(bytes:ByteArray):void
@@ -564,7 +647,7 @@
 
 					var isImage:Boolean = false;
 
-					if(object is DefineBitsJPEG2Tag)
+					if(object is DefineBitsJPEG2Tag || object is DefineBitsJPEG3Tag)
 					{
 						isImage = true;
 					}
@@ -622,7 +705,7 @@
 						case 'preview':
 							if(isImage)
 							{
-								getImagePreview(SWFTag(object));
+								getImagePreview(SWFTag(object), type, metadata);
 							}
 							else
 							{

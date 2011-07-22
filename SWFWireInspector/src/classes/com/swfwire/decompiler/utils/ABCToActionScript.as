@@ -1199,7 +1199,7 @@ package com.swfwire.decompiler.utils
 					else if(op is Instruction_dup)
 					{
 						tempStr = stack.pop();
-						stack.push(tempStr);
+						stack.push('<dup>'+tempStr);
 						stack.push(tempStr);
 					}
 					else if(op is Instruction_swap)
@@ -1836,7 +1836,10 @@ package com.swfwire.decompiler.utils
 						tempStr = stack.pop();
 						if(tempStr != '<wasdeleted>')
 						{
-							source = tempStr+';';
+							if(tempStr.substr(0, 5) != '<dup>')
+							{
+								source = tempStr+';';
+							}
 						}
 					}
 					else if(op is Instruction_newarray)
@@ -2062,7 +2065,7 @@ package com.swfwire.decompiler.utils
 			}
 		}
 		
-		public function multinameTypeToString(r:ReadableMultiname):String
+		public function multinameTypeToString(r:ReadableMultiname, seperator:String = '::'):String
 		{
 			var result:String = '';
 			if(customNamespaces[r.namespace])
@@ -2075,8 +2078,7 @@ package com.swfwire.decompiler.utils
 			}
 			else
 			{
-				//result = r.namespace + '::' + r.name;
-				result = r.namespace + '.' + r.name;
+				result = r.namespace + seperator + r.name;
 			}
 			return result;
 		}
@@ -2171,7 +2173,7 @@ package com.swfwire.decompiler.utils
 			{
 				var r:ReadableMultiname = new ReadableMultiname();
 				getReadableMultiname(c.interfaces[iter2], r);
-				interfaces.push(multinameTypeToString(r));
+				interfaces.push(multinameTypeToString(r, '.'));
 			}
 			
 			var interfaceString:String = '';
@@ -2182,7 +2184,7 @@ package com.swfwire.decompiler.utils
 			}
 			
 			var inheritanceString:String = '';
-			var superName:String = multinameTypeToString(c.superName);
+			var superName:String = multinameTypeToString(c.superName, '.');
 			if(superName != '*' && superName != '' && superName != 'Object')
 			{
 				inheritanceString = ' extends '+superName;
@@ -2197,15 +2199,6 @@ package com.swfwire.decompiler.utils
 '	}\n' +
 '}';
 			return result;
-			/*
-			var template:String = 'package {packageName} { public class {className}}}';
-			return StringUtil.namedSubstitute(template, 
-				{
-					packageName: c.className.namespace,
-					className: c.className.name,
-					properties: properties.join('\n')
-				});
-			*/
 		}
 	}
 }
