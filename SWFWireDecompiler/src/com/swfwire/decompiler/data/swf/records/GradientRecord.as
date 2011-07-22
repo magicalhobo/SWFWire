@@ -8,14 +8,17 @@ package com.swfwire.decompiler.data.swf.records
 		public var reserved:uint;
 		public var numGradients:uint;
 		public var gradientRecords:Vector.<GradientControlPointRecord>;
-		
-		public function read(swf:SWFByteArray):void
+
+		public function GradientRecord(reserved:uint = 0, numGradients:uint = 0, gradientRecords:Vector.<GradientControlPointRecord> = null)
 		{
-			
-		}
-		
-		public function write(swf:SWFByteArray):void
-		{
+			if(gradientRecords == null)
+			{
+				gradientRecords = new Vector.<GradientControlPointRecord>();
+			}
+
+			this.reserved = reserved;
+			this.numGradients = numGradients;
+			this.gradientRecords = gradientRecords;
 		}
 	}
 }

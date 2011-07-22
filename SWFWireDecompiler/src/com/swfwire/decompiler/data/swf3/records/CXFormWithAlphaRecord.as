@@ -20,50 +20,5 @@ package com.swfwire.decompiler.data.swf3.records
 		public var greenAddTerm:int;
 		public var blueAddTerm:int;
 		public var alphaAddTerm:int;
-		
-		public function read(swf:SWFByteArray):void
-		{
-			hasAddTerms = swf.readFlag();
-			hasMultTerms = swf.readFlag();
-			nBits = swf.readUB(4);
-			
-			if(hasMultTerms)
-			{
-				redMultTerm = swf.readSB(nBits);
-				greenMultTerm = swf.readSB(nBits);
-				blueMultTerm = swf.readSB(nBits);
-				alphaMultTerm = swf.readSB(nBits);
-			}
-			
-			if(hasAddTerms)
-			{
-				redAddTerm = swf.readSB(nBits);
-				greenAddTerm = swf.readSB(nBits);
-				blueAddTerm = swf.readSB(nBits);
-				alphaAddTerm = swf.readSB(nBits);
-			}
-		}
-		public function write(swf:SWFByteArray):void
-		{
-			hasAddTerms = swf.readFlag();
-			hasMultTerms = swf.readFlag();
-			nBits = swf.readUB(4);
-			
-			if(hasMultTerms)
-			{
-				redMultTerm = swf.readSB(nBits);
-				greenMultTerm = swf.readSB(nBits);
-				blueMultTerm = swf.readSB(nBits);
-				alphaMultTerm = swf.readSB(nBits);
-			}
-			
-			if(hasAddTerms)
-			{
-				redAddTerm = swf.readSB(nBits);
-				greenAddTerm = swf.readSB(nBits);
-				blueAddTerm = swf.readSB(nBits);
-				alphaAddTerm = swf.readSB(nBits);
-			}
-		}
 	}
 }

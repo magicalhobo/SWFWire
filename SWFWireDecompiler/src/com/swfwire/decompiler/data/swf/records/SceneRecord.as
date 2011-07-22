@@ -13,15 +13,5 @@ package com.swfwire.decompiler.data.swf.records
 			this.offset = offset;
 			this.name = name;
 		}
-		public function read(swf:SWFByteArray):void
-		{
-			offset = swf.readEncodedUI32();
-			name = swf.readString();
-		}
-		public function write(swf:SWFByteArray):void
-		{
-			swf.writeUI32(offset);
-			swf.writeString(name);
-		}
 	}
 }

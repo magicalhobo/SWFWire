@@ -276,7 +276,6 @@
     <classEntry path="com.swfwire.decompiler.data.swf.records.RGBRecord"/>
     <classEntry path="com.swfwire.decompiler.data.swf.records.RectangleRecord"/>
     <classEntry path="com.swfwire.decompiler.data.swf.records.SceneRecord"/>
-    <classEntry path="com.swfwire.decompiler.data.swf.records.Shape3FillStyleRecord"/>
     <classEntry path="com.swfwire.decompiler.data.swf.records.ShapeWithStyleRecord"/>
     <classEntry path="com.swfwire.decompiler.data.swf.records.StraightEdgeRecord"/>
     <classEntry path="com.swfwire.decompiler.data.swf.records.StyleChangeRecord"/>

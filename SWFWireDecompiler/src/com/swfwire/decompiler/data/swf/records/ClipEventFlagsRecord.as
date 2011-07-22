@@ -24,51 +24,28 @@ package com.swfwire.decompiler.data.swf.records
 		public var construct:Boolean;
 		public var keyPress:Boolean;
 		public var dragOut:Boolean;
-		
-		public function read(swf:SWFByteArray):void
+
+		public function ClipEventFlagsRecord(keyUp:Boolean = false, keyDown:Boolean = false, mouseUp:Boolean = false, mouseDown:Boolean = false, mouseMove:Boolean = false, unload:Boolean = false, enterFrame:Boolean = false, load:Boolean = false, dragOver:Boolean = false, rollOut:Boolean = false, rollOver:Boolean = false, releaseOutside:Boolean = false, release:Boolean = false, press:Boolean = false, initialize:Boolean = false, data:Boolean = false, construct:Boolean = false, keyPress:Boolean = false, dragOut:Boolean = false)
 		{
-			keyUp = swf.readFlag();
-			keyDown = swf.readFlag();
-			mouseUp = swf.readFlag();
-			mouseDown = swf.readFlag();
-			mouseMove = swf.readFlag();
-			unload = swf.readFlag();
-			enterFrame = swf.readFlag();
-			load = swf.readFlag();
-			dragOver = swf.readFlag();
-			rollOut = swf.readFlag();
-			rollOver = swf.readFlag();
-			releaseOutside = swf.readFlag();
-			release = swf.readFlag();
-			press = swf.readFlag();
-			initialize = swf.readFlag();
-			data = swf.readFlag();
-			construct = swf.readFlag();
-			keyPress = swf.readFlag();
-			dragOut = swf.readFlag();
-		}
-		
-		public function write(swf:SWFByteArray):void
-		{
-			swf.writeUB(1, keyUp ? 1 : 0);
-			swf.writeUB(1, keyDown ? 1 : 0);
-			swf.writeUB(1, mouseUp ? 1 : 0);
-			swf.writeUB(1, mouseDown ? 1 : 0);
-			swf.writeUB(1, mouseMove ? 1 : 0);
-			swf.writeUB(1, unload ? 1 : 0);
-			swf.writeUB(1, enterFrame ? 1 : 0);
-			swf.writeUB(1, load ? 1 : 0);
-			swf.writeUB(1, dragOver ? 1 : 0);
-			swf.writeUB(1, rollOut ? 1 : 0);
-			swf.writeUB(1, rollOver ? 1 : 0);
-			swf.writeUB(1, releaseOutside ? 1 : 0);
-			swf.writeUB(1, release ? 1 : 0);
-			swf.writeUB(1, press ? 1 : 0);
-			swf.writeUB(1, initialize ? 1 : 0);
-			swf.writeUB(1, data ? 1 : 0);
-			swf.writeUB(1, construct ? 1 : 0);
-			swf.writeUB(1, keyPress ? 1 : 0);
-			swf.writeUB(1, dragOut ? 1 : 0);
+			this.keyUp = keyUp;
+			this.keyDown = keyDown;
+			this.mouseUp = mouseUp;
+			this.mouseDown = mouseDown;
+			this.mouseMove = mouseMove;
+			this.unload = unload;
+			this.enterFrame = enterFrame;
+			this.load = load;
+			this.dragOver = dragOver;
+			this.rollOut = rollOut;
+			this.rollOver = rollOver;
+			this.releaseOutside = releaseOutside;
+			this.release = release;
+			this.press = press;
+			this.initialize = initialize;
+			this.data = data;
+			this.construct = construct;
+			this.keyPress = keyPress;
+			this.dragOut = dragOut;
 		}
 	}
 }

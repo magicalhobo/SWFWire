@@ -14,48 +14,18 @@ package com.swfwire.decompiler.data.swf.records
 		public var redAddTerm:int;
 		public var greenAddTerm:int;
 		public var blueAddTerm:int;
-		
-		public function read(swf:SWFByteArray):void
+
+		public function CXFormRecord(hasAddTerms:Boolean = false, hasMultTerms:Boolean = false, nBits:uint = 0, redMultTerm:int = 0, greenMultTerm:int = 0, blueMultTerm:int = 0, redAddTerm:int = 0, greenAddTerm:int = 0, blueAddTerm:int = 0)
 		{
-			hasAddTerms = swf.readFlag();
-			hasMultTerms = swf.readFlag();
-			nBits = swf.readUB(4);
-			
-			if(hasMultTerms)
-			{
-				redMultTerm = swf.readSB(nBits);
-				greenMultTerm = swf.readSB(nBits);
-				blueMultTerm = swf.readSB(nBits);
-			}
-			
-			if(hasAddTerms)
-			{
-				redAddTerm = swf.readSB(nBits);
-				greenAddTerm = swf.readSB(nBits);
-				blueAddTerm = swf.readSB(nBits);
-			}
-		}
-		public function write(swf:SWFByteArray):void
-		{
-			swf.writeUB(1, hasAddTerms ? 1 : 0);
-			swf.writeUB(1, hasMultTerms ? 1 : 0);
-			
-			throw new Error('This needs to really calculate the nBits!');
-			swf.writeUB(4, nBits);
-			
-			if(hasMultTerms)
-			{
-				swf.writeSB(nBits, redMultTerm);
-				swf.writeSB(nBits, greenMultTerm);
-				swf.writeSB(nBits, blueMultTerm);
-			}
-			
-			if(hasAddTerms)
-			{
-				swf.writeSB(nBits, redAddTerm);
-				swf.writeSB(nBits, greenAddTerm);
-				swf.writeSB(nBits, blueAddTerm);
-			}
+			this.hasAddTerms = hasAddTerms;
+			this.hasMultTerms = hasMultTerms;
+			this.nBits = nBits;
+			this.redMultTerm = redMultTerm;
+			this.greenMultTerm = greenMultTerm;
+			this.blueMultTerm = blueMultTerm;
+			this.redAddTerm = redAddTerm;
+			this.greenAddTerm = greenAddTerm;
+			this.blueAddTerm = blueAddTerm;
 		}
 	}
 }

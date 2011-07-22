@@ -10,35 +10,22 @@ package com.swfwire.decompiler.data.swf.records
 		public var actionRecordSize:uint;
 		public var keyCode:uint;
 		public var actions:Vector.<ActionRecord>;
-		
-		public function read(swf:SWFByteArray):void
+
+		public function ClipActionRecord(eventFlags:ClipEventFlagsRecord = null, actionRecordSize:uint = 0, keyCode:uint = 0, actions:Vector.<ActionRecord> = null)
 		{
-			eventFlags = new ClipEventFlagsRecord();
-			eventFlags.read(swf);
-			actionRecordSize = swf.readUI32();
-			if(eventFlags.keyPress)
+			if(eventFlags == null)
 			{
-				keyCode = swf.readUI8();
+				eventFlags = new ClipEventFlagsRecord();
 			}
-			actions = new Vector.<ActionRecord>();
-			var originalPosition:uint;
-			while(true)
+			if(actions == null)
 			{
-				originalPosition = swf.getBytePosition();
-				if(swf.readUI8() == 0)
-				{
-					break;
-				}
-				swf.setBytePosition(originalPosition);
-				var actionRecord:ActionRecord = new ActionRecord();
-				actionRecord.read(swf);
-				actions.push(actionRecord);
+				actions = new Vector.<ActionRecord>();
 			}
-		}
-		
-		public function write(swf:SWFByteArray):void
-		{
-			throw new Error('Not implemented');
+
+			this.eventFlags = eventFlags;
+			this.actionRecordSize = actionRecordSize;
+			this.keyCode = keyCode;
+			this.actions = actions;
 		}
 	}
 }

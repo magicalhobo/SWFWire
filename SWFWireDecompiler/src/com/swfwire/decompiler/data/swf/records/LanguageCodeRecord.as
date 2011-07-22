@@ -12,5 +12,10 @@ package com.swfwire.decompiler.data.swf.records
 		public static const LANGUAGE_CODE_TRADITIONAL_CHINESE:uint = 5;
 		
 		public var languageCode:uint;
+
+		public function LanguageCodeRecord(languageCode:uint = 0)
+		{
+			this.languageCode = languageCode;
+		}
 	}
 }

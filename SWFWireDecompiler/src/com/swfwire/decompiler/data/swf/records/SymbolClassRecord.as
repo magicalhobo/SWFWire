@@ -7,16 +7,11 @@ package com.swfwire.decompiler.data.swf.records
 	{
 		public var characterId:uint;
 		public var className:String;
-		
-		public function read(swf:SWFByteArray):void
+
+		public function SymbolClassRecord(characterId:uint = 0, className:String = '')
 		{
-			characterId = swf.readUI16();
-			className = swf.readString();
-		}
-		public function write(swf:SWFByteArray):void
-		{
-			swf.writeUI16(characterId);
-			swf.writeString(className);
+			this.characterId = characterId;
+			this.className = className;
 		}
 	}
 }

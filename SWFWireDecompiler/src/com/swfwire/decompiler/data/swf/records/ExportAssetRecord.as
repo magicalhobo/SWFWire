@@ -7,16 +7,11 @@ package com.swfwire.decompiler.data.swf.records
 	{
 		public var tag:uint;
 		public var name:String;
-		
-		public function read(swf:SWFByteArray):void
+
+		public function ExportAssetRecord(tag:uint = 0, name:String = '')
 		{
-			tag = swf.readUI16();
-			name = swf.readString();
-		}
-		public function write(swf:SWFByteArray):void
-		{
-			swf.writeUI16(tag);
-			swf.writeString(name);
+			this.tag = tag;
+			this.name = name;
 		}
 	}
 }

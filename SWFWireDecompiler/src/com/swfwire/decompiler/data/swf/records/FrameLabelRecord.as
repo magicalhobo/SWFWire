@@ -13,15 +13,5 @@ package com.swfwire.decompiler.data.swf.records
 			this.frameNum = frameNum;
 			this.frameLabel = frameLabel;
 		}
-		public function read(swf:SWFByteArray):void
-		{
-			frameNum = swf.readEncodedUI32();
-			frameLabel = swf.readString();
-		}
-		public function write(swf:SWFByteArray):void
-		{
-			swf.writeUI32(frameNum);
-			swf.writeString(frameLabel);
-		}
 	}
 }
