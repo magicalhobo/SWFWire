@@ -395,12 +395,14 @@ package com.swfwire.decompiler.utils
 											  stack:OperandStack = null,
 											  target:int = -1,
 											  depth:int = 0,
-											  definedLocals:Object = null):Object
+											  definedLocals:Object = null,
+											  assumes:Object = null):Object
 		{
 			var lines:Array = [];
 			
 			trace('depth: '+depth+'	'+start);
-			
+			if (!assumes)
+			assumes = {};
 			if(!scope)
 			{
 				scope = new ScopeStack(0);
@@ -624,38 +626,36 @@ package com.swfwire.decompiler.utils
 				
 				if(showActionScript)
 				{
-					function branch(target1:int, target2:int):Object
+					function branch(target1:int, target2:int,fnupdate:Function):Object
 					{
 						var tempStr1:String = '';
 						var tempStr2:String = '';
-						
-						var hitmapCopy1:Object = {};
-						var hitmapCopy2:Object = {};
-						for(var iterHit1:String in hitmapWithStack)
-						{
-							hitmapCopy1[iterHit1] = hitmapWithStack[iterHit1];
-							hitmapCopy2[iterHit1] = hitmapWithStack[iterHit1];
+						function clone(from:Object):Object {
+							var to:Object = { };
+							for (var iter :String in from) {
+								to[iter] = from[iter];
 						}
-						
-						var hitmapCopy3:Object = {};
-						var hitmapCopy4:Object = {};
-						for(var iterHitmap:String in hitmap)
-						{
-							hitmapCopy3[iterHitmap] = hitmap[iterHitmap];
-							hitmapCopy4[iterHitmap] = hitmap[iterHitmap];
+							return to;
 						}
+						var hitmapCopy1:Object = clone(hitmapWithStack);
+						var hitmapCopy2:Object = clone(hitmapWithStack);
+						var hitmapCopy3:Object = clone(hitmap);
+						var hitmapCopy4:Object = clone(hitmap);
 						
 						var stackCopy1:OperandStack = new OperandStack();
 						stackCopy1.values = stack.values.slice();
 						var stackCopy2:OperandStack = new OperandStack();
 						stackCopy2.values = stack.values.slice();
-						
 						trace('			branch point: '+iter);
 						trace('			start branch from: '+target1);
-						var r1:Object = instructionsToString(methodName, startTime, instructions, argumentNames, slotNames, localCount, target1, cache2, hitmapCopy3, hitmapCopy1, positionLookup, true, scope, locals, stackCopy1, -1, depth + 1, definedLocals);
+						var assumes1:Object = clone(assumes);
+						var assumes2:Object = clone(assumes);
+						fnupdate(assumes1, false);
+						fnupdate(assumes2, true);
+						var r1:Object = instructionsToString(methodName, startTime, instructions, argumentNames, slotNames, localCount, target1, cache2, hitmapCopy3, hitmapCopy1, positionLookup, true, scope, locals, stackCopy1, -1, depth + 1, definedLocals,assumes1);
 						trace('			end branch from: '+target1);
 						trace('			start branch from: '+target2);
-						var r2:Object = instructionsToString(methodName, startTime, instructions, argumentNames, slotNames, localCount, target2, cache2, hitmapCopy4, hitmapCopy2, positionLookup, true, scope, locals, stackCopy2, -1, depth + 1, definedLocals);
+						var r2:Object = instructionsToString(methodName, startTime, instructions, argumentNames, slotNames, localCount, target2, cache2, hitmapCopy4, hitmapCopy2, positionLookup, true, scope, locals, stackCopy2, -1, depth + 1, definedLocals,assumes2);
 						trace('			end branch from: '+target2);
 						
 						var isWhile:Boolean = false;
@@ -693,13 +693,6 @@ package com.swfwire.decompiler.utils
 									break outer;
 								}
 							}
-						}
-						
-						if(showBranchInfo)
-						{
-							lines.push('		MERGE @'+a1);
-							lines.push('		FLOW1 LENGTH: '+r1.flow.length+', BREAK @'+r1.breakOn);
-							lines.push('		FLOW2 LENGTH: '+r2.flow.length+', BREAK @'+r2.breakOn);
 						}
 						
 						if(showBranchInfo)
@@ -797,8 +790,13 @@ package com.swfwire.decompiler.utils
 					
 					function conditional(condition:String, inequality:Boolean):String
 					{
+						function isdup(cond:String):Boolean
+						{
+							return Boolean(cond.substr(0, 5) == '<dup>');
+						}
 						var key2:String = iter+':'+stack.values.join('|');
 						var cached:Object;
+						var duped:Boolean = isdup(condition);
 						if(cache2[key2])
 						{
 							trace('CACHE HIT!');
@@ -812,13 +810,17 @@ package com.swfwire.decompiler.utils
 							trace('CACHE MISS! EXECUTING EXPENSIVE BRANCH');
 							trace('	key: '+key2);
 							tempInt = positionLookup[Object(op).reference];
+							function fnupdate(arr:Object, value:Boolean):void
+							{
+								arr[condition] = value;
+							}
 							if(inequality)
 							{
-								b = branch(tempInt, iter + 1);
+								b = branch(tempInt, iter + 1,fnupdate);
 							}
 							else
 							{
-								b = branch(iter + 1, tempInt);
+								b = branch(iter + 1, tempInt,fnupdate);
 							}
 						}
 						
@@ -835,14 +837,35 @@ package com.swfwire.decompiler.utils
 						}
 						
 						tempStr2 = '';
+						if (assumes.length>0) lines.push("//assumes "+assumes.toString());
 						if(b.flow1.length > 0)
 						{
 							if(b.flow2.length > 0)
 							{
+								var condstr:String = condition.substr(5);
+								if (duped){
+								if (assumes[condstr] == false) {
+									lines.push("//ONLY ELSE PART IS EMITTED ("+["duped","=",duped,"condition","=",condstr,"is false"].join(" ")+")");
+									tempStr2 = b.source1;
+								}
+								else if (assumes[condstr] == true) {
+									lines.push("//ONLY IF PART IS EMITTED ("+["duped","=",duped,"condition","=",condstr,"is true"].join(" ")+")");
+									tempStr2 = b.source2;										
+								}
+								else { 
+									lines.push("//NOT TRIVIAL ("+["duped","=",duped,"condition","=",condstr,'assumes','=',String(assumes[condstr])].join(" ")+")");
+									tempStr2 = cond + '(' + condition + ')\n{\n' + b.source2 + '\n}\nelse\n{\n' + b.source1 + '\n}';
+								}
+								}
+								else{
 								tempStr2 = cond+'('+condition+')\n{\n'+b.source2+'\n}\nelse\n{\n'+b.source1+'\n}';
+							}
 							}
 							else
 							{
+								if (duped && assumes[condstr] == false)
+									tempStr2 = b.source1;
+								else
 								tempStr2 = cond+'(!('+condition+'))\n{\n'+b.source1+'\n}';
 							}
 						}
@@ -850,6 +873,9 @@ package com.swfwire.decompiler.utils
 						{
 							if(b.flow2.length > 0)
 							{
+								if (duped && assumes[condstr] == true)
+									tempStr2 = b.source2;
+								else
 								tempStr2 = cond+'('+condition+')\n{\n'+b.source2+'\n}';
 							}
 						}
@@ -1038,7 +1064,13 @@ package com.swfwire.decompiler.utils
 					else if(op is Instruction_iftrue)
 					{
 						tempStr4 = stack.pop();
+						if(tempStr4 == 'true')
+						{
+							iter = positionLookup[Instruction_iftrue(op).reference] - 1;
+						}
+						else {
 						conditional(tempStr4, false);
+					}
 					}
 					else if(op is Instruction_iffalse)
 					{
@@ -1123,6 +1155,16 @@ package com.swfwire.decompiler.utils
 						tempStr = stack.pop();
 						tempStr2 = stack.pop();
 						conditional(tempStr2+' > '+tempStr, true);
+					}
+					else if (op is Instruction_istypelate) {
+						tempStr2=stack.pop(); tempStr = stack.pop();
+						stack.push("Boolean("+[tempStr2, "is",tempStr].join(" ")+')');
+					}
+					else if(op is Instruction_inclocal_i)
+					{
+						var index:int = Instruction_inclocal_i(op).index;
+						source += ["++",locals.getName(index),";"].join("");
+						locals.setValue(index, [locals.getValue(index), "+1"].join(""));
 					}
 					else if(op is Instruction_getlocal0)
 					{
@@ -1833,6 +1875,7 @@ package com.swfwire.decompiler.utils
 					}
 					else if(op is Instruction_pop)
 					{
+						if (stack.values.length>0){
 						tempStr = stack.pop();
 						if(tempStr != '<wasdeleted>')
 						{
@@ -1841,6 +1884,8 @@ package com.swfwire.decompiler.utils
 								source = tempStr+';';
 							}
 						}
+					}
+						else lines.push("//UNKNOWN ACTION:tried to pop empty stack");
 					}
 					else if(op is Instruction_newarray)
 					{
