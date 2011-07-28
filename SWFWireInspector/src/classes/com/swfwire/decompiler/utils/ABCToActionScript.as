@@ -133,6 +133,7 @@ package com.swfwire.decompiler.utils
 			var classInfo:ClassInfoToken = abcFile.classes[index];
 			var instance:InstanceToken = abcFile.instances[index];
 			
+			rc.type = instance.flags & InstanceToken.FLAG_CLASS_INTERFACE ? ReadableClass.INTERFACE : ReadableClass.CLASS;
 			rc.className = new ReadableMultiname();
 			getReadableMultiname(instance.name, rc.className);
 			rc.superName = new ReadableMultiname();
@@ -1754,15 +1755,15 @@ package com.swfwire.decompiler.utils
 					}
 					else if(op is Instruction_convert_d)
 					{
-						stack.push('Number('+stack.pop()+')');
+						coerce('Number');
 					}
 					else if(op is Instruction_convert_i)
 					{
-						stack.push('int('+stack.pop()+')');
+						coerce('int');
 					}
 					else if(op is Instruction_convert_u)
 					{
-						stack.push('uint('+stack.pop()+')');
+						coerce('uint');
 					}
 					else if(op is Instruction_applytype)
 					{
@@ -1875,7 +1876,7 @@ package com.swfwire.decompiler.utils
 						tempStr = stack.pop();
 						if(tempStr != '<wasdeleted>')
 						{
-							if(tempStr.substr(0, 5) != '<dup>')
+							if(tempStr && tempStr.substr(0, 5) != '<dup>')
 							{
 								source = tempStr+';';
 							}
@@ -1916,7 +1917,7 @@ package com.swfwire.decompiler.utils
 					{
 						var r2:ReadableTrait = new ReadableTrait();
 						getMethodBody(0, Instruction_newfunction(op).index, r2);
-						stack.push(traitToString(r2, false, false, 0));
+						stack.push(traitToString(r2, false, false, false, 0));
 					}
 					else if(op is Instruction_deleteproperty)
 					{
@@ -1999,7 +2000,7 @@ package com.swfwire.decompiler.utils
 			return result;
 		}
 		
-		public function traitToString(r:ReadableTrait, showNamespace:Boolean = true, showName:Boolean = true, methodIndents:int = 2):String
+		public function traitToString(r:ReadableTrait, showMethodBody:Boolean = true, showNamespace:Boolean = true, showName:Boolean = true, methodIndents:int = 2):String
 		{
 			var pieces:Array = [];
 			if(showNamespace)
@@ -2078,14 +2079,21 @@ package com.swfwire.decompiler.utils
 					pieces.push(':'+type);
 				}
 				
-				if(r.instructions && r.instructions.length > 0)
+				if(showMethodBody)
 				{
-					var indent:String = StringUtil.repeat('\t', methodIndents);
-					pieces.push('\n'+indent+'{\n'+StringUtil.indent(instructionsToString(r.declaration.name, getTimer(), r.instructions, r.argumentNames, r.slots, r.localCount).result, indent+'	')+'\n'+indent+'}');
+					if(r.instructions && r.instructions.length > 0)
+					{
+						var indent:String = StringUtil.repeat('\t', methodIndents);
+						pieces.push('\n'+indent+'{\n'+StringUtil.indent(instructionsToString(r.declaration.name, getTimer(), r.instructions, r.argumentNames, r.slots, r.localCount).result, indent+'	')+'\n'+indent+'}');
+					}
+					else
+					{
+						pieces.push(' {}');
+					}
 				}
 				else
 				{
-					pieces.push(' {}');
+					pieces.push(';');
 				}
 			}
 			return pieces.join('');
@@ -2126,6 +2134,9 @@ package com.swfwire.decompiler.utils
 		{
 			var properties:Array = [];
 			
+			var type:String = c.type;
+			var isClass:Boolean = type == ReadableClass.CLASS;
+			
 			for(var iter:String in c.traits)
 			{
 				var rt:ReadableTrait = c.traits[iter]; 
@@ -2139,7 +2150,15 @@ package com.swfwire.decompiler.utils
 			
 			for(var iter3:String in c.traits)
 			{
-				var str:String = traitToString(c.traits[iter3]);
+				var rt2:ReadableTrait = c.traits[iter3];
+				if(!isClass)
+				{
+					if(rt2.declaration.name == c.className.name && rt2.declaration.namespace == 'public')
+					{
+						continue;
+					}
+				}
+				var str:String = traitToString(rt2, isClass, isClass);
 				if(str != '')
 				{
 					properties.push(str);
@@ -2232,7 +2251,7 @@ package com.swfwire.decompiler.utils
 			var result:String = 
 'package '+c.className.namespace+'\n' +
 '{\n' +
-'	public class '+c.className.name+inheritanceString+interfaceString+'\n' +
+'	public '+type+' '+c.className.name+inheritanceString+interfaceString+'\n' +
 '	{\n' +
 '		' + properties.join('\n		') + '\n' +
 '	}\n' +

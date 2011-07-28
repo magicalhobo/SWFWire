@@ -509,7 +509,7 @@ package net.anirudh.as3syntaxhighlight
                                 	
                                 style = patternParts[0];
 								
-								if (token == "class") 
+								if (token == "class" || token == "interface") 
 								{
 			                   		style = "class";
 			                   	}
