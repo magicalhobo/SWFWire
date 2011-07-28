@@ -834,6 +834,18 @@ package com.swfwire.decompiler.utils
 							cond = 'foreachin';
 						}
 						
+						if(condition.substr(0, 5) == '<dup>')
+						{
+							condition = condition.substr(5);
+						}
+						
+						var coercion:RegExp = /^Boolean\((.*)\)$/i;
+						var result:Array = condition.match(coercion);
+						if(result)
+						{
+							condition = result[1];
+						}
+						
 						tempStr2 = '';
 						if(b.flow1.length > 0)
 						{
@@ -952,6 +964,26 @@ package com.swfwire.decompiler.utils
 							}
 						}
 						return code;
+					}
+					
+					function coerce(type:String):void
+					{
+						var operand:String = stack.pop();
+						var dup:Boolean = operand.substr(0, 5) == '<dup>';
+						if(dup)
+						{
+							operand = operand.substr(5);
+						}
+						var matches:Array = operand.match(new RegExp('^'+type+'(.*)$'))
+						if(!matches)
+						{
+							operand = type+'('+operand+')';
+						}
+						if(dup)
+						{
+							operand = '<dup>'+operand;
+						}
+						stack.push(operand);
 					}
 
 					if(op is EndInstruction)
@@ -1199,7 +1231,14 @@ package com.swfwire.decompiler.utils
 					else if(op is Instruction_dup)
 					{
 						tempStr = stack.pop();
-						stack.push('<dup>'+tempStr);
+						if(tempStr.substr(0, 5) == '<dup>')
+						{
+							stack.push(tempStr);
+						}
+						else
+						{
+							stack.push('<dup>'+tempStr);
+						}
 						stack.push(tempStr);
 					}
 					else if(op is Instruction_swap)
@@ -1711,7 +1750,7 @@ package com.swfwire.decompiler.utils
 					}
 					else if(op is Instruction_convert_b)
 					{
-						stack.push('Boolean('+stack.pop()+')');
+						coerce('Boolean');
 					}
 					else if(op is Instruction_convert_d)
 					{
