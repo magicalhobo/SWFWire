@@ -14,6 +14,10 @@ package com.swfwire.decompiler.abc
 		}
 		public function pop():*
 		{
+			if(values.length == 0)
+			{
+				trace('WARNING: OperandStack underflow');
+			}
 			return values.pop();
 		}
 	}

@@ -174,9 +174,9 @@ package net.anirudh.as3syntaxhighlight
 			"private protected public final dynamic extends implements static override get set " +
 			"typeof instanceof with is as " +
 			"throw try catch finally " +
-			"void null undefined false true this super trace " +
+			"void null false true this super trace " +
 			"new delete " +
-			"if else do while switch case default for in foreach as continue break return ";
+			"if else do while switch case default for in each as continue break return ";
         
         // token style names.  correspond to css classes
         /** token style for a string literal */
@@ -528,10 +528,6 @@ package net.anirudh.as3syntaxhighlight
 								else if (token == "trace") 
 								{
 			                   		style = "trace";
-			                   	}
-								else if (token == "undefined") 
-								{
-			                   		style = "undefined";
 			                   	}
                                 break;
                             }
