@@ -219,7 +219,7 @@ package com.swfwire.decompiler.utils
 					if(trait.kind == TraitsInfoToken.KIND_TRAIT_SLOT)
 					{
 						var slotToken:TraitSlotToken = trait.data as TraitSlotToken;
-						r.slots[slotToken.slotId] = abcFile.cpool.strings[MultinameQNameToken(abcFile.cpool.multinames[trait.name].data).name].utf8;
+						r.slots[slotToken.slotId] = namespaceToString(MultinameQNameToken(abcFile.cpool.multinames[trait.name].data).ns) + "::" + abcFile.cpool.strings[MultinameQNameToken(abcFile.cpool.multinames[trait.name].data).name].utf8;
 					}
 				}
 			}
@@ -289,7 +289,7 @@ package com.swfwire.decompiler.utils
 						if(trait.kind == TraitsInfoToken.KIND_TRAIT_SLOT)
 						{
 							var slotToken:TraitSlotToken = trait.data as TraitSlotToken;
-							r.slots[slotToken.slotId] = abcFile.cpool.strings[MultinameQNameToken(abcFile.cpool.multinames[trait.name].data).name].utf8;
+							r.slots[slotToken.slotId] = namespaceToString(MultinameQNameToken(abcFile.cpool.multinames[trait.name].data).ns) + "::" + abcFile.cpool.strings[MultinameQNameToken(abcFile.cpool.multinames[trait.name].data).name].utf8;
 						}
 					}
 				}
@@ -395,15 +395,17 @@ package com.swfwire.decompiler.utils
 											  stack:OperandStack = null,
 											  target:int = -1,
 											  depth:int = 0,
-											  definedLocals:Object = null):Object
+											  definedLocals:Object = null,
+											  assumes:Dictionary = null):Object
 		{
 			var lines:Array = [];
 			
 			trace('depth: '+depth+'	'+start);
-			
+			if (!assumes)
+			assumes = new Dictionary(true);
 			if(!scope)
 			{
-				scope = new ScopeStack(0);
+				scope = new ScopeStack(new Vector.<Object>,false);
 			}
 			if(!definedLocals)
 			{
@@ -431,7 +433,7 @@ package com.swfwire.decompiler.utils
 			}
 			if(!stack)
 			{
-				stack = new OperandStack();
+				stack = new OperandStack(new Vector.<Object>,false);
 			}
 			var localCount:uint = 0;
 			
@@ -445,7 +447,7 @@ package com.swfwire.decompiler.utils
 			}
 			if(!positionLookup)
 			{
-				positionLookup = new Dictionary();
+				positionLookup = new Dictionary(true);
 				for(var iter1:uint = 0; iter1 < instructions.length; iter1++)
 				{
 					positionLookup[instructions[iter1]] = iter1;
@@ -477,7 +479,7 @@ package com.swfwire.decompiler.utils
 			{
 				sourceUntil[iter] = lines.join('\n');
 				
-				var key:String = iter+':'+stack.values.join('|');
+				var key:String = iter+"\u2122"+stack.values.join('|');
 				//trace('for: '+key+' ('+stack.values.length+')');
 				
 				if(hitmap[iter])
@@ -624,38 +626,86 @@ package com.swfwire.decompiler.utils
 				
 				if(showActionScript)
 				{
-					function branch(target1:int, target2:int):Object
+					var boolrexp:RegExp =/(<dup>)?Boolean\((.+)\)$/;
+					function unwrapbool(cond:String):String {
+						if (boolrexp.test(cond)){
+							var condtounwraped:String = cond.slice();
+							while(true){
+							var result:Object = boolrexp.exec(condtounwraped);
+								if (result) {
+									condtounwraped = '';
+									if (result[1]) condtounwraped += result[1];
+									if (result[2]) condtounwraped += result[2];
+								}
+								else break;
+							}
+							return condtounwraped;
+						}
+						else return cond;
+					}
+					function prunedup(cond:String):String {
+						cond = cond.replace(/<dup>/, '');/*
+						function isdup(cond:String):Boolean
+						{
+							return /^<dup>/.test(cond);
+						}
+						while (isdup(cond)) {
+							cond = cond.substr(5);
+						}
+						*/
+						return cond;
+					}
+					function getcanonicalboolexpr(expr:String):Object {
+						var boolexpr:Object = null;
+						if (/^!/.test(expr))
+						{
+							boolexpr = assumes[expr.substr(1)];
+						}
+						else boolexpr = assumes[expr];
+						return boolexpr;
+					}
+					function branch(target1:int, target2:int,fnupdate:Function):Object
 					{
 						var tempStr1:String = '';
 						var tempStr2:String = '';
-						
-						var hitmapCopy1:Object = {};
-						var hitmapCopy2:Object = {};
-						for(var iterHit1:String in hitmapWithStack)
-						{
-							hitmapCopy1[iterHit1] = hitmapWithStack[iterHit1];
-							hitmapCopy2[iterHit1] = hitmapWithStack[iterHit1];
+						function clone(from:Object):Object {
+							var to:Object = { };
+							for (var iter :String in from) {
+								to[iter] = from[iter];
 						}
-						
-						var hitmapCopy3:Object = {};
-						var hitmapCopy4:Object = {};
-						for(var iterHitmap:String in hitmap)
-						{
-							hitmapCopy3[iterHitmap] = hitmap[iterHitmap];
-							hitmapCopy4[iterHitmap] = hitmap[iterHitmap];
+							return to;
 						}
+						function clone_d(from:Dictionary):Dictionary {
+							var to:Dictionary = new Dictionary(true);
+							for (var iter :String in from) {
+								to[iter] = from[iter];
+						}
+							return to;
+						}
+						var hitmapCopy1:Object = clone(hitmapWithStack);
+						var hitmapCopy2:Object = clone(hitmapWithStack);
+						var hitmapCopy3:Object = clone(hitmap);
+						var hitmapCopy4:Object = clone(hitmap);
 						
-						var stackCopy1:OperandStack = new OperandStack();
-						stackCopy1.values = stack.values.slice();
-						var stackCopy2:OperandStack = new OperandStack();
-						stackCopy2.values = stack.values.slice();
-						
+						var stackCopy1:OperandStack = new OperandStack(stack.values,true);
+						var stackCopy2:OperandStack = new OperandStack(stack.values,true);
 						trace('			branch point: '+iter);
-						trace('			start branch from: '+target1);
-						var r1:Object = instructionsToString(methodName, startTime, instructions, argumentNames, slotNames, localCount, target1, cache2, hitmapCopy3, hitmapCopy1, positionLookup, true, scope, locals, stackCopy1, -1, depth + 1, definedLocals);
+						trace('			start branch from: ' + target1);
+						var assumes1:Dictionary = assumes;
+						var assumes2:Dictionary = assumes;
+						var bupdate:Boolean = fnupdate(null, null)===true;
+						if (bupdate) {
+							assumes1 = clone_d(assumes);
+							assumes2 = clone_d(assumes);
+							fnupdate(assumes1, false);
+							fnupdate(assumes2, true);
+						}
+						var scope1:ScopeStack = new ScopeStack(scope.values, true);
+						var scope2:ScopeStack = new ScopeStack(scope.values, true);
+						var r1:Object = instructionsToString(methodName, startTime, instructions, argumentNames, slotNames, localCount, target1, cache2, hitmapCopy3, hitmapCopy1, positionLookup, true, scope1, locals, stackCopy1, -1, depth + 1, definedLocals,assumes1);
 						trace('			end branch from: '+target1);
-						trace('			start branch from: '+target2);
-						var r2:Object = instructionsToString(methodName, startTime, instructions, argumentNames, slotNames, localCount, target2, cache2, hitmapCopy4, hitmapCopy2, positionLookup, true, scope, locals, stackCopy2, -1, depth + 1, definedLocals);
+						trace('			start branch from: ' + target2);
+						var r2:Object = instructionsToString(methodName, startTime, instructions, argumentNames, slotNames, localCount, target2, cache2, hitmapCopy4, hitmapCopy2, positionLookup, true, scope2, locals, stackCopy2, -1, depth + 1, definedLocals,assumes2);
 						trace('			end branch from: '+target2);
 						
 						var isWhile:Boolean = false;
@@ -676,7 +726,7 @@ package com.swfwire.decompiler.utils
 								if(r1.flow[iter4] == r2.flow[iter5])
 								{
 									a2 = r1.flow[iter4];
-									var tempStack:Array = a2.split(':');
+									var tempStack:Array = a2.split("\u2122");
 									a1 = tempStack.shift();
 									if(tempStack[0])
 									{
@@ -693,13 +743,6 @@ package com.swfwire.decompiler.utils
 									break outer;
 								}
 							}
-						}
-						
-						if(showBranchInfo)
-						{
-							lines.push('		MERGE @'+a1);
-							lines.push('		FLOW1 LENGTH: '+r1.flow.length+', BREAK @'+r1.breakOn);
-							lines.push('		FLOW2 LENGTH: '+r2.flow.length+', BREAK @'+r2.breakOn);
 						}
 						
 						if(showBranchInfo)
@@ -797,8 +840,47 @@ package com.swfwire.decompiler.utils
 					
 					function conditional(condition:String, inequality:Boolean):String
 					{
-						var key2:String = iter+':'+stack.values.join('|');
+						var showBranchInfo2:Boolean = false;
+						var key2:String = iter+"\u2122"+stack.values.join('|');
 						var cached:Object;
+						var condstr:String = prunedup(unwrapbool(condition));
+
+						var negprefixed:Boolean = /^!/.test(condstr);
+						var toevaluated:String;
+						if (negprefixed) toevaluated = condstr.substr(1);
+						else toevaluated = condstr;
+						function fnupdate(arr:Object, value:Boolean):Object
+						{
+							if (negprefixed) { 
+								value = !value;
+							}
+							if (arr!=null){
+								arr[toevaluated] = value;
+								if (showBranchInfo2)
+								lines.push(["//ASSUME ", toevaluated, String(value)].join(" "));
+								return null;
+							}
+							else {
+								if (showBranchInfo2)
+								lines.push(["//NOT DETERMINED ", toevaluated, String(([true, false].indexOf(assumes[toevaluated])) == -1)].join(" "));
+								return ([true, false].indexOf(assumes[toevaluated])) == -1;
+							}
+						}
+						var bcondition:Object=null;
+						if (negprefixed && ([true,false].indexOf(assumes[toevaluated])!=-1)){
+							bcondition = !assumes[toevaluated];
+						}
+						else{
+							bcondition = assumes[toevaluated];
+						}
+						if (!fnupdate(null, null)&&(bcondition!==null))
+						{
+							var whethertobranch:Boolean = bcondition==!inequality;
+							if (whethertobranch)
+							iter = positionLookup[op["reference"]] - 1;
+							return null;
+						}
+						
 						if(cache2[key2])
 						{
 							trace('CACHE HIT!');
@@ -814,11 +896,11 @@ package com.swfwire.decompiler.utils
 							tempInt = positionLookup[Object(op).reference];
 							if(inequality)
 							{
-								b = branch(tempInt, iter + 1);
+								b = branch(tempInt, iter + 1,fnupdate);
 							}
 							else
 							{
-								b = branch(iter + 1, tempInt);
+								b = branch(iter + 1, tempInt,fnupdate);
 							}
 						}
 						
@@ -833,24 +915,50 @@ package com.swfwire.decompiler.utils
 						{
 							cond = 'foreachin';
 						}
-						
 						tempStr2 = '';
 						if(b.flow1.length > 0)
 						{
 							if(b.flow2.length > 0)
 							{
-								tempStr2 = cond+'('+condition+')\n{\n'+b.source2+'\n}\nelse\n{\n'+b.source1+'\n}';
+								if (bcondition == false) {
+									if (showBranchInfo2) lines.push("//ONLY ELSE PART IS EMITTED ("+["condition","=",toevaluated,"is false"].join(" ")+")");
+									tempStr2 = b.source1;
+								}
+								else if (bcondition == true) {
+									if (showBranchInfo2) lines.push("//ONLY IF PART IS EMITTED ("+["condition","=",toevaluated,"is true"].join(" ")+")");
+									tempStr2 = b.source2;										
+								}
+								else {
+									if (showBranchInfo2) lines.push("//NOT TRIVIAL ("+["condition","=",toevaluated,String(bcondition)].join(" ")+")");
+									tempStr2 = cond+'('+condition+')\n{\n'+b.source2+'\n}\nelse\n{\n'+b.source1+'\n}';
+								}
 							}
 							else
 							{
-								tempStr2 = cond+'(!('+condition+'))\n{\n'+b.source1+'\n}';
+								if (bcondition == false)
+									tempStr2 = b.source1;
+								else if (bcondition == true) {
+									if (showBranchInfo2) lines.push("//TOTALLY OMITTED ("+["condition","=",toevaluated,"is true"].join(" ")+")");
+								}
+								else {
+									if (showBranchInfo2) lines.push("//NOT TRIVIAL ("+["condition","=",toevaluated,String(bcondition)].join(" ")+")");
+									tempStr2 = cond+'(!('+condition+'))\n{\n'+b.source1+'\n}';
+								}
 							}
 						}
 						else
 						{
 							if(b.flow2.length > 0)
 							{
-								tempStr2 = cond+'('+condition+')\n{\n'+b.source2+'\n}';
+								if (bcondition == true)
+									tempStr2 = b.source2;
+								else if (bcondition == false){
+									if (showBranchInfo2) lines.push("//TOTALLY OMITTED ("+["condition","=",toevaluated,"is false"].join(" ")+")");
+								}
+								else {
+									if (showBranchInfo2) lines.push("//NOT TRIVIAL ("+["condition","=",toevaluated,String(bcondition)].join(" ")+")");
+									tempStr2 = cond+'('+condition+')\n{\n'+b.source2+'\n}';
+								}
 							}
 						}
 						
@@ -870,14 +978,14 @@ package com.swfwire.decompiler.utils
 						{
 							if(showBranchInfo)
 							{
-								source = '[CACHED]\n'+source;
+								source = '[CACHED]\n'+source+'[/CACHED]\n';
 							}
 						}
 						else
 						{
 							cache2[key2] = {b: b};
 						}
-						return source;
+						return null;
 					}
 					
 					function localAssign(id:int):void
@@ -953,7 +1061,6 @@ package com.swfwire.decompiler.utils
 						}
 						return code;
 					}
-
 					if(op is EndInstruction)
 					{
 					}
@@ -1038,7 +1145,13 @@ package com.swfwire.decompiler.utils
 					else if(op is Instruction_iftrue)
 					{
 						tempStr4 = stack.pop();
+						if(tempStr4 == 'true')
+						{
+							iter = positionLookup[Instruction_iftrue(op).reference] - 1;
+						}
+						else {
 						conditional(tempStr4, false);
+					}
 					}
 					else if(op is Instruction_iffalse)
 					{
@@ -1124,6 +1237,16 @@ package com.swfwire.decompiler.utils
 						tempStr2 = stack.pop();
 						conditional(tempStr2+' > '+tempStr, true);
 					}
+					else if (op is Instruction_istypelate) {
+						tempStr2=stack.pop(); tempStr = stack.pop();
+						stack.push("Boolean("+[tempStr2, "is",tempStr].join(" ")+')');
+					}
+					else if(op is Instruction_inclocal_i)
+					{
+						var index:int = Instruction_inclocal_i(op).index;
+						source += ["++",locals.getName(index),";"].join("");
+						locals.setValue(index, [locals.getValue(index), "+1"].join(""));
+					}
 					else if(op is Instruction_getlocal0)
 					{
 						stack.push(locals.getName(0));
@@ -1188,7 +1311,9 @@ package com.swfwire.decompiler.utils
 						tempStr4 = slotNames[Instruction_setslot(op).slotIndex];
 						if(tempStr4 != tempStr)
 						{
-							source = 'var '+tempStr4+':'+tempStr2+' = '+tempStr+';';
+							if (tempStr3=="<activation>")
+							source = 'var ' + tempStr4 + ':' + tempStr2 + ' = ' + tempStr + ';';
+							else source = tempStr4 + ':' + tempStr2 + ' = ' + tempStr + ';';
 						}
 						//source = slotNames[Instruction_setslot(op).slotIndex]+' = '+tempStr+';';
 					}
@@ -1767,17 +1892,21 @@ package com.swfwire.decompiler.utils
 					{
 						stack.push(stack.pop()+' - 1');
 					}
+					else if(op is Instruction_pushwith)
+					{
+						scope.push(stack.pop());
+					}
 					else if(op is Instruction_pushscope)
 					{
 						scope.push(stack.pop());
 					}
 					else if(op is Instruction_popscope)
 					{
-						scope.push(stack.pop());
+						scope.pop();
 					}
 					else if(op is Instruction_getscopeobject)
 					{
-						stack.push(scope.values[scope.values.length - 1 - Instruction_getscopeobject(op).index]);
+						stack.push(String(scope.values[scope.values.length - 1 - Instruction_getscopeobject(op).index]));
 					}
 					else if(op is Instruction_getglobalscope)
 					{
@@ -1833,6 +1962,7 @@ package com.swfwire.decompiler.utils
 					}
 					else if(op is Instruction_pop)
 					{
+						if (stack.values.length>0){
 						tempStr = stack.pop();
 						if(tempStr != '<wasdeleted>')
 						{
@@ -1841,6 +1971,8 @@ package com.swfwire.decompiler.utils
 								source = tempStr+';';
 							}
 						}
+					}
+						else lines.push("//UNKNOWN ACTION:tried to pop empty stack");
 					}
 					else if(op is Instruction_newarray)
 					{

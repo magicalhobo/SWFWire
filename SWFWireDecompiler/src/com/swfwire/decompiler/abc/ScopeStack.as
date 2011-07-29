@@ -3,17 +3,28 @@ package com.swfwire.decompiler.abc
 	public class ScopeStack
 	{
 		public var values:Vector.<Object>;
-		
-		public function ScopeStack(maxScopeDepth:uint)
+		private var copyonwrite:Boolean;
+		private var duped:Boolean=false;
+		public function ScopeStack(_values:Vector.<Object>,cow:Boolean)
 		{
-			values = new Vector.<Object>();
+			values = _values;
+			copyonwrite = cow;
+		}
+		private function fork():void
+		{
+		if (copyonwrite && !duped){
+			values = values.slice();
+			duped = true;
+		}
 		}
 		public function push(value:*):void
 		{
+			fork();
 			values.push(value);
 		}
 		public function pop():*
 		{
+			fork();
 			return values.pop();
 		}
 	}
