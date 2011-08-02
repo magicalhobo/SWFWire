@@ -62,7 +62,7 @@ package com.swfwire.decompiler.utils
 				case MultinameToken.KIND_RTQName:
 				case MultinameToken.KIND_RTQNameA:
 					var rtqn:MultinameRTQNameToken = multiname.data as MultinameRTQNameToken;
-					readable.namespace = stack.pop();
+					readable.namespace = uncoerce(stack.pop(), 'Namespace', true).replace('::', '.');
 					readable.name = cpool.strings[rtqn.name].utf8;
 					break;
 				case MultinameToken.KIND_MultinameL:
@@ -115,7 +115,7 @@ package com.swfwire.decompiler.utils
 						var mq2:MultinameQNameToken = cpool.multinames[tn.subType].data as MultinameQNameToken;
 						var rSub:ReadableMultiname = new ReadableMultiname();
 						getReadableMultiname(tn.subType, rSub);
-						readable.name = cpool.strings[mq1.name].utf8 + '.<' + multinameTypeToString(rSub) + '>';
+						readable.name = cpool.strings[mq1.name].utf8 + '.<' + multinameTypeToString(rSub, '.') + '>';
 						break;
 					default:
 						readable.name = '#'+index+'/'+cpool.multinames.length+'('+multiname.kind.toString(16)+')';
@@ -389,6 +389,16 @@ package com.swfwire.decompiler.utils
 			return clone;
 		}
 		
+		private function uncoerce(value:String, pattern:String = '[\w]+', leaveParenthesis:Boolean = false):String
+		{
+			var matches:Array = value.match(new RegExp('^'+pattern+'\\((.*)\\)$'))
+			if(matches)
+			{
+				value = leaveParenthesis ? '('+matches[1]+')' : matches[1];
+			}
+			return value;
+		}
+		
 		private function instructionsToString(methodName:String,
 											  startTime:int,
 											  instructions:Vector.<IInstruction>,
@@ -603,7 +613,7 @@ package com.swfwire.decompiler.utils
 						{
 							var r:ReadableMultiname = new ReadableMultiname();
 							this.getReadableMultiname(op['index'], r);
-							var mnString:String = this.multinameTypeToString(r);
+							var mnString:String = this.multinameTypeToString(r, '.');
 							if(mnString == '?')
 							{
 								mnString = '(#'+op['index']+'/'+abcFile.cpool.multinames.length+')';
@@ -660,10 +670,14 @@ package com.swfwire.decompiler.utils
 						
 						trace('			branch point: '+iter);
 						trace('			start branch from: '+target1);
-						var r1:Object = instructionsToString(methodName, startTime, instructions, argumentNames, slotNames, localCount, target1, cache2, hitmapCopy3, hitmapCopy1, knownConditions1, positionLookup, true, scope, locals, stackCopy1, -1, depth + 1, definedLocals);
+						var r1:Object = instructionsToString(methodName, startTime, instructions,
+							argumentNames, slotNames, localCount, target1, cache2, hitmapCopy3, hitmapCopy1,
+							knownConditions1, positionLookup, true, scope, locals, stackCopy1, -1, depth + 1, cloneObject(definedLocals));
 						trace('			end branch from: '+target1);
 						trace('			start branch from: '+target2);
-						var r2:Object = instructionsToString(methodName, startTime, instructions, argumentNames, slotNames, localCount, target2, cache2, hitmapCopy4, hitmapCopy2, knownConditions2, positionLookup, true, scope, locals, stackCopy2, -1, depth + 1, definedLocals);
+						var r2:Object = instructionsToString(methodName, startTime, instructions,
+							argumentNames, slotNames, localCount, target2, cache2, hitmapCopy4, hitmapCopy2,
+							knownConditions2, positionLookup, true, scope, locals, stackCopy2, -1, depth + 1, cloneObject(definedLocals));
 						trace('			end branch from: '+target2);
 						
 						var isWhile:Boolean = false;
@@ -684,12 +698,12 @@ package com.swfwire.decompiler.utils
 								if(r1.flow[iter4] == r2.flow[iter5])
 								{
 									a2 = r1.flow[iter4];
-									var tempStack:Array = a2.split(':');
-									a1 = tempStack.shift();
-									if(tempStack[0])
+									var splitPoint:int = a2.indexOf(':');
+									a1 = int(a2.substr(0, splitPoint));
+									var tempStack:String = a2.substr(splitPoint + 1);
+									if(tempStack)
 									{
-										tempStack = tempStack[0].split('|');
-										newStack = Vector.<Object>(tempStack);
+										newStack = Vector.<Object>(tempStack.split('|'));
 									}
 									else
 									{
@@ -828,12 +842,15 @@ package com.swfwire.decompiler.utils
 							condition = result[1];
 						}
 						
-						if(dup)
+						if(dup || true)
 						{
-							if(condition && knownConditions[condition])
+							if(condition && knownConditions.hasOwnProperty(condition))
 							{
-								trace('KNOWN CONDITION: '+condition);
-								if(inequality)
+								trace('KNOWN CONDITION: '+condition+' = '+knownConditions[condition]);
+								var execute:Boolean = inequality;
+								execute = knownConditions[condition] ? !execute : execute;
+								
+								if(execute)
 								{
 									iter = iter + 1;
 								}
@@ -1003,6 +1020,7 @@ package com.swfwire.decompiler.utils
 							firstNextValue = dec;
 						}
 						
+						var addedDeclaration:Boolean = false;
 						if(!definedLocals[id])
 						{
 							dec = 'var '+dec;
@@ -1012,11 +1030,19 @@ package com.swfwire.decompiler.utils
 							}
 							dec = dec+':'+tempStr2;
 							definedLocals[id] = true;
+							addedDeclaration = true;
 						}
 
 						if(tempStr3 != '<activation>' && tempStr3 != name && !isNextName && !isNextValue)
 						{
-							source = dec+' = '+tempStr3+';';
+							if(addedDeclaration && tempStr3 == 'undefined')
+							{
+								source = dec+';';
+							}
+							else
+							{
+								source = dec+' = '+tempStr3+';';
+							}
 						}
 						locals.setValue(id, tempStr3);
 					}
@@ -1057,7 +1083,7 @@ package com.swfwire.decompiler.utils
 						}
 						stack.push(operand);
 					}
-
+					
 					if(op is EndInstruction)
 					{
 					}
@@ -1440,10 +1466,8 @@ package com.swfwire.decompiler.utils
 							default:
 								rmn = new ReadableMultiname();
 								getReadableMultiname(tempInt, rmn);
-								tempStr = this.multinameTypeToString(rmn);
+								tempStr = this.multinameTypeToString(rmn, '.');
 								stack.push(tempStr);
-								//stack.push(tempStr);
-								//source = 'findprop - '+tempStr;
 								break;
 						}
 					}
@@ -1456,10 +1480,8 @@ package com.swfwire.decompiler.utils
 							default:
 								rmn = new ReadableMultiname();
 								getReadableMultiname(tempInt, rmn);
-								tempStr = this.multinameTypeToString(rmn);
-								
+								tempStr = this.multinameTypeToString(rmn, '.');
 								stack.push(tempStr);
-								//source = 'getprop - '+tempStr;
 								break;
 						}
 					}
@@ -1480,7 +1502,7 @@ package com.swfwire.decompiler.utils
 							default:
 								rmn = new ReadableMultiname();
 								getReadableMultiname(tempInt, rmn);
-								tempStr = this.multinameTypeToString(rmn);
+								tempStr = this.multinameTypeToString(rmn, '.');
 								if(obj != tempStr)
 								{
 									tempStr = 'super.'+tempStr;
@@ -1510,7 +1532,7 @@ package com.swfwire.decompiler.utils
 								
 								rmn = new ReadableMultiname();
 								getReadableMultiname(tempInt, rmn);
-								tempStr = this.multinameTypeToString(rmn);
+								tempStr = this.multinameTypeToString(rmn, '.');
 								
 								if(tempStr2 != tempStr)
 								{
@@ -1539,10 +1561,17 @@ package com.swfwire.decompiler.utils
 								rmn = new ReadableMultiname();
 								getReadableMultinameRuntime(tempInt, rmn, stack);
 								tempStr2 = stack.pop();
-								tempStr = this.multinameTypeToString(rmn);
-								if(tempStr2 != tempStr)
+								
+								tempStr = this.multinameTypeToString(rmn, '.');
+								
+								if((tempStr != tempStr2) && (tempStr2 != rmn.name))
 								{
+									tempStr = this.multinameTypeToString(rmn);
 									tempStr = tempStr2+'.'+tempStr;
+								}
+								else
+								{
+									tempStr = this.multinameTypeToString(rmn);
 								}
 								break;
 						}
@@ -1568,7 +1597,7 @@ package com.swfwire.decompiler.utils
 								
 								rmn = new ReadableMultiname();
 								getReadableMultinameRuntime(tempInt, rmn, stack);
-								tempStr = this.multinameTypeToString(rmn);
+								tempStr = this.multinameTypeToString(rmn, '.');
 								
 								tempStr2 = stack.pop();
 								
@@ -1602,7 +1631,7 @@ package com.swfwire.decompiler.utils
 								
 								rmn = new ReadableMultiname();
 								getReadableMultiname(tempInt, rmn);
-								tempStr = this.multinameTypeToString(rmn);
+								tempStr = this.multinameTypeToString(rmn, '.');
 								
 								if(tempStr2 != tempStr)
 								{
@@ -1622,7 +1651,7 @@ package com.swfwire.decompiler.utils
 							default:
 								rmn = new ReadableMultiname();
 								getReadableMultiname(tempInt, rmn);
-								tempStr = this.multinameTypeToString(rmn);
+								tempStr = this.multinameTypeToString(rmn, '.');
 								
 								tempStr = tempStr;
 								stack.push(tempStr);
@@ -1638,7 +1667,7 @@ package com.swfwire.decompiler.utils
 						rmn = new ReadableMultiname();
 						getReadableMultinameRuntime(tempInt, rmn, stack);
 						tempStr2 = stack.pop();
-						tempStr = this.multinameTypeToString(rmn);
+						tempStr = this.multinameTypeToString(rmn, '.');
 						tempStr = tempStr2+'..'+tempStr;
 						
 						stack.push(tempStr);
@@ -1682,7 +1711,7 @@ package com.swfwire.decompiler.utils
 								
 								rmn = new ReadableMultiname();
 								getReadableMultiname(tempInt, rmn);
-								tempStr = this.multinameTypeToString(rmn);
+								tempStr = this.multinameTypeToString(rmn, '.');
 								
 								if(tempStr2 != tempStr)
 								{
@@ -1716,7 +1745,7 @@ package com.swfwire.decompiler.utils
 								
 								rmn = new ReadableMultiname();
 								getReadableMultiname(tempInt, rmn);
-								tempStr = this.multinameTypeToString(rmn);
+								tempStr = this.multinameTypeToString(rmn, '.');
 								
 								if(tempStr2 != tempStr)
 								{
@@ -1741,7 +1770,10 @@ package com.swfwire.decompiler.utils
 					}
 					else if(op is Instruction_callsupervoid)
 					{
-						source = 'super();';
+						if(!sourceStarted)
+						{
+							source = 'super();';
+						}
 					}
 					else if(op is Instruction_constructprop)
 					{
@@ -1760,7 +1792,7 @@ package com.swfwire.decompiler.utils
 								
 								rmn = new ReadableMultiname();
 								getReadableMultiname(tempInt, rmn);
-								tempStr = this.multinameTypeToString(rmn);
+								tempStr = this.multinameTypeToString(rmn, '.');
 								
 								if(tempStr2 != tempStr)
 								{
@@ -1791,7 +1823,10 @@ package com.swfwire.decompiler.utils
 						//Not sure why this exists... should always be 'this'
 						stack.pop();
 						
-						source = 'super('+args.join(', ')+');';
+						if(args.length != 0 || sourceStarted)
+						{
+							source = 'super('+args.join(', ')+');';
+						}
 					}
 					else if(op is Instruction_coerce)
 					{
@@ -1801,7 +1836,7 @@ package com.swfwire.decompiler.utils
 						
 						rmn = new ReadableMultiname();
 						getReadableMultiname(tempInt, rmn);
-						tempStr2 = this.multinameTypeToString(rmn);
+						tempStr2 = this.multinameTypeToString(rmn, '.');
 
 						stack.push(tempStr2+'('+tempStr+')');
 					}
@@ -1887,7 +1922,7 @@ package com.swfwire.decompiler.utils
 					}
 					else if(op is Instruction_popscope)
 					{
-						scope.push(stack.pop());
+						scope.pop();
 					}
 					else if(op is Instruction_getscopeobject)
 					{
@@ -1998,7 +2033,7 @@ package com.swfwire.decompiler.utils
 						tempStr2 = stack.pop();
 						rmn = new ReadableMultiname();
 						getReadableMultinameRuntime(Instruction_deleteproperty(op).index, rmn, stack);
-						tempStr = this.multinameTypeToString(rmn);
+						tempStr = this.multinameTypeToString(rmn, '.');
 						source = 'delete '+tempStr+'['+tempStr2+'];';
 						stack.push('<wasdeleted>');
 					}
@@ -2122,7 +2157,7 @@ package com.swfwire.decompiler.utils
 				{
 					pieces.push('var ');
 				}
-				pieces.push(r.declaration.name+':'+multinameTypeToString(r.type));
+				pieces.push(r.declaration.name+':'+multinameTypeToString(r.type, '.'));
 				if(r.initializer)
 				{
 					pieces.push(' = '+r.initializer);
@@ -2139,7 +2174,7 @@ package com.swfwire.decompiler.utils
 				var args:Array = [];
 				for(var iter:uint = 0; iter < r.arguments.length; iter++)
 				{
-					args.push(r.argumentNames[iter] + ':' + multinameTypeToString(r.arguments[iter]));
+					args.push(r.argumentNames[iter] + ':' + multinameTypeToString(r.arguments[iter], '.'));
 				}
 				if(showName)
 				{
@@ -2152,7 +2187,7 @@ package com.swfwire.decompiler.utils
 				}
 				pieces.push('('+args.join(', ')+')');
 				
-				var type:String = multinameTypeToString(r.type);
+				var type:String = multinameTypeToString(r.type, '.');
 				if(type != '')
 				{
 					pieces.push(':'+type);
@@ -2223,7 +2258,7 @@ package com.swfwire.decompiler.utils
 				{
 					var uri:String = rt.initializer.replace(/^"(.*)"$/, '$1');
 					trace(uri);
-					customNamespaces[uri] = multinameTypeToString(rt.declaration);
+					customNamespaces[uri] = multinameTypeToString(rt.declaration, '.');
 				}
 			}
 			
