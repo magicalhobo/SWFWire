@@ -134,6 +134,8 @@
 				detailsPanel.actionScript.showDebug.addEventListener(Event.CHANGE, actionScriptPanelChangedHandler);
 				detailsPanel.actionScript.showStack.addEventListener(Event.CHANGE, actionScriptPanelChangedHandler);
 				detailsPanel.actionScript.showBranchInfo.addEventListener(Event.CHANGE, actionScriptPanelChangedHandler);
+				
+				detailsPanel.actionScript.save.addEventListener(MouseEvent.CLICK, saveHandler);
 
 				if(Config.TESTING)
 				{
@@ -767,6 +769,18 @@
 					}
 				}
 			}
+			
+			protected function saveHandler(event:MouseEvent):void
+			{
+				var file:FileReference = new FileReference();
+				file.save(detailsPanel.actionScript.classes.text);
+				/*
+				var bytes:ByteArray = new ByteArray();
+				bytes.writeUTFBytes(detailsPanel.actionScript.classes.text);
+				save(bytes, File.userDirectory.resolvePath('decompiled/File.as').url);
+				*/
+			}
+			
 		]]>
 	</mx:Script>
 	<mx:String id="as3Styles">
