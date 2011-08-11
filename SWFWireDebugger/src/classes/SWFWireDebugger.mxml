@@ -17,6 +17,7 @@
 			import com.swfwire.debugger.Config;
 			import com.swfwire.debugger.DebuggerAsyncModifier;
 			import com.swfwire.debugger.debug;
+			import com.swfwire.debugger.injected.navigateToURL;
 			import com.swfwire.debugger.ui.PreviewWindow;
 			import com.swfwire.debugger.utils.*;
 			import com.swfwire.decompiler.*;
@@ -83,17 +84,42 @@
 			private var updateStatsTimer:Timer;
 			private var swfId:int = 1;
 			
+			private function addMenuItem(name:String, separatorBefore:Boolean = false, selectCallback:Function = null):void
+			{
+				var item:ContextMenuItem = new ContextMenuItem(name, separatorBefore);
+				if(selectCallback != null)
+				{
+					item.addEventListener(Event.SELECT, selectCallback);
+				}
+				contextMenu.items.push(item);
+			}
+			
 			private function main():void
 			{
 				debug = new Debug(true, 'SWFWireDebugger');
 				debug.log('main');
 				
-				var updateMenuItem:ContextMenuItem = new ContextMenuItem('SWFWireDebugger Version '+Config.VERSION);
-				updateMenuItem.addEventListener(Event.SELECT, function(ev:*):void
+				addMenuItem('SWFWireDebugger Version '+Config.VERSION);
+				
+				addMenuItem('Usage Wiki...', true, function(ev:*):void
 				{
+					flash.net.navigateToURL(new URLRequest('https://github.com/magicalhobo/SWFWire/wiki'));
+				});
+				addMenuItem('Report issues...', false, function(ev:*):void
+				{
+					flash.net.navigateToURL(new URLRequest('https://github.com/magicalhobo/SWFWire/issues'));
+				});
+				addMenuItem('View Source...', false, function(ev:*):void
+				{
+					flash.net.navigateToURL(new URLRequest('https://github.com/magicalhobo/SWFWire/tree/master/SWFWireDebugger'));
+				});
+				addMenuItem('Check for updates...', false, function(ev:*):void
+				{
+					appUpdater.isDownloadUpdateVisible = true;
+					appUpdater.isDownloadProgressVisible = true;
+					appUpdater.isCheckForUpdateVisible = true;
 					appUpdater.checkNow();
 				});
-				contextMenu.items.push(updateMenuItem);
 				
 				stage.addEventListener(Event.ENTER_FRAME, enterFrameHandler);
 				
@@ -1528,8 +1554,7 @@
 								<mx:columns>
 									<ui:AccessorTypeColumn headerText="" dataField="type" width="25" resizable="false"/>
 									<mx:DataGridColumn headerText="Name" dataField="name" width="180"/>
-									<mx:DataGridColumn headerText="Watch" dataField="watch"
-													   itemRenderer="com.swfwire.debugger.ui.MethodValueRenderer"/>
+									<!--<mx:DataGridColumn headerText="Watch" dataField="watch"/>-->
 								</mx:columns>
 							</mx:DataGrid>
 						</mx:VBox>
