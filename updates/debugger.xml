@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <update xmlns="http://ns.adobe.com/air/framework/update/description/2.5">
-	<versionNumber>1.6.24</versionNumber>
-	<url>https://github.com/downloads/magicalhobo/SWFWire/SWFWireDebugger-1.6.24.air</url>
-	<description>Added search boxes, and a Flex style inspector.</description>
+	<versionNumber>1.6.25</versionNumber>
+	<url>https://github.com/downloads/magicalhobo/SWFWire/SWFWireDebugger-1.6.25.air</url>
+	<description>Added menu links to GitHub.</description>
 </update>
