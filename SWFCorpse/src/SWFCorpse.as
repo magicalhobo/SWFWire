@@ -27,10 +27,6 @@ package
 	
 	public class SWFCorpse extends Sprite implements IEmpty
 	{
-		public function notEmptyAnyMore(bitches:*):void
-		{
-			return;
-		}
 		/*
 		internal namespace custom = "http://magicalhobo.com/custom";
 		
