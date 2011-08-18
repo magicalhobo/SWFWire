@@ -11,7 +11,6 @@
 			import air.update.ApplicationUpdaterUI;
 			import air.update.events.UpdateEvent;
 			
-			import com.adobe.licensing.LicenseManager;
 			import com.swfwire.decompiler.*;
 			import com.swfwire.decompiler.abc.instructions.*;
 			import com.swfwire.decompiler.abc.tokens.*;
@@ -43,7 +42,6 @@
 			
 			import net.anirudh.as3syntaxhighlight.CodePrettyPrint;
 
-			private var licenseManager:LicenseManager;
 			private var loader:Loader;
 			private var urlLoader:URLLoader;
 			private var windowTracker:WindowTracker;
@@ -72,15 +70,6 @@
 				
 				contextMenu.items.push(updateCheckItem);
 				
-				if(Config.IN_MARKET)
-				{
-					licenseManager = new LicenseManager();
-					if(!Config.TESTING)
-					{
-						licenseManager.checkLicense(this, 'A6BEB7F6-801B-17FE-FF07-FB1256D5305C', true, false);
-					}
-				}
-
 				appUpdater = new ApplicationUpdaterUI();
 				appUpdater.configurationFile = new File('app:/updateConfig.xml');
 				if(Config.TESTING)
