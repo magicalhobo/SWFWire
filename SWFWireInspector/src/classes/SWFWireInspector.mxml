@@ -56,19 +56,42 @@
 			private var parseStart:uint;
 			private var syntaxHighlighting:Boolean = true;
 
+			private function addMenuItem(name:String, separatorBefore:Boolean = false, selectCallback:Function = null):void
+			{
+				var item:ContextMenuItem = new ContextMenuItem(name, separatorBefore);
+				if(selectCallback != null)
+				{
+					item.addEventListener(Event.SELECT, selectCallback);
+				}
+				contextMenu.items.push(item);
+			}
+			
 			private function main():void
 			{
 				debug = new Debug(true, 'SWFWireInspector');
 				debug.log('main');
 
-				var updateCheckItem:ContextMenuItem = new ContextMenuItem('SWFWireInspector '+Config.VERSION);
-				updateCheckItem.addEventListener(Event.SELECT, function(ev:Event):void
+				addMenuItem('SWFWireInspector Version '+Config.VERSION);
+				
+				addMenuItem('Usage Wiki...', true, function(ev:*):void
 				{
+					flash.net.navigateToURL(new URLRequest('https://github.com/magicalhobo/SWFWire/wiki'));
+				});
+				addMenuItem('Report issues...', false, function(ev:*):void
+				{
+					flash.net.navigateToURL(new URLRequest('https://github.com/magicalhobo/SWFWire/issues'));
+				});
+				addMenuItem('View Source...', false, function(ev:*):void
+				{
+					flash.net.navigateToURL(new URLRequest('https://github.com/magicalhobo/SWFWire/tree/master/SWFWireInspector'));
+				});
+				addMenuItem('Check for updates...', false, function(ev:*):void
+				{
+					appUpdater.isDownloadUpdateVisible = true;
+					appUpdater.isDownloadProgressVisible = true;
 					appUpdater.isCheckForUpdateVisible = true;
 					appUpdater.checkNow();
 				});
-				
-				contextMenu.items.push(updateCheckItem);
 				
 				appUpdater = new ApplicationUpdaterUI();
 				appUpdater.configurationFile = new File('app:/updateConfig.xml');
