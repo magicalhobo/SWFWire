@@ -20,22 +20,10 @@ package
 	import org.osmf.display.ScaleMode;
 	
 	import packagename.ClassName;
-	import packagename.IEmpty;
-	import packagename.mynamespace;
 	
-	public class SWFCorpse extends Sprite implements IEmpty
+	public class SWFCorpse extends Sprite
 	{
 		/*
-		packagename.mynamespace var test:String = 'mytest';
-		public var test:String = 'mytest';
-		
-		public function SWFCorpse()
-		{
-			var n:String = '1:2:3:4';
-			trace(n.split(':', 2).join(':'));
-		}
-		*/
-		
 		public function testSpeed():void
 		{
 			trace('1');
@@ -55,6 +43,7 @@ package
 			}
 			trace('3');
 		}
+		*/
 		/*
 		public function testIntMath():void
 		{
@@ -62,7 +51,12 @@ package
 			var b:int = 1;
 			var c:int;
 			a++;
+			++a;
+			a += 1;
 			b--;
+			--b;
+			b -= 1;
+		
 			c = a + b;
 			c = a - b;
 			c = a * b;
@@ -161,8 +155,9 @@ package
 			mynamespace::test = 'set';
 			trace('2');
 		}
+		
 		/*
-		public function notEmptyAnyMore(bitches:*):void
+		public function testConditionCache():void
 		{
 			if('1')
 			{
@@ -179,41 +174,13 @@ package
 				}
 				trace('not 1');
 			}
-			
+		}
+		
+		public function testNameResolution():void
+		{
 			var a:String = mynamespace::test;
 			
 			(packagename.mynamespace)::test;
-			
-			if(a)
-			{
-				trace('a is there');
-			}
-			trace('test done');
-			
-			for(var iter:* in this)
-			{
-				trace(this[iter]);
-			}
-			
-			for each(var iter2:* in this)
-			{
-				trace(iter2);
-			}
-			
-			if(iter in this)
-			{
-				trace('in this');
-			}
-			
-			while(iter in this)
-			{
-				trace('in this');
-			}
-			
-			for(var iter3:* = 0; iter3 < 10; iter3++)
-			{
-				trace(iter3);
-			}
 		}
 		*/
 		/*
@@ -224,7 +191,7 @@ package
 		private static var privateStaticVar:Boolean;
 		internal static var internalStaticVar:Boolean;
 		custom static var customStaticVar:Boolean;
-		
+		*/
 		public static function testFor():void
 		{
 			for(var i:uint = 0; i < 10; i++)
@@ -235,8 +202,17 @@ package
 		
 		public static function testForIn():void
 		{
-			var b:Object = {};
-			for(var i:String in b)
+			var a:Object = {};
+			for(var i:String in a)
+			{
+				trace(i);
+			}
+		}
+		
+		public static function testForEachIn():void
+		{
+			var a:Object = {};
+			for each(var i:* in a)
 			{
 				trace(i);
 			}
@@ -293,7 +269,7 @@ package
 				trace('3');
 			}
 		}
-		
+		/*
 		public static function testSwitch(myArg:uint):void
 		{
 			switch(1)
@@ -341,6 +317,7 @@ package
 		{
 			return function():void
 			{
+				trace('closure');
 			}
 		}
 		
@@ -403,6 +380,7 @@ package
 		}
 		*/
 		/*
+		
 		public var publicVar:String = 'publicVar';
 		protected var protectedVar:String = 'protectedVar';
 		private var privateVar:String = 'privateVar';
@@ -432,244 +410,6 @@ package
 		custom function customMethod(param1:Object):Boolean
 		{
 			return true;
-		}
-		
-		protected function clickHandler(ev:MouseEvent):void
-		{
-			var rand:Number = Math.random();
-			switch(ev.type)
-			{
-				case MouseEvent.CLICK:
-					trace('event was a click');
-					break;
-				default:
-					trace('event was something else');
-					break;
-			}
-		}
-		
-		private function testAnonymousFunction():void
-		{
-			function myAnonymousFunction():String
-			{
-				return 'called';
-			}
-			myAnonymousFunction();
-		}
-		
-		private function loadCompleteHandler(ev:Event):void
-		{
-			var ul:URLLoader = ev.currentTarget as URLLoader;
-			trace('load complete: '+ul.bytesLoaded);
-		}
-
-		/*
-		public static var delegates:Object;
-		public static function check(... args):*
-		{
-			var vec:Vector.<Object> = new Vector.<Object>;
-			return;
-		}
-		
-		public static function create(target:Object, handlerFunction:Function, shouldAppend:Boolean = true, ... args) : Function
-		{
-			var oTarget:Object;
-			var oFunction:Function;
-			var oAppend:Boolean = true;
-			var oArgs:Array;
-			var f:Function;
-			var oParams:Array;
-			var i:int;
-			var d:Dictionary;
-			
-			var loc1:*;
-			oTarget = target;
-			oFunction = handlerFunction;
-			oAppend = shouldAppend;
-			
-			f = check(oTarget, oFunction, oAppend, oArgs); //check() returns null if conditions not satisfied
-			if(f != null) {
-				return f;
-			}
-			
-			oParams = new Array();
-			
-			while((i = 0) < oArgs.length) {
-				oParams.push(oArgs[i++]);
-			}
-			
-			d = new Dictionary(true);
-			d["oTarget"] = oTarget;
-			d["oParams"] = oParams;
-			d["oFunction"] = oFunction;
-			d["appendParams"] = oAppend;
-			d["dFunction"] = function():* {
-				var loc1:* = arguments.callee.delegate;
-				
-				return loc1["oFunction"].apply(loc1["oTarget"], loc1["appendParams"] ? (arguments.concat(loc1["oParams"])) : (loc1["oParams"]));
-			}
-			
-			d["dFunction"].delegate = d;
-			delegates.push(d); //delegates is a field variable -- class variable
-			return d["dFunction"];
-			
-		}
-		
-		private var i:int = 55;
-		private var j:int = 6;
-		private var k:int = 1;
-		
-		public function decrement():void
-		{
-			trace("i-- is as follows");
-			i--;
-			trace("i-- complete");
-			trace("--j is as follows");
-			--j;
-			trace("Other syntax for testing:\n i = i - 1");
-			i = i - 1;
-			trace("j -= 1");
-			j -= 1;
-			trace("subtracting i from a variable that is 1");
-			i -= k;
-			
-			
-		}
-		*/
-		
-		/*
-		public function SWFCorpse1(obj:Object = null)
-		{
-			function local(a:Number):void
-			{
-				trace('a: '+this);
-			}
-			
-			local(123);
-			
-			local = function(b:Number):void
-			{
-				trace('b: '+this);
-			}
-				
-			local.call(null, 234);
-			
-			var n:Boolean = 1 == 1 || 2 == 2;
-			
-			if(1)
-			{
-				boolean = true;
-			}
-			else
-			{
-				var boolean:Boolean = false;
-			}
-			
-			trace(boolean);
-			
-			if(obj == 1 || obj == 2 || obj == 3)
-			{
-				trace('1 or 2');
-			}
-			trace('3');
-			
-			
-			/*
-			vec = new Vector.<DisplayObject>();
-			
-			var a:Number = 1 | 2 & 3;
-			var b:Number = 0;
-			b |= 1;
-			b &= 1;
-			b <<= 1;
-			b >>= 1;
-			b >>>= 1;
-			b = 1 << 2;
-			b = 1 >> 2;
-			b = 1 >>> 2;
-			b = b ^ 1;
-			b = ~b;
-			
-			if(obj.prop === 1)
-			{
-				trace('hell strict yes');
-			}
-			
-			/*
-			if(obj.prop == 1 || obj.prop == 2)
-			{
-				trace('if 1');
-			}
-			else
-			{
-				trace('else 1');
-			}
-			
-			if(obj.prop == 1 || obj.prop == 2)
-			{
-				trace('if 2');
-			}
-			else
-			{
-				trace('else 2');
-			}
-			
-			getTimer();
-			getTimer();
-			getTimer();
-			
-			/*
-			for(var iter:String in loaderInfo.parameters)
-			{
-				trace(iter+': '+loaderInfo.parameters[iter]);
-			}
-			trace('Starting constructor');
-			trace('stage: '+stage);
-			
-			var ur:URLRequest = new URLRequest('http://www.google.com/images/logos/ps_logo2a_cp.png');
-			var ul:URLLoader = new URLLoader();
-			ul.addEventListener(Event.COMPLETE, loadCompleteHandler);
-			ul.load(ur);
-			
-			var nc:NetConnection = new NetConnection();
-			nc.connect('rtmp://localhost');
-			
-			trace('FlashVars: ');
-			for(var iter:String in loaderInfo.parameters)
-			{
-				trace('	'+iter+': '+loaderInfo.parameters[iter]);
-			}
-			trace('---------');
-			
-			Security.allowDomain('swfwire.com');
-			/*
-			stage.scaleMode = StageScaleMode.NO_SCALE;
-			stage.align = StageAlign.TOP_LEFT;
-			trace('Stage is: '+stage.stageWidth+'x'+stage.stageHeight);
-			* /
-			
-			publicMethod('test');
-			protectedMethod('test');
-			privateMethod('test');
-			
-			testExternalInterface();
-			testAnonymousFunction();
-			testTryCatchFinally();
-			
-			custom::customMethod(null);
-			ClassName.staticMethod();
-			var t:ClassName = new ClassName();
-			t.method();
-			
-			var shape:Sprite = new Sprite();
-			shape.graphics.beginFill(0xFF0000);
-			shape.graphics.drawRect(0, 0, 100, 100);
-			shape.graphics.endFill();
-			addChild(shape);
-			shape.addEventListener(MouseEvent.CLICK, clickHandler);
-			shape.addEventListener(MouseEvent.MOUSE_DOWN, clickHandler);
-			
-			trace('Ending constructor');
 		}
 		*/
 	}
