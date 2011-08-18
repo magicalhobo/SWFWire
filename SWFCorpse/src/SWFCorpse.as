@@ -1,7 +1,5 @@
 package
 {
-	import com.swfwire.utils.ObjectUtil;
-	
 	import flash.display.DisplayObject;
 	import flash.display.LoaderInfo;
 	import flash.display.Shape;
@@ -28,6 +26,197 @@ package
 	public class SWFCorpse extends Sprite implements IEmpty
 	{
 		/*
+		packagename.mynamespace var test:String = 'mytest';
+		public var test:String = 'mytest';
+		
+		public function SWFCorpse()
+		{
+			var n:String = '1:2:3:4';
+			trace(n.split(':', 2).join(':'));
+		}
+		*/
+		
+		public function testSpeed():void
+		{
+			trace('1');
+			if(1 || 2 || 3 || 4 || 5)
+			{
+				trace('1 - 5');
+			}
+			trace('2');
+			if(1 && 2 && 3 && 4 && 5)
+			{
+				trace('1 and 5');
+			}
+			trace('1');
+			if(1 || 2)
+			{
+				trace('1 - 5');
+			}
+			trace('3');
+		}
+		/*
+		public function testIntMath():void
+		{
+			var a:int = 1;
+			var b:int = 1;
+			var c:int;
+			a++;
+			b--;
+			c = a + b;
+			c = a - b;
+			c = a * b;
+			c = a / b;
+			c = a % b;
+			
+			c = 1 + 1;
+			c = 1 - 1;
+			c = 1 * 1;
+			c = 1 / 1;
+			c = 1 % 1;
+		}
+		
+		public function testBitwise():void
+		{
+			var n:Number = 0;
+			n |= 1;
+			n &= 1;
+			n <<= 1;
+			n >>= 1;
+			n >>>= 1;
+			n = 1 << 2;
+			n = 1 >> 2;
+			n = 1 >>> 2;
+			n = n ^ 1;
+			n = ~n;
+		}
+		
+		public function testIfElse():void
+		{
+			trace('start');
+			if('1')
+			{
+				trace('1');
+			}
+			else if('2')
+			{
+				trace('2');
+			}
+			else if('3')
+			{
+				trace('3');
+			}
+			else
+			{
+				trace('none');
+			}
+			trace('end');
+		}
+		
+		public function testSwitch():void
+		{
+			trace('start');
+			switch('condition')
+			{
+				case '1':
+					trace('1');
+					break;
+				case '2':
+					trace('2');
+					break;
+				case '3':
+					trace('3');
+					break;
+			}
+			trace('end');
+		}
+		
+		public function testLogical():void
+		{
+			trace('1');
+			if(1 || 2)
+			{
+				trace('1 or 2');
+			}
+			trace('2');
+			if(1 && 2)
+			{
+				trace('1 and 2');
+			}
+			trace('3');
+		}
+		
+		/*
+		public function testTernary():void
+		{
+			trace('1');
+			var result:String = 'condition' ? 'yes' : 'no';
+			trace('2');
+		}
+		/*
+		public function testMemberWithNamespace():void
+		{
+			trace('1');
+			mynamespace::test;
+			mynamespace::test = 'set';
+			trace('2');
+		}
+		/*
+		public function notEmptyAnyMore(bitches:*):void
+		{
+			if('1')
+			{
+				if('1')
+				{
+					trace('definitely 1');
+				}
+			}
+			else
+			{
+				if('1')
+				{
+					trace('impossible');
+				}
+				trace('not 1');
+			}
+			
+			var a:String = mynamespace::test;
+			
+			(packagename.mynamespace)::test;
+			
+			if(a)
+			{
+				trace('a is there');
+			}
+			trace('test done');
+			
+			for(var iter:* in this)
+			{
+				trace(this[iter]);
+			}
+			
+			for each(var iter2:* in this)
+			{
+				trace(iter2);
+			}
+			
+			if(iter in this)
+			{
+				trace('in this');
+			}
+			
+			while(iter in this)
+			{
+				trace('in this');
+			}
+			
+			for(var iter3:* = 0; iter3 < 10; iter3++)
+			{
+				trace(iter3);
+			}
+		}
+		*/
+		/*
 		internal namespace custom = "http://magicalhobo.com/custom";
 		
 		public static var publicStaticVar:Boolean;
@@ -36,24 +225,11 @@ package
 		internal static var internalStaticVar:Boolean;
 		custom static var customStaticVar:Boolean;
 		
-		public function playground():*
-		{
-			switch(this)
-			{
-				case 'a':
-					return new DisplayObject;
-					break;
-				default:
-					return this;
-					break;
-			}
-		}
-		
 		public static function testFor():void
 		{
 			for(var i:uint = 0; i < 10; i++)
 			{
-				nothing();
+				trace(i);
 			}
 		}
 		
@@ -62,7 +238,7 @@ package
 			var b:Object = {};
 			for(var i:String in b)
 			{
-				nothing();
+				trace(i);
 			}
 		}
 		
@@ -73,21 +249,23 @@ package
 				trace('infinity!');
 			}
 		}
-		public static function testInfiniteWhile(arg:Boolean):void
+		
+		public static function testInfiniteWhile():void
 		{
-			while(arg)
+			while(true)
 			{
 				trace('infinity!');
 			}
 		}
 		
-		public static function testIfTrue(arg:Boolean):void
+		public static function testIfTrue():void
 		{
-			if(arg)
+			if(true)
 			{
 				trace('not infinity!');
 			}
 		}
+		
 		public static function testIfElse():void
 		{
 			if(1)
@@ -100,9 +278,25 @@ package
 			}
 		}
 		
+		public static function testIfElseIf():void
+		{
+			if(1)
+			{
+				trace('1');
+			}
+			else if(2)
+			{
+				trace('2');
+			}
+			else
+			{
+				trace('3');
+			}
+		}
+		
 		public static function testSwitch(myArg:uint):void
 		{
-			switch(myArg)
+			switch(1)
 			{
 				case 1:
 					trace('1');
@@ -182,7 +376,7 @@ package
 				trace('finally!');
 			}
 		}
-		
+		/*
 		public static function publicStaticMethod(param1:String):Boolean
 		{
 			return true;
@@ -207,11 +401,8 @@ package
 		{
 			return true;
 		}
-		
-		private static function nothing():void
-		{
-		}
-		
+		*/
+		/*
 		public var publicVar:String = 'publicVar';
 		protected var protectedVar:String = 'protectedVar';
 		private var privateVar:String = 'privateVar';
@@ -271,7 +462,7 @@ package
 			var ul:URLLoader = ev.currentTarget as URLLoader;
 			trace('load complete: '+ul.bytesLoaded);
 		}
-		*/
+
 		/*
 		public static var delegates:Object;
 		public static function check(... args):*
@@ -346,29 +537,23 @@ package
 		}
 		*/
 		
-		public var vec:Vector.<DisplayObject>;
-		
-		override public function get x():Number
+		/*
+		public function SWFCorpse1(obj:Object = null)
 		{
-			return super.x;
-		}
-		
-		override public function set x(value:Number):void
-		{
-			//pass
-			super.x = value;
-		}
-		
-		private namespace irock = "http://magicalhobo.com";
-		
-		irock static var wtf2:String = 'omg';
-		
-		irock var wtf:String = "hell yes";
-		
-		mynamespace var test:String = 'hell yes2';
-		
-		public function SWFCorpse(obj:Object = null)
-		{
+			function local(a:Number):void
+			{
+				trace('a: '+this);
+			}
+			
+			local(123);
+			
+			local = function(b:Number):void
+			{
+				trace('b: '+this);
+			}
+				
+			local.call(null, 234);
+			
 			var n:Boolean = 1 == 1 || 2 == 2;
 			
 			if(1)
@@ -485,7 +670,7 @@ package
 			shape.addEventListener(MouseEvent.MOUSE_DOWN, clickHandler);
 			
 			trace('Ending constructor');
-			*/
 		}
+		*/
 	}
 }
