@@ -1,7 +1,7 @@
 ---
 layout: default
 id: home
-title: Open Source Flash Tools
+title: The best open source Flash development tools
 ---
 			<div class="section right">
 				<div id="inspector-badge">
@@ -37,3 +37,11 @@ title: Open Source Flash Tools
 				library written in ActionScript 3 for reading and writing swfs.
 				<div class="clear"></div>
 			</div>
+			<div class="section last">
+				<h1><a href="https://github.com/magicalhobo/SWFWire/commits/">Recent Commits</a></h1>
+				<div id="commit-log">
+					<div class="loading">Loading...</div>
+				</div>
+			</div>
+			<script type="text/javascript" src="js/commits.js"></script>
+			<script src="http://github.com/api/v2/json/commits/list/magicalhobo/SWFWire/master?callback=commitHandler"></script>

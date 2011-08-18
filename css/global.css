@@ -176,3 +176,21 @@ body#inspector .screenshot
 	float: right;
     margin-left: 10px;
 }
+.commit
+{
+	margin: 5px 0;
+	padding: 10px;
+	background: #292929;
+}
+.commit .date
+{
+	text-align: right;
+}
+.commit .message
+{
+	font-size: 20px;
+}
+.loading
+{
+	text-align: center;
+}
