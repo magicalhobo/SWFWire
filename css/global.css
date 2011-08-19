@@ -95,12 +95,6 @@ p
 {
 	background-color: inherit;
 }
-.twitter
-{
-	position: absolute;
-	top: 10px;
-	left: 10px;
-}
 
 #body
 {
@@ -186,7 +180,7 @@ body#inspector .screenshot
 	float: right;
     margin-left: 10px;
 }
-.commit
+.commit, .tweet
 {
 	margin: 5px 0;
 	padding: 10px;
@@ -196,7 +190,7 @@ body#inspector .screenshot
 {
 	text-align: right;
 }
-.commit .message
+.commit .message, .tweet .message
 {
 	font-size: 20px;
 }
