@@ -87,9 +87,19 @@ p
 	background-color: #a4da22;
 	color: #000;
 }
+#navigation a.logo
+{
+	font-size: 0;
+}
 #navigation a.logo:hover
 {
 	background-color: inherit;
+}
+.twitter
+{
+	position: absolute;
+	top: 10px;
+	left: 10px;
 }
 
 #body
