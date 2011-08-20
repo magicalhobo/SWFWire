@@ -52,6 +52,10 @@ p
 {
 	text-indent: 1em;
 }
+a img
+{
+	border: 0;
+}
 .clear
 {
 	clear: both;
@@ -99,7 +103,7 @@ p
 #body
 {
 	background-color: #292929;
-	width: 750px;
+	width: 850px;
 	margin: 0 auto;
 	padding: 17px 25px;
 }
@@ -121,16 +125,12 @@ p
 #body-background
 {
 	width: 100%;
-	background-position: center center;
-	background-attachment: fixed;
 	background-color: #333;
-	background-image: url("../images/shadow.png");
-	background-repeat: repeat-y;"
 }
 
 #footer
 {
-	padding: 8px;
+	padding: 8px 0 10px;
 	text-align: center;
 	border-top: 8px solid #222;
 }
@@ -162,6 +162,43 @@ body#inspector #body>.column
 {
 	margin-bottom: 0;
 }
+.section.github
+{
+	background-color: #ddd;
+	color: #333;
+    border-radius: 4px;
+	width: 480px;
+	margin-right: 20px;
+	float: left;
+}
+.section.github h1
+{
+	text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.7);
+}
+.section.github h1 a
+{
+	color: #666 !important;
+}
+.section.github h1 a, .section.twitter h1 a
+{
+	font-size: 18px;
+}
+.section.twitter
+{
+    background-color: #eee;
+	color: #333;
+    border-radius: 4px;
+	width: 269px;
+	float: left;
+}
+.section.twitter h1
+{
+	color: #333;
+}
+.section.twitter h1 a
+{
+	color: #2FC2EF !important;
+}
 body#inspector .screenshot
 {
 	width: 300px;
@@ -176,7 +213,8 @@ body#inspector .screenshot
 	text-align: center;
 	margin-bottom: 8px;
 }
-#inspector-badge, #debugger-badge {
+#inspector-badge, #debugger-badge
+{
 	float: right;
     margin-left: 10px;
 }
@@ -184,15 +222,36 @@ body#inspector .screenshot
 {
 	margin: 5px 0;
 	padding: 10px;
-	background: #292929;
+	border-top: 1px solid #ccc;
+}
+.commit
+{
+	border-top: 1px solid #aaa;
+	border-left: 1px solid #aaa;
+	border-bottom: 1px solid #eee;
+	border-right: 1px solid #eee;
+	border-radius: 4px;
+	background-color: #d0d0d0;
 }
 .commit .date
 {
-	text-align: right;
+	float: right;
+	margin-left: 10px;
+    color: #666666 !important;
+    text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.7);
 }
 .commit .message, .tweet .message
 {
 	font-size: 20px;
+}
+.tweet .date
+{
+	color: #999;
+	font-size: 14px;
+}
+.tweet:last-child
+{
+	border-bottom: 1px solid #ccc;
 }
 .loading
 {

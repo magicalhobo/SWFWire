@@ -9,7 +9,7 @@ function commitHandler(result)
 			var data = result.commits[iter];
 			var date = new Date(data.committed_date);
 			var div = '<div class="commit">' +
-				'<div class="date"><a class="id" href="http://github.com'+data.url+'">'+date.toLocaleDateString()+' by '+data.author.login+'</a></div>' +
+				'<a class="date" href="http://github.com'+data.url+'">'+date.toLocaleDateString()+'</a>' +
 				'<div class="message">'+data.message+'</div>' +
 				'</div>';
 			divs.push(div);
@@ -27,8 +27,10 @@ function tweetHandler(result)
 		for(var iter = 0; iter < count; iter++)
 		{
 			var data = result[iter];
+			var date = new Date(data.created_at);
 			var div = '<div class="tweet">' +
 				'<div class="message">'+data.text+'</div>' +
+				'<div class="date">'+date.toLocaleDateString()+'</div>' +
 				'</div>';
 			divs.push(div);
 		}
