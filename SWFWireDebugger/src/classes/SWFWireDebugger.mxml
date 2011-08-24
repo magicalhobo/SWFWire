@@ -14,6 +14,8 @@
 			import air.update.ApplicationUpdaterUI;
 			import air.update.events.UpdateEvent;
 			
+			import by.blooddy.crypto.image.PNGEncoder;
+			
 			import com.swfwire.debugger.Config;
 			import com.swfwire.debugger.DebuggerAsyncModifier;
 			import com.swfwire.debugger.debug;
@@ -48,7 +50,6 @@
 			import mx.events.FlexEvent;
 			import mx.events.ListEvent;
 			import mx.events.NumericStepperEvent;
-			import mx.graphics.codec.PNGEncoder;
 			import mx.managers.DragManager;
 			
 			private var windowTracker:WindowTracker;
@@ -109,6 +110,13 @@
 				{
 					flash.net.navigateToURL(new URLRequest('https://github.com/magicalhobo/SWFWire/issues'));
 				});
+				addMenuItem('Send error report...', false, function(ev:*):void
+				{
+					var bitmap:BitmapData = new BitmapData(stage.stageWidth, stage.stageHeight);
+					bitmap.draw(stage);
+					var data:ByteArray = PNGEncoder.encode(bitmap);
+					save(data, 'C:\\temp\\flash\\error.png');
+				});
 				addMenuItem('View Source...', false, function(ev:*):void
 				{
 					flash.net.navigateToURL(new URLRequest('https://github.com/magicalhobo/SWFWire/tree/master/SWFWireDebugger'));
@@ -135,10 +143,21 @@
 					if(!nativeWindow.closed)
 					{
 						ev.preventDefault();
+						
+						propertiesCollection.removeAll();
+						methodsCollection.removeAll();
+						stylesCollection.removeAll();
 						netCollection.removeAll();
 						objectCollection.removeAll();
+						breadCrumb.collection.removeAll();
+						
+						lastTarget = null;
+						lastInspectTarget = null;
+						lastHits = [];
+						
 						preview.unload();
 						preview.visible = false;
+						
 						currentState = 'waiting';
 					}
 				});
@@ -190,35 +209,12 @@
 					log(ObjectUtil.objectToString(ev.error, 2, 2, 50, 50, true, '	'));
 				});
 				
-				preview.addEventListener('loaderComplete', function(ev:Event):void
+				preview.addEventListener('loaderInit', function(ev:Event):void
 				{
 					updateStatus('Successfully loaded '+lastUrl);
 					
 					preview.visible = true;
 					preview.activate();
-					
-					var loaderClass:* = injectedAppDomain.getDefinition('com.swfwire.debugger.injected.Loader');
-					loaderClass.overrideApplicationDomain = preview.loader.contentLoaderInfo.applicationDomain;
-					
-					var urlLoaderClass:* = injectedAppDomain.getDefinition('com.swfwire.debugger.injected.URLLoader');
-					urlLoaderClass.applicationRoot = lastUrl.substr(0, lastUrl.lastIndexOf('/') + 1);
-					urlLoaderClass.referer = lastUrl;
-					
-					var stageClass:* = injectedAppDomain.getDefinition('com.swfwire.debugger.injected.SWFWire_Stage');
-					stageClass.stage = preview.stage;
-					
-					var loaderInfoClass:* = injectedAppDomain.getDefinition('com.swfwire.debugger.injected.SWFWire_LoaderInfo');
-					//loaderInfoClass.defaultParameters = parameters;
-					
-					//loaderClass.overrideApplicationDomain = new ApplicationDomain(preview.loader.contentLoaderInfo.applicationDomain);
-					
-					/*
-					if(rootSWF)
-					{
-						var RootClass:* = injectedAppDomain.getDefinition(rootClassName);
-						var rootInstance:* = new RootClass();
-					}
-					*/
 					
 					var target:DisplayObject = preview.loader.content;
 					
@@ -1103,6 +1099,22 @@
 					
 					context.parameters = parameters;
 					
+					var loaderClass:* = injectedAppDomain.getDefinition('com.swfwire.debugger.injected.Loader');
+					loaderClass.applicationRoot = lastUrl.substr(0, lastUrl.lastIndexOf('/') + 1);
+					loaderClass.overrideApplicationDomain = preview.loader.contentLoaderInfo.applicationDomain;
+					
+					var urlLoaderClass:* = injectedAppDomain.getDefinition('com.swfwire.debugger.injected.URLLoader');
+					urlLoaderClass.applicationRoot = lastUrl.substr(0, lastUrl.lastIndexOf('/') + 1);
+					urlLoaderClass.referer = lastUrl;
+					
+					var stageClass:* = injectedAppDomain.getDefinition('com.swfwire.debugger.injected.SWFWire_Stage');
+					stageClass.stage = preview.stage;
+					
+					var loaderInfoClass:* = injectedAppDomain.getDefinition('com.swfwire.debugger.injected.SWFWire_LoaderInfo');
+					//loaderInfoClass.defaultParameters = parameters;
+					
+					//loaderClass.overrideApplicationDomain = new ApplicationDomain(preview.loader.contentLoaderInfo.applicationDomain);
+					
 					preview.loadBytes(bytes, context);
 				}
 			}
@@ -1408,8 +1420,7 @@
 			{
 				var bitmapData:BitmapData = new BitmapData(preview.width, preview.height);
 				bitmapData.draw(preview.stage);
-				var encoder:PNGEncoder = new PNGEncoder();
-				var bytes:ByteArray = encoder.encode(bitmapData);
+				var bytes:ByteArray = PNGEncoder.encode(bitmapData);
 				var url:String = File.documentsDirectory.resolvePath('snapshot.'+(new Date().getTime())+'.png').url;
 				save(bytes, url);
 				updateStatus('Saved snapshot.  <a href="'+url+'">'+url+'</a>');

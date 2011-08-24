@@ -57,10 +57,8 @@ package com.swfwire.debugger.injected
 			
 			if(request.url.indexOf('://') == -1)
 			{
-				if(request.url.substr(0, 5) == 'app:/')
-				{
-					request.url = request.url.substr(5);
-				}
+				request.url = request.url.replace(/^(\.\.\/)*/, '');
+				request.url = request.url.replace(/^app:\//, '');
 				request.url = applicationRoot + request.url;
 			}
 			

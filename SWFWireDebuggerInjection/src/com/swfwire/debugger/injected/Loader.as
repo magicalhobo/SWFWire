@@ -16,11 +16,19 @@ package com.swfwire.debugger.injected
 	public class Loader extends flash.display.Loader
 	{
 		public static var globalEvents:EventDispatcher = new EventDispatcher();
+		public static var applicationRoot:String = '';
 		public static var overrideApplicationDomain:ApplicationDomain;
 		
 		override public function load(request:URLRequest, context:LoaderContext = null):void
 		{
 			trace('Loader.load("'+request.url+'")');
+			
+			if(request.url.indexOf('://') == -1)
+			{
+				request.url = request.url.replace(/^(\.\.\/)*/, '');
+				request.url = request.url.replace(/^app:\//, '');
+				request.url = applicationRoot + request.url;
+			}
 			
 			var instance:* = this;
 			

@@ -37,14 +37,14 @@ package com.swfwire.debugger.ui
 			
 			loader = new Loader();
 			overlay = new Shape();
-			
 
 			overlayGraphics = overlay.graphics;
 			
 			stage.addChild(loader);
 			stage.addChild(overlay);
 			
-			loader.contentLoaderInfo.addEventListener(Event.INIT, loaderCompleteHandler, false, 0, true);
+			loader.contentLoaderInfo.addEventListener(Event.COMPLETE, loaderCompleteHandler, false, 0, true);
+			loader.contentLoaderInfo.addEventListener(Event.INIT, loaderInitHandler, false, 0, true);
 			
 			stage.addEventListener(MouseEvent.MIDDLE_MOUSE_DOWN, previewMiddleDownHandler, true, int.MAX_VALUE, true);
 			stage.addEventListener(MouseEvent.MOUSE_WHEEL, previewMiddleScrollHandler, true, int.MAX_VALUE, true);
@@ -52,9 +52,14 @@ package com.swfwire.debugger.ui
 		
 		private function loaderCompleteHandler(ev:Event):void
 		{
+			dispatchEvent(new Event('loaderComplete'));
+		}
+		
+		private function loaderInitHandler(ev:Event):void
+		{
 			resetSWFPosition();
 			
-			dispatchEvent(new Event('loaderComplete'));
+			dispatchEvent(new Event('loaderInit'));
 		}
 		
 		private function previewMiddleDownHandler(ev:MouseEvent):void

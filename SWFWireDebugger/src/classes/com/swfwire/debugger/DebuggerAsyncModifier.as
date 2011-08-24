@@ -302,8 +302,12 @@ package com.swfwire.debugger
 						}
 					}
 					
+					var start:int;
+					
 					for(var iterInstance:int = 0; iterInstance < abcTag.abcFile.instances.length; iterInstance++)
 					{
+						start = getTimer();
+						
 						var thisInstance:InstanceToken = abcTag.abcFile.instances[iterInstance];
 						if(thisInstance.flags & InstanceToken.FLAG_CLASS_INTERFACE)
 						{
@@ -407,12 +411,14 @@ package com.swfwire.debugger
 							getPropertyInstructions.length,
 							0,
 							Vector.<String>([':String']));
+						
+						trace('Creating property accessors took '+(getTimer() - start)+'ms');
 					}
 					
 					if(true)
 					{
 						var l:*;
-						const minScopeDepth:uint = 3;
+						const minScopeDepth:uint = 0;
 						
 						var loggerClassIndex:int = wrapper.addQName(
 							wrapper.addNamespaceFromString('com.swfwire.debugger.injected'), 
@@ -423,6 +429,8 @@ package com.swfwire.debugger
 						var enterFunctionIndex:int = wrapper.addQName(emptyNS, wrapper.addString('enterFunction'));
 						var exitFunctionIndex:int = wrapper.addQName(emptyNS, wrapper.addString('exitFunction'));
 						var newObjectIndex:int = wrapper.addQName(emptyNS, wrapper.addString('newObject'));
+						
+						start = getTimer();
 						
 						var traceIndex:int = wrapper.getMultinameIndex('', 'trace');
 						if(traceIndex >= 0)
@@ -463,6 +471,8 @@ package com.swfwire.debugger
 							});
 						}
 						
+						trace('Alterting trace statements took '+(getTimer() - start)+'ms');
+						
 						var nameFromMethodId:Object = {};
 						
 						function qnameToString(instance:String, index:uint):String
@@ -484,6 +494,8 @@ package com.swfwire.debugger
 							}
 							return result;
 						}
+						
+						start = getTimer();
 						
 						for(var i11:int = 0; i11 < abcTag.abcFile.instances.length; i11++)
 						{
@@ -541,13 +553,45 @@ package com.swfwire.debugger
 							}
 						}
 						
+						for(var i20:int = 0; i20 < abcTag.abcFile.scripts.length; i20++)
+						{
+							var scriptInfo:ScriptInfoToken = abcTag.abcFile.scripts[i20];
+							
+							nameFromMethodId[scriptInfo.init] = 'global$init';
+						}
+						
+						l = wrapper.findInstruction(new InstructionTemplate(Instruction_newfunction, {}));
+						
+						for(var i15:int = 0; i15 < l.length; i15++)
+						{
+							var mb2:MethodBodyInfoToken = abcTag.abcFile.methodBodies[l[i15].methodBody];
+							var newfinst:Instruction_newfunction = mb2.instructions[l[i15].id] as Instruction_newfunction;
+							var anonMethodName:String = nameFromMethodId[mb2.method];
+							if(anonMethodName)
+							{
+								anonMethodName = anonMethodName+'/<anonymous>';
+							}
+							else
+							{
+								anonMethodName = '<anonymous>';
+							}
+							nameFromMethodId[newfinst.index] = anonMethodName;
+						}
+						
+						trace('Determining method names took '+(getTimer() - start)+'ms');
+						
+						start = getTimer();
+						
 						l = new Vector.<InstructionLocation>;
 						l = l.concat(wrapper.findInstruction(new InstructionTemplate(Instruction_construct, {})));
 						l = l.concat(wrapper.findInstruction(new InstructionTemplate(Instruction_constructprop, {})));
 						
-						l = l.concat(wrapper.findInstruction(new InstructionTemplate(Instruction_newclass, {})));
 						l = l.concat(wrapper.findInstruction(new InstructionTemplate(Instruction_newobject, {})));
 						l = l.concat(wrapper.findInstruction(new InstructionTemplate(Instruction_newarray, {})));
+						
+						trace('Finding newobject calls took '+(getTimer() - start)+'ms');
+						
+						start = getTimer();
 						
 						for(var iter7:* in l)
 						{
@@ -567,24 +611,10 @@ package com.swfwire.debugger
 							wrapper.redirectReferences(z.methodBody, a[a.length - 1], a[0]);
 							return a;
 						});
-
-						l = wrapper.findInstruction(new InstructionTemplate(Instruction_newfunction, {}));
 						
-						for(var i15:int = 0; i15 < l.length; i15++)
-						{
-							var mb2:MethodBodyInfoToken = abcTag.abcFile.methodBodies[l[i15].methodBody];
-							var newfinst:Instruction_newfunction = mb2.instructions[l[i15].id] as Instruction_newfunction;
-							var anonMethodName:String = nameFromMethodId[mb2.method];
-							if(anonMethodName)
-							{
-								anonMethodName = anonMethodName+'/<anonymous>';
-							}
-							else
-							{
-								anonMethodName = '<anonymous>';
-							}
-							nameFromMethodId[newfinst.index] = anonMethodName;
-						}
+						trace('Replacing newobject calls took '+(getTimer() - start)+'ms');
+
+						start = getTimer();
 						
 						for(var i9:int = 0; i9 < abcTag.abcFile.methodBodies.length; i9++)
 						{
@@ -601,7 +631,9 @@ package com.swfwire.debugger
 								
 								var paramCount:uint = abcTag.abcFile.methods[mb.method].paramCount;
 								
+								abcTag.abcFile.methodBodies[i9].maxScopeDepth += 1;
 								
+								j9.unshift(new Instruction_popscope());
 								j9.unshift(new Instruction_callpropvoid(enterFunctionIndex, 3));
 								
 								if(paramCount > 0)
@@ -611,7 +643,12 @@ package com.swfwire.debugger
 									
 									for(var i10:int = paramCount - 1; i10 >= 0; i10--)
 									{
-										var paramName:ParamInfoToken = abcTag.abcFile.methods[mb.method].paramNames[i10];
+										var method:MethodInfoToken = abcTag.abcFile.methods[mb.method];
+										var paramName:ParamInfoToken;
+										if(method.paramNames.length > i10)
+										{
+											paramName = method.paramNames[i10];
+										}
 										j9.unshift(new Instruction_getlocal(i10 + 1));
 										if(paramName && paramName.value > 0)
 										{
@@ -639,8 +676,14 @@ package com.swfwire.debugger
 								}
 								j9.unshift(new Instruction_pushstring(methodId));
 								j9.unshift(new Instruction_getlex(loggerClassIndex));
+								j9.unshift(new Instruction_pushscope());
+								j9.unshift(new Instruction_getlocal0());
 							}
 						}
+						
+						trace('Adding entermethod calls took '+(getTimer() - start)+'ms');
+						
+						start = getTimer();
 						
 						l = wrapper.findInstruction(new InstructionTemplate(Instruction_returnvoid, {}));
 						
@@ -700,6 +743,8 @@ package com.swfwire.debugger
 							wrapper.redirectReferences(z.methodBody, a[a.length - 1], a[0]);
 							return a;
 						});
+						
+						trace('Adding exitmethod calls took '+(getTimer() - start)+'ms');
 					}
 				}
 				currentTagId++;
