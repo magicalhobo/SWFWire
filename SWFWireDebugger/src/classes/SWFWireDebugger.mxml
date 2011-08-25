@@ -50,6 +50,7 @@
 			import mx.events.FlexEvent;
 			import mx.events.ListEvent;
 			import mx.events.NumericStepperEvent;
+			import mx.events.ScrollEvent;
 			import mx.managers.DragManager;
 			
 			private var windowTracker:WindowTracker;
@@ -466,6 +467,8 @@
 				propertiesCollection.filterFunction = propertiesFilter;
 				methodsCollection.filterFunction = methodsFilter;
 				stylesCollection.filterFunction = stylesFilter;
+				
+				watchScroll();
 				
 				injectionLoader.load(new URLRequest(librarySwf), context);
 			}
@@ -1461,6 +1464,32 @@
 				stylesCollection.refresh();
 			}
 			
+			protected function autoScroll_clickHandler(ev:MouseEvent):void
+			{
+				logger.autoScroll = autoScroll.selected;
+				watchScroll();
+			}
+			
+			protected function saveConsole_clickHandler(ev:MouseEvent):void
+			{
+				var fileReference:FileReference = new FileReference();
+				fileReference.save(console.text, 'SWFWire_console_'+(new Date().getTime())+'.log');
+			}
+			
+			protected function watchScroll():void
+			{
+				if(autoScroll.selected)
+				{
+					console.addEventListener(ScrollEvent.SCROLL, consoleScrollHandler);
+				}
+			}
+			
+			protected function consoleScrollHandler(ev:ScrollEvent):void
+			{
+				autoScroll.selected = false;
+				logger.autoScroll = false;
+				console.removeEventListener(ScrollEvent.SCROLL, consoleScrollHandler);
+			}
 		]]>
 	</mx:Script>
 	<mx:states>
@@ -1472,6 +1501,8 @@
 			<mx:RemoveChild target="{writeProgress}"/>
 			<mx:RemoveChild target="{systemLog}"/>
 			<mx:RemoveChild target="{stats}"/>
+			<mx:RemoveChild target="{vbox2}"/>
+			<mx:AddChild target="{vbox2}" relativeTo="{vbox1}" position="after"/>
 		</mx:State>
 		<mx:State name="loading">
 			<mx:RemoveChild target="{hdividedbox1}"/>
@@ -1519,24 +1550,24 @@
 		<ui:StatsGraph id="stats" width="100%" height="100%" creationComplete="stats_creationCompleteHandler(event)"/>
 	</mx:HBox>
 	<mx:Canvas width="100%" height="100%" id="swfDropTarget" backgroundColor="#000000" backgroundAlpha="0">
-		<mx:VBox horizontalCenter="0" verticalCenter="0" horizontalAlign="center" id="vbox1" width="100%">
-			<mx:Label text="Drop File Here" styleName="bigText"/>
-			<mx:Form width="80%" id="form1">
-				<mx:FormItem label="SWF URL: " width="100%">
-					<mx:TextInput id="swfUrl" width="100%"/>
-				</mx:FormItem>
-				<mx:FormItem label="FlashVars: " width="100%">
-					<mx:TextInput id="flashvars" width="100%"/>
-				</mx:FormItem>
-				<mx:FormItem label="Use Cached: ">
-					<mx:CheckBox id="useCached"/>
-				</mx:FormItem>
-				<mx:FormItem label="Debug Loaded SWF files: ">
-					<mx:CheckBox id="modifyChildren"/>
-				</mx:FormItem>
-			</mx:Form>
-			<mx:Button label="Debug" click="load_clickHandler(event)" styleName="bigText"/>
-		</mx:VBox>
+		<mx:HBox width="100%" height="100%" horizontalAlign="center" verticalAlign="middle">
+			<mx:VBox horizontalCenter="0" verticalCenter="0" horizontalAlign="center" id="vbox1" width="100%">
+				<mx:Label text="Drop File Here" styleName="bigText"/>
+				<mx:Form width="80%" id="form1">
+					<mx:FormItem label="SWF URL: " width="100%">
+						<mx:TextInput id="swfUrl" width="100%"/>
+					</mx:FormItem>
+					<mx:FormItem label="FlashVars: " width="100%">
+						<mx:TextInput id="flashvars" width="100%"/>
+					</mx:FormItem>
+					<mx:FormItem>
+						<mx:CheckBox id="useCached" label="Use Cached"/>
+						<mx:CheckBox id="modifyChildren" label="Debug Loaded SWF files"/>
+					</mx:FormItem>
+				</mx:Form>
+				<mx:Button id="debugButton" label="Debug" click="load_clickHandler(event)" styleName="bigText"/>
+			</mx:VBox>
+		</mx:HBox>
 	</mx:Canvas>
 	<mx:TextArea id="systemLog" editable="false" width="100%" height="100%"/>
 	<mx:HDividedBox width="100%" height="100%" id="hdividedbox1">
@@ -1604,6 +1635,8 @@
 							<mx:HBox width="100%" verticalAlign="middle">
 								<ui:SearchInput id="consoleSearch" change="consoleSearch_changeHandler(event)" enter="consoleSearch_enterHandler(event)"/>
 								<mx:Spacer width="100%"/>
+								<mx:CheckBox id="autoScroll" label="AutoScroll" click="autoScroll_clickHandler(event)" selected="true"/>
+								<mx:Button label="Save" click="saveConsole_clickHandler(event)"/>
 								<mx:Button label="Clear" click="clearConsole_clickHandler(event)"/>
 							</mx:HBox>
 							<ui:HighlightedTextArea id="console" width="100%" height="100%" editable="false" fontFamily="Courier New" fontSize="11"/>

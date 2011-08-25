@@ -304,117 +304,6 @@ package com.swfwire.debugger
 					
 					var start:int;
 					
-					for(var iterInstance:int = 0; iterInstance < abcTag.abcFile.instances.length; iterInstance++)
-					{
-						start = getTimer();
-						
-						var thisInstance:InstanceToken = abcTag.abcFile.instances[iterInstance];
-						if(thisInstance.flags & InstanceToken.FLAG_CLASS_INTERFACE)
-						{
-							continue;
-						}
-						
-						var enumerateMethodsInstructions:Vector.<IInstruction> = new Vector.<IInstruction>();
-						var enumeratePropertiesInstructions:Vector.<IInstruction> = new Vector.<IInstruction>();
-						
-						var hits:Object = {};
-						
-						for(var iterMainTraits:* in thisInstance.traits)
-						{
-							var traitsInfo:TraitsInfoToken = thisInstance.traits[iterMainTraits];
-							var qname:MultinameQNameToken;
-							if(traitsInfo.kind == TraitsInfoToken.KIND_TRAIT_METHOD)
-							{
-								qname = cpool.multinames[traitsInfo.name].data as MultinameQNameToken;
-								enumerateMethodsInstructions.push(new Instruction_pushstring(qname.name));
-								enumerateMethodsInstructions.push(new Instruction_getlocal0);
-								enumerateMethodsInstructions.push(new Instruction_getproperty(traitsInfo.name));
-							}
-							else if(traitsInfo.kind == TraitsInfoToken.KIND_TRAIT_SLOT ||
-									traitsInfo.kind == TraitsInfoToken.KIND_TRAIT_GETTER ||
-									traitsInfo.kind == TraitsInfoToken.KIND_TRAIT_SETTER)
-							{
-								qname = cpool.multinames[traitsInfo.name].data as MultinameQNameToken;
-								var kind:uint = cpool.namespaces[qname.ns].kind;
-								if(kind == NamespaceToken.KIND_Namespace ||
-								   kind == NamespaceToken.KIND_PrivateNs ||
-								   kind == NamespaceToken.KIND_ProtectedNamespace ||
-								   kind == NamespaceToken.KIND_PackageInternalNs)
-								{
-									if(!hits[qname.name])
-									{
-										hits[qname.name] = true;
-										enumeratePropertiesInstructions.push(new Instruction_pushstring(qname.name));
-										enumeratePropertiesInstructions.push(new Instruction_getlocal0);
-										enumeratePropertiesInstructions.push(new Instruction_getproperty(traitsInfo.name));
-									}
-								}
-							}
-						}
-						
-						var uniqueID:String = wrapper.getQNameString(thisInstance.name, '::');
-						
-						enumerateMethodsInstructions.push(new Instruction_newobject(enumerateMethodsInstructions.length * 1 / 3));
-						enumerateMethodsInstructions.push(new Instruction_returnvalue());
-						createMethod(abcTag, wrapper, thisInstance, 'swfWire_enumerateMethods_'+uniqueID, enumerateMethodsInstructions, enumerateMethodsInstructions.length);
-
-						enumeratePropertiesInstructions.push(new Instruction_newobject(enumeratePropertiesInstructions.length * 1 / 3));
-						enumeratePropertiesInstructions.push(new Instruction_returnvalue());
-						createMethod(abcTag, wrapper, thisInstance, 'swfWire_enumerateProperties_'+uniqueID, enumeratePropertiesInstructions, enumeratePropertiesInstructions.length);
-
-						var instanceNamespace:String = wrapper.getQNameString(thisInstance.name, ':');
-						var instanceNamespaceIndex:int = wrapper.addString(instanceNamespace);
-						
-						var instanceNSSet:NamespaceSetToken = new NamespaceSetToken();
-						instanceNSSet.namespaces.push(cpool.namespaces.length);
-						cpool.namespaces.push(new NamespaceToken(NamespaceToken.KIND_PrivateNs, instanceNamespaceIndex));
-						cpool.namespaces.push(new NamespaceToken(NamespaceToken.KIND_ProtectedNamespace, instanceNamespaceIndex));
-						
-						for(var iterNS:int = 1; iterNS < cpool.namespaces.length; iterNS++)
-						{
-							instanceNSSet.namespaces.push(iterNS);
-						}
-						instanceNSSet.count = instanceNSSet.namespaces.length;
-						var instanceNSSetIndex:int = cpool.nsSets.length;
-						cpool.nsSets.push(instanceNSSet);
-						
-						var wildcardMultiname:MultinameToken = new MultinameToken(MultinameToken.KIND_MultinameL, new MultinameMultinameLToken(instanceNSSetIndex));
-						var wildcardMultinameIndex:int = cpool.multinames.length;
-						cpool.multinames.push(wildcardMultiname);
-						
-						var setPropertyInstructions:Vector.<IInstruction> = new Vector.<IInstruction>();
-						setPropertyInstructions.push(new Instruction_getlocal0());
-						setPropertyInstructions.push(new Instruction_getlocal1());
-						setPropertyInstructions.push(new Instruction_getlocal2());
-						setPropertyInstructions.push(new Instruction_setproperty(wildcardMultinameIndex));
-						setPropertyInstructions.push(new Instruction_pushtrue());
-						setPropertyInstructions.push(new Instruction_returnvalue());
-						createMethodWithArguments(abcTag,
-							wrapper,
-							thisInstance, 
-							'swfWire_setProperty_'+uniqueID,
-							setPropertyInstructions,
-							setPropertyInstructions.length,
-							0,
-							Vector.<String>([':String', ':Object']));
-						
-						var getPropertyInstructions:Vector.<IInstruction> = new Vector.<IInstruction>();
-						getPropertyInstructions.push(new Instruction_getlocal0());
-						getPropertyInstructions.push(new Instruction_getlocal1());
-						getPropertyInstructions.push(new Instruction_getproperty(wildcardMultinameIndex));
-						getPropertyInstructions.push(new Instruction_returnvalue());
-						createMethodWithArguments(abcTag,
-							wrapper,
-							thisInstance, 
-							'swfWire_getProperty_'+uniqueID,
-							getPropertyInstructions,
-							getPropertyInstructions.length,
-							0,
-							Vector.<String>([':String']));
-						
-						trace('Creating property accessors took '+(getTimer() - start)+'ms');
-					}
-					
 					if(true)
 					{
 						var l:*;
@@ -745,6 +634,117 @@ package com.swfwire.debugger
 						});
 						
 						trace('Adding exitmethod calls took '+(getTimer() - start)+'ms');
+					}
+					
+					for(var iterInstance:int = 0; iterInstance < abcTag.abcFile.instances.length; iterInstance++)
+					{
+						start = getTimer();
+						
+						var thisInstance:InstanceToken = abcTag.abcFile.instances[iterInstance];
+						if(thisInstance.flags & InstanceToken.FLAG_CLASS_INTERFACE)
+						{
+							continue;
+						}
+						
+						var enumerateMethodsInstructions:Vector.<IInstruction> = new Vector.<IInstruction>();
+						var enumeratePropertiesInstructions:Vector.<IInstruction> = new Vector.<IInstruction>();
+						
+						var hits:Object = {};
+						
+						for(var iterMainTraits:* in thisInstance.traits)
+						{
+							var traitsInfo:TraitsInfoToken = thisInstance.traits[iterMainTraits];
+							var qname:MultinameQNameToken;
+							if(traitsInfo.kind == TraitsInfoToken.KIND_TRAIT_METHOD)
+							{
+								qname = cpool.multinames[traitsInfo.name].data as MultinameQNameToken;
+								enumerateMethodsInstructions.push(new Instruction_pushstring(qname.name));
+								enumerateMethodsInstructions.push(new Instruction_getlocal0);
+								enumerateMethodsInstructions.push(new Instruction_getproperty(traitsInfo.name));
+							}
+							else if(traitsInfo.kind == TraitsInfoToken.KIND_TRAIT_SLOT ||
+								traitsInfo.kind == TraitsInfoToken.KIND_TRAIT_GETTER ||
+								traitsInfo.kind == TraitsInfoToken.KIND_TRAIT_SETTER)
+							{
+								qname = cpool.multinames[traitsInfo.name].data as MultinameQNameToken;
+								var kind:uint = cpool.namespaces[qname.ns].kind;
+								if(kind == NamespaceToken.KIND_Namespace ||
+									kind == NamespaceToken.KIND_PrivateNs ||
+									kind == NamespaceToken.KIND_ProtectedNamespace ||
+									kind == NamespaceToken.KIND_PackageInternalNs)
+								{
+									if(!hits[qname.name])
+									{
+										hits[qname.name] = true;
+										enumeratePropertiesInstructions.push(new Instruction_pushstring(qname.name));
+										enumeratePropertiesInstructions.push(new Instruction_getlocal0);
+										enumeratePropertiesInstructions.push(new Instruction_getproperty(traitsInfo.name));
+									}
+								}
+							}
+						}
+						
+						var uniqueID:String = wrapper.getQNameString(thisInstance.name, '::');
+						
+						enumerateMethodsInstructions.push(new Instruction_newobject(enumerateMethodsInstructions.length * 1 / 3));
+						enumerateMethodsInstructions.push(new Instruction_returnvalue());
+						createMethod(abcTag, wrapper, thisInstance, 'swfWire_enumerateMethods_'+uniqueID, enumerateMethodsInstructions, enumerateMethodsInstructions.length);
+						
+						enumeratePropertiesInstructions.push(new Instruction_newobject(enumeratePropertiesInstructions.length * 1 / 3));
+						enumeratePropertiesInstructions.push(new Instruction_returnvalue());
+						createMethod(abcTag, wrapper, thisInstance, 'swfWire_enumerateProperties_'+uniqueID, enumeratePropertiesInstructions, enumeratePropertiesInstructions.length);
+						
+						var instanceNamespace:String = wrapper.getQNameString(thisInstance.name, ':');
+						var instanceNamespaceIndex:int = wrapper.addString(instanceNamespace);
+						
+						var instanceNSSet:NamespaceSetToken = new NamespaceSetToken();
+						instanceNSSet.namespaces.push(cpool.namespaces.length);
+						cpool.namespaces.push(new NamespaceToken(NamespaceToken.KIND_PrivateNs, instanceNamespaceIndex));
+						cpool.namespaces.push(new NamespaceToken(NamespaceToken.KIND_ProtectedNamespace, instanceNamespaceIndex));
+						
+						for(var iterNS:int = 1; iterNS < cpool.namespaces.length; iterNS++)
+						{
+							instanceNSSet.namespaces.push(iterNS);
+						}
+						instanceNSSet.count = instanceNSSet.namespaces.length;
+						var instanceNSSetIndex:int = cpool.nsSets.length;
+						cpool.nsSets.push(instanceNSSet);
+						
+						var wildcardMultiname:MultinameToken = new MultinameToken(MultinameToken.KIND_MultinameL, new MultinameMultinameLToken(instanceNSSetIndex));
+						var wildcardMultinameIndex:int = cpool.multinames.length;
+						cpool.multinames.push(wildcardMultiname);
+						
+						var setPropertyInstructions:Vector.<IInstruction> = new Vector.<IInstruction>();
+						setPropertyInstructions.push(new Instruction_getlocal0());
+						setPropertyInstructions.push(new Instruction_getlocal1());
+						setPropertyInstructions.push(new Instruction_getlocal2());
+						setPropertyInstructions.push(new Instruction_setproperty(wildcardMultinameIndex));
+						setPropertyInstructions.push(new Instruction_pushtrue());
+						setPropertyInstructions.push(new Instruction_returnvalue());
+						createMethodWithArguments(abcTag,
+							wrapper,
+							thisInstance, 
+							'swfWire_setProperty_'+uniqueID,
+							setPropertyInstructions,
+							setPropertyInstructions.length,
+							0,
+							Vector.<String>([':String', ':Object']));
+						
+						var getPropertyInstructions:Vector.<IInstruction> = new Vector.<IInstruction>();
+						getPropertyInstructions.push(new Instruction_getlocal0());
+						getPropertyInstructions.push(new Instruction_getlocal1());
+						getPropertyInstructions.push(new Instruction_getproperty(wildcardMultinameIndex));
+						getPropertyInstructions.push(new Instruction_returnvalue());
+						createMethodWithArguments(abcTag,
+							wrapper,
+							thisInstance, 
+							'swfWire_getProperty_'+uniqueID,
+							getPropertyInstructions,
+							getPropertyInstructions.length,
+							0,
+							Vector.<String>([':String']));
+						
+						trace('Creating property accessors took '+(getTimer() - start)+'ms');
 					}
 				}
 				currentTagId++;
