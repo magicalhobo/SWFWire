@@ -4,17 +4,19 @@ package com.swfwire.utils
 
 	public class ByteArrayUtil
 	{
+		private static var buffer:ByteArray = new ByteArray();
+		
 		public static function getUTF8Length(value:String):uint
 		{
-			var bytes:ByteArray = new ByteArray();
-			bytes.writeUTFBytes(value);
-			return bytes.length;
+			buffer.clear();
+			buffer.writeUTFBytes(value);
+			return buffer.length;
 		}
 		public static function getNullTerminatedUTF8Length(value:String):uint
 		{
-			var bytes:ByteArray = new ByteArray();
-			bytes.writeUTFBytes(value);
-			return bytes.length + 1;
+			buffer.clear();
+			buffer.writeUTFBytes(value);
+			return buffer.length + 1;
 		}
 		
 		public static function toBitString(value:uint, length:uint = 8):String

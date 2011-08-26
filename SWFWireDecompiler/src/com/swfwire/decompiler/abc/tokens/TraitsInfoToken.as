@@ -1,6 +1,7 @@
 package com.swfwire.decompiler.abc.tokens
 {
 	import com.swfwire.decompiler.abc.ABCByteArray;
+	import com.swfwire.decompiler.abc.ABCReaderMetadata;
 	import com.swfwire.decompiler.abc.tokens.traits.*;
 	
 	public class TraitsInfoToken implements IToken
@@ -39,72 +40,6 @@ package com.swfwire.decompiler.abc.tokens
 			this.data = data;
 			this.metadataCount = metadataCount;
 			this.metadata = metadata;
-		}
-		
-		public function read(abc:ABCByteArray):void
-		{
-			var iter:uint;
-			
-			name = abc.readU30();
-			var kindAndAttributes:uint = abc.readU8();
-			
-			attributes = kindAndAttributes >> 4;
-			kind = kindAndAttributes & filter4;
-			
-			switch(kind)
-			{
-				case KIND_TRAIT_SLOT:
-				case KIND_TRAIT_CONST:
-					data = new TraitSlotToken();
-					break;
-				case KIND_TRAIT_METHOD:
-				case KIND_TRAIT_GETTER:
-				case KIND_TRAIT_SETTER:
-					data = new TraitMethodToken();
-					break;
-				case KIND_TRAIT_CLASS:
-					data = new TraitClassToken();
-					break;
-				case KIND_TRAIT_FUNCTION:
-					data = new TraitFunctionToken();
-					break;
-				default:
-					throw new Error('Invalid trait kind: '+kind);
-					break;
-			}
-			data.read(abc);
-			
-			if(attributes & ATTRIBUTE_METADATA)
-			{
-				metadataCount = abc.readU30();
-				metadata = new Vector.<uint>(metadataCount);
-				for(iter = 0; iter < metadataCount; iter++)
-				{
-					metadata[iter] = abc.readU30();
-				}
-			}
-		}
-		public function write(abc:ABCByteArray):void
-		{
-			var iter:uint;
-			
-			abc.writeU30(name);
-			
-			var kindAndAttributes:uint = 0;
-			kindAndAttributes = (attributes << 4) | (kind & filter4);
-			
-			abc.writeU8(kindAndAttributes);
-			
-			data.write(abc);
-			
-			if(attributes & ATTRIBUTE_METADATA)
-			{
-				abc.writeU30(metadata.length);
-				for(iter = 0; iter < metadata.length; iter++)
-				{
-					abc.writeU30(metadata[iter]);
-				}
-			}
 		}
 	}
 }

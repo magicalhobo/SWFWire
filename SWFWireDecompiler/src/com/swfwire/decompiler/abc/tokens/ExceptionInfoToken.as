@@ -1,6 +1,7 @@
 package com.swfwire.decompiler.abc.tokens
 {
 	import com.swfwire.decompiler.abc.ABCByteArray;
+	import com.swfwire.decompiler.abc.ABCReaderMetadata;
 	import com.swfwire.decompiler.abc.instructions.IInstruction;
 	
 	public class ExceptionInfoToken implements IToken
@@ -21,23 +22,6 @@ package com.swfwire.decompiler.abc.tokens
 			this.target = target;
 			this.excType = excType;
 			this.varName = varName;
-		}
-		
-		public function read(abc:ABCByteArray):void
-		{
-			from = abc.readU30();
-			to = abc.readU30();
-			target = abc.readU30();
-			excType = abc.readU30();
-			varName = abc.readU30();
-		}
-		public function write(abc:ABCByteArray):void
-		{
-			abc.writeU30(from);
-			abc.writeU30(to);
-			abc.writeU30(target);
-			abc.writeU30(excType);
-			abc.writeU30(varName);
 		}
 	}
 }

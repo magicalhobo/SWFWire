@@ -1,6 +1,7 @@
 package com.swfwire.decompiler.abc.tokens
 {
 	import com.swfwire.decompiler.abc.ABCByteArray;
+	import com.swfwire.decompiler.abc.ABCReaderMetadata;
 	import com.swfwire.decompiler.abc.instructions.IInstruction;
 	
 	import flash.utils.ByteArray;
@@ -8,7 +9,6 @@ package com.swfwire.decompiler.abc.tokens
 	public class MethodBodyInfoToken implements IToken
 	{
 		public var method:uint;
-		//TODO: automatically calculate limits? in a subclass?
 		public var maxStack:uint;
 		public var localCount:uint;
 		public var initScopeDepth:uint;
@@ -52,63 +52,6 @@ package com.swfwire.decompiler.abc.tokens
 			this.traitCount = traitCount;
 			this.traits = traits;
 			this.instructions = instructions;
-		}
-		
-		public function read(abc:ABCByteArray):void
-		{
-			var iter:uint;
-			method = abc.readU30();
-			maxStack = abc.readU30();
-			localCount = abc.readU30();
-			initScopeDepth = abc.readU30();
-			maxScopeDepth = abc.readU30();
-			codeLength = abc.readU30();
-			code = new ByteArray();
-			if(codeLength > 0)
-			{
-				abc.readBytes(code, 0, codeLength);
-			}
-			
-			exceptionCount = abc.readU30();
-			exceptions = new Vector.<ExceptionInfoToken>(exceptionCount);
-			for(iter = 0; iter < exceptionCount; iter++)
-			{
-				var exceptionInfo:ExceptionInfoToken = new ExceptionInfoToken();
-				exceptionInfo.read(abc);
-				exceptions[iter] = exceptionInfo;
-			}
-			traitCount = abc.readU30();
-			traits = new Vector.<TraitsInfoToken>(traitCount);
-			for(iter = 0; iter < traitCount; iter++)
-			{
-				var trait:TraitsInfoToken = new TraitsInfoToken();
-				trait.read(abc);
-				traits[iter] = trait;
-			}
-		}
-		public function write(abc:ABCByteArray):void
-		{
-			var iter:uint;
-			abc.writeU30(method);
-			abc.writeU30(maxStack);
-			abc.writeU30(localCount);
-			abc.writeU30(initScopeDepth);
-			abc.writeU30(maxScopeDepth);
-			abc.writeU30(code.length);
-			if(code.length > 0)
-			{
-				abc.writeBytes(code, 0, code.length);
-			}
-			abc.writeU30(exceptionCount);
-			for(iter = 0; iter < exceptions.length; iter++)
-			{
-				exceptions[iter].write(abc);
-			}
-			abc.writeU30(traitCount);
-			for(iter = 0; iter < traits.length; iter++)
-			{
-				traits[iter].write(abc);
-			}
 		}
 	}
 }

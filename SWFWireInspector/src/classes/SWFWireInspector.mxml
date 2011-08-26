@@ -12,6 +12,7 @@
 			import air.update.events.UpdateEvent;
 			
 			import com.swfwire.decompiler.*;
+			import com.swfwire.decompiler.abc.ABCReaderMetadata;
 			import com.swfwire.decompiler.abc.instructions.*;
 			import com.swfwire.decompiler.abc.tokens.*;
 			import com.swfwire.decompiler.abc.tokens.traits.TraitSlotToken;
@@ -251,6 +252,8 @@
 
 				var swfBytes:SWFByteArray = new SWFByteArray(bytes);
 				var swf:AsyncSWFReader = new AsyncSWFReader();
+				
+				swf.catchErrors = false;
 
 				swf.addEventListener(AsyncSWFReaderEvent.TAG_READ, tagReadHandler);
 				swf.addEventListener(AsyncSWFReaderEvent.READ_COMPLETE, readCompleteHandler);
@@ -374,7 +377,8 @@
 				if(id != currentTagId)
 				{
 					currentTagId = id;
-					translator = new ABCToActionScript(tag.abcFile, result.abcMetadata[id].offsetFromId, customNamespaces);
+					var metadata:ABCReaderMetadata = lastResult.abcMetadata[id];
+					translator = new ABCToActionScript(tag.abcFile, metadata.offsetFromId, customNamespaces);
 	
 					var cpool:ConstantPoolToken = tag.abcFile.cpool;
 	
@@ -385,27 +389,18 @@
 					var classes:Array = [];
 					var ns:String;
 					var name:String;
-					/*
-					for(var iter:uint = 0; iter < tag.abcFile.classCount; iter++)
-					{
-						var instance:InstanceToken = tag.abcFile.instances[iter];
-	
-						var rc:ReadableClass = new ReadableClass();
-						rc.className = new ReadableMultiname();
-						translator.getReadableMultiname(instance.name, rc.className);
-	
-						classes.push({id: iter, className: rc.className.name, packageName: rc.className.namespace});
-					}
-					*/
 					
 					var iter:uint = 0;
 					for each(var script:ScriptInfoToken in tag.abcFile.scripts)
 					{
+						var size:uint = metadata.tokens[script].length;
 						for(var iter2:uint = 0; iter2 < script.traitCount; iter2++)
 						{
+							var trait:TraitsInfoToken = script.traits[iter2];
+							size += metadata.tokens[trait].length;
 							var r:ReadableTrait = new ReadableTrait();
-							translator.getReadableTrait(script.traits[iter2], r);
-							classes.push({id: iter, className: r.declaration.name, packageName: r.declaration.namespace, trait: script.traits[iter2]});
+							translator.getReadableTrait(trait, r);
+							classes.push({id: iter, className: r.declaration.name, packageName: r.declaration.namespace, trait: script.traits[iter2], size: size});
 							iter++;
 						}
 					}
@@ -815,7 +810,6 @@
 			}
 			.kwd {
 				color: #0033ff;
-				font-weight: bold;
 			}
 			.com {
 				color: #009900;
@@ -826,8 +820,11 @@
 				color: #3f5fbf;
 			}
 			.typ {
-				color: #000000;
-				font-weight: normal;
+				color: #0000ff;
+				font-weight: bold;
+				font-family: Arial;
+				font-size: 16px;
+				font-style: italic;
 			}
 			.lit {
 				color: #000000;
@@ -842,7 +839,9 @@
 			}
 			.pln {
 				color: #000000;
-				font-weight: normal;
+				font-weight: bold;
+				font-family: Arial;
+				font-size: 16px;
 			}
 			.tag {
 				color: #000088;

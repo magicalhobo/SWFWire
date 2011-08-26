@@ -56,6 +56,12 @@ package com.swfwire.decompiler
 			var abcWriter:ABCWriter = new ABCWriter();
 			var writeResult:ABCWriteResult = abcWriter.write(tag.abcFile);
 			
+			if(context.result.abcMetadata.length <= context.tagId)
+			{
+				context.result.abcMetadata.length = context.tagId + 1;
+			}
+			context.result.abcMetadata[context.tagId] = writeResult.metadata;
+			
 			context.bytes.writeBytes(writeResult.bytes);
 		}
 		

@@ -10,15 +10,5 @@ package com.swfwire.decompiler.abc.tokens.multinames
 		{
 			this.nsSet = nsSet;
 		}
-		
-		public function read(abc:ABCByteArray):void
-		{
-			//cpool.nsSets
-			nsSet = abc.readU30();
-		}
-		public function write(abc:ABCByteArray):void
-		{
-			abc.writeU30(nsSet);
-		}
 	}
 }

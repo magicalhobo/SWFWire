@@ -11,17 +11,5 @@ package com.swfwire.decompiler.abc.tokens
 		{
 			this.utf8 = utf8;
 		}
-		
-		public function read(abc:ABCByteArray):void
-		{
-			var size:uint = abc.readU30();
-			utf8 = abc.readString(size);
-		}
-		public function write(abc:ABCByteArray):void
-		{
-			var size:uint = ByteArrayUtil.getUTF8Length(utf8);
-			abc.writeU30(size);
-			abc.writeString(utf8);
-		}
 	}
 }

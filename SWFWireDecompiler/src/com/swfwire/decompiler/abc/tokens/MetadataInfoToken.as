@@ -1,6 +1,7 @@
 package com.swfwire.decompiler.abc.tokens
 {
 	import com.swfwire.decompiler.abc.ABCByteArray;
+	import com.swfwire.decompiler.abc.ABCReaderMetadata;
 	
 	public class MetadataInfoToken implements IToken
 	{
@@ -18,30 +19,6 @@ package com.swfwire.decompiler.abc.tokens
 			this.name = name;
 			this.itemCount = itemCount;
 			this.items = items;
-		}
-		
-		public function read(abc:ABCByteArray):void
-		{
-			name = abc.readU30();
-			itemCount = abc.readU30();
-			items = new Vector.<ItemInfoToken>(itemCount);
-			var iter:uint = 0;
-			for(iter = 0; iter < itemCount; iter++)
-			{
-				var item:ItemInfoToken = new ItemInfoToken();
-				item.read(abc);
-				items[iter] = item;
-			}
-		}
-		public function write(abc:ABCByteArray):void
-		{
-			abc.writeU30(name);
-			abc.writeU30(itemCount);
-			var iter:uint = 0;
-			for(iter = 0; iter < items.length; iter++)
-			{
-				items[iter].write(abc);
-			}
 		}
 	}
 }

@@ -2,12 +2,22 @@ package com.swfwire.decompiler.abc
 {
 	public class ABCReadResult
 	{
-		public var abc:ABCFile;
+		public var abcFile:ABCFile;
 		public var metadata:ABCReaderMetadata;
 		
-		public function ABCReadResult()
+		public function ABCReadResult(abcFile:ABCFile = null, metadata:ABCReaderMetadata = null)
 		{
-			this.metadata = new ABCReaderMetadata();
+			if(!abcFile)
+			{
+				abcFile = new ABCFile();
+			}
+			if(!metadata)
+			{
+				metadata = new ABCReaderMetadata();
+			}
+			
+			this.abcFile = abcFile;
+			this.metadata = metadata;
 		}
 	}
 }

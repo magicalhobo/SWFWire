@@ -12,20 +12,5 @@ package com.swfwire.decompiler.abc.tokens.multinames
 			this.ns = ns;
 			this.name = name;
 		}
-		
-		public function read(abc:ABCByteArray):void
-		{
-			//cpool.namespaces
-			ns = abc.readU30();
-			//cpool.strings
-			name = abc.readU30();
-		}
-		public function write(abc:ABCByteArray):void
-		{
-			//cpool.namespaces
-			abc.writeU30(ns);
-			//cpool.strings
-			abc.writeU30(name);
-		}
 	}
 }

@@ -393,6 +393,10 @@
     <classEntry path="com.swfwire.decompiler.SWF5Writer"/>
     <classEntry path="com.swfwire.decompiler.SWF6Writer"/>
     <classEntry path="com.swfwire.decompiler.SWFWireDecompilerConfig"/>
+    <classEntry path="com.swfwire.decompiler.abc.ABCInstructionReader"/>
+    <classEntry path="com.swfwire.decompiler.abc.ABCInstructionWriter"/>
+    <classEntry path="com.swfwire.decompiler.abc.ABCWriterContext"/>
+    <classEntry path="com.swfwire.decompiler.abc.ABCWriterMetadata"/>
   </includeClasses>
   <includeResources/>
   <namespaceManifests/>

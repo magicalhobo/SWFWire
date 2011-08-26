@@ -115,15 +115,22 @@ package com.swfwire.decompiler
 				
 				context.tagId = tagId;
 				
-				try
+				if(catchErrors)
+				{
+					try
+					{
+						tag = readTag(context, header);
+					}
+					catch(e:Error)
+					{
+						result.warnings.push('Error parsing Tag #'+tagId+': '+e);
+						bytes.setBytePosition(startPosition);
+						tag = readUnknownTag(context, header);
+					}
+				}
+				else
 				{
 					tag = readTag(context, header);
-				}
-				catch(e:Error)
-				{
-					result.warnings.push('Error parsing Tag #'+tagId+': '+e);
-					bytes.setBytePosition(startPosition);
-					tag = readUnknownTag(context, header);
 				}
 				
 				tag.header = header;

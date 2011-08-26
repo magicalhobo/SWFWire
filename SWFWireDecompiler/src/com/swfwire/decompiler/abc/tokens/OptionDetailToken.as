@@ -1,6 +1,7 @@
 package com.swfwire.decompiler.abc.tokens
 {
 	import com.swfwire.decompiler.abc.ABCByteArray;
+	import com.swfwire.decompiler.abc.ABCReaderMetadata;
 	
 	public class OptionDetailToken implements IToken
 	{
@@ -27,17 +28,6 @@ package com.swfwire.decompiler.abc.tokens
 		{
 			this.val = val;
 			this.kind = kind;
-		}
-		
-		public function read(abc:ABCByteArray):void
-		{
-			val = abc.readU30();
-			kind = abc.readU8();
-		}
-		public function write(abc:ABCByteArray):void
-		{
-			abc.writeU30(val);
-			abc.writeU8(kind);
 		}
 	}
 }

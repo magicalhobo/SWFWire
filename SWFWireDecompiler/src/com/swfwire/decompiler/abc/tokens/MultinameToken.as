@@ -1,6 +1,7 @@
 package com.swfwire.decompiler.abc.tokens
 {
 	import com.swfwire.decompiler.abc.ABCByteArray;
+	import com.swfwire.decompiler.abc.ABCReaderMetadata;
 	import com.swfwire.decompiler.abc.tokens.multinames.*;
 	
 	public class MultinameToken implements IToken
@@ -56,23 +57,6 @@ package com.swfwire.decompiler.abc.tokens
 		{
 			this.kind = kind;
 			this.data = data;
-		}
-		
-		public function read(abc:ABCByteArray):void
-		{
-			kind = abc.readU8();
-			var dataClass:Class = getClassFromKind(kind);
-			if(!dataClass)
-			{
-				throw new Error('Unknown multiname kind: '+kind);
-			}
-			data = new dataClass();
-			data.read(abc);
-		}
-		public function write(abc:ABCByteArray):void
-		{
-			abc.writeU8(kind);
-			data.write(abc);
 		}
 	}
 }

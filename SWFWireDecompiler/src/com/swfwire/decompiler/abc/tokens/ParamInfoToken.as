@@ -10,14 +10,5 @@ package com.swfwire.decompiler.abc.tokens
 		{
 			this.value = value;
 		}
-		
-		public function read(abc:ABCByteArray):void
-		{
-			value = abc.readU30();
-		}
-		public function write(abc:ABCByteArray):void
-		{
-			abc.writeU30(value);
-		}
 	}
 }

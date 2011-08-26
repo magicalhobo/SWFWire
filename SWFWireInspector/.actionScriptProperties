@@ -10,7 +10,6 @@
           <libraryPathEntry kind="3" linkType="1" path="${PROJECT_FRAMEWORKS}/libs/flex.swc" useDefaultLinkType="false"/>
         </excludedEntries>
       </libraryPathEntry>
-      <libraryPathEntry kind="1" linkType="1" path="libs"/>
       <libraryPathEntry kind="3" linkType="1" path="/SWFWireDecompiler/bin/SWFWireDecompiler.swc" useDefaultLinkType="false"/>
       <libraryPathEntry kind="3" linkType="1" path="/SWFWireUtils/bin/SWFWireUtils.swc" useDefaultLinkType="false"/>
     </libraryPath>

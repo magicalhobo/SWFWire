@@ -1,6 +1,7 @@
 package com.swfwire.decompiler.abc.tokens
 {
 	import com.swfwire.decompiler.abc.ABCByteArray;
+	import com.swfwire.decompiler.abc.ABCReaderMetadata;
 	
 	public class NamespaceToken implements IToken
 	{
@@ -19,17 +20,6 @@ package com.swfwire.decompiler.abc.tokens
 		{
 			this.kind = kind;
 			this.name = name;
-		}
-		
-		public function read(abc:ABCByteArray):void
-		{
-			kind = abc.readU8();
-			name = abc.readU30();
-		}
-		public function write(abc:ABCByteArray):void
-		{
-			abc.writeU8(kind);
-			abc.writeU30(name);
 		}
 	}
 }

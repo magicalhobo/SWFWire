@@ -12,16 +12,5 @@ package com.swfwire.decompiler.abc.tokens.traits
 			this.dispId = dispId;
 			this.methodId = methodId;
 		}
-		
-		public function read(abc:ABCByteArray):void
-		{
-			dispId = abc.readU30();
-			methodId = abc.readU30();
-		}
-		public function write(abc:ABCByteArray):void
-		{
-			abc.writeU30(dispId);
-			abc.writeU30(methodId);
-		}
 	}
 }

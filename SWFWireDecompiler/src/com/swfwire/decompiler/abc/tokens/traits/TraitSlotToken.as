@@ -16,26 +16,5 @@ package com.swfwire.decompiler.abc.tokens.traits
 			this.vIndex = vIndex;
 			this.vKind = vKind;
 		}
-		
-		public function read(abc:ABCByteArray):void
-		{
-			slotId = abc.readU30();
-			typeName = abc.readU30();
-			vIndex = abc.readU30();
-			if(vIndex)
-			{
-				vKind = abc.readU8();
-			}
-		}
-		public function write(abc:ABCByteArray):void
-		{
-			abc.writeU30(slotId);
-			abc.writeU30(typeName);
-			abc.writeU30(vIndex);
-			if(vIndex)
-			{
-				abc.writeU8(vKind);
-			}
-		}
 	}
 }

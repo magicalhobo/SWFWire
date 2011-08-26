@@ -28,6 +28,8 @@ package com.swfwire.decompiler
 		
 		public var version:uint = FILE_VERSION;
 		
+		public var catchErrors:Boolean;
+		
 		public function read(bytes:SWFByteArray):SWFReadResult 
 		{
 			var result:SWFReadResult = new SWFReadResult();
@@ -60,15 +62,22 @@ package com.swfwire.decompiler
 				context.tagId = tagId;
 				
 				var tag:SWFTag;
-				try
+				if(catchErrors)
+				{
+					try
+					{
+						tag = readTag(context, header);
+					}
+					catch(e:Error)
+					{
+						result.errors.push('Error parsing Tag #'+tagId+' (type: '+header.type+').  Error: '+e);
+						bytes.setBytePosition(startPosition);
+						tag = readUnknownTag(context, header);
+					}
+				}
+				else
 				{
 					tag = readTag(context, header);
-				}
-				catch(e:Error)
-				{
-					result.errors.push('Error parsing Tag #'+tagId+' (type: '+header.type+').  Error: '+e);
-					bytes.setBytePosition(startPosition);
-					tag = readUnknownTag(context, header);
 				}
 				
 				tag.header = header;

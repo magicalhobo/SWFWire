@@ -1,6 +1,7 @@
 package com.swfwire.decompiler.abc.tokens
 {
 	import com.swfwire.decompiler.abc.ABCByteArray;
+	import com.swfwire.decompiler.abc.ABCReaderMetadata;
 	
 	public class ItemInfoToken implements IToken
 	{
@@ -11,17 +12,6 @@ package com.swfwire.decompiler.abc.tokens
 		{
 			this.key = key;
 			this.value = value;
-		}
-		
-		public function read(abc:ABCByteArray):void
-		{
-			key = abc.readU30();
-			value = abc.readU30();
-		}
-		public function write(abc:ABCByteArray):void
-		{
-			abc.writeU30(key);
-			abc.writeU30(value);
 		}
 	}
 }

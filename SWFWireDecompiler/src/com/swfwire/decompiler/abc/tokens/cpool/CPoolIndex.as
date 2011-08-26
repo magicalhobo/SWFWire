@@ -4,7 +4,7 @@ package com.swfwire.decompiler.abc.tokens.cpool
 	{
 		public static const INVALID:int = -1;
 		
-		public var value:int = INVALID;
+		public var value:int;
 		
 		public function CPoolIndex(value:int = -1)
 		{

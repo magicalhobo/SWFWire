@@ -96,7 +96,7 @@ package com.swfwire.decompiler
 			}
 			context.result.abcMetadata[context.tagId] = readResult.metadata;
 			
-			tag.abcFile = readResult.abc;
+			tag.abcFile = readResult.abcFile;
 			
 			return tag;
 		}

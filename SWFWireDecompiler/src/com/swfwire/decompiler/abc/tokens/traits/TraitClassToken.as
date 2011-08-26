@@ -12,16 +12,5 @@ package com.swfwire.decompiler.abc.tokens.traits
 			this.slotId = slotId;
 			this.classId = classId;
 		}
-		
-		public function read(abc:ABCByteArray):void
-		{
-			slotId = abc.readU30();
-			classId = abc.readU30();
-		}
-		public function write(abc:ABCByteArray):void
-		{
-			abc.writeU30(slotId);
-			abc.writeU30(classId);
-		}
 	}
 }
