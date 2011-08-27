@@ -240,6 +240,9 @@
 					logger = injectedAppDomain.getDefinition('com.swfwire.debugger.injected.Logger');
 					logger.output = console;
 					
+					logger.skipAdded = true;
+					logger.skipRemoved = true;
+					
 					logger.skipFL = true;
 					logger.skipMX = false;
 					logger.skipFlashX = true;
@@ -1039,6 +1042,30 @@
 					
 					var result:SWFWriteResult = ev.result;
 					
+					var stats:Object = {};
+					
+					for(var iter:* in result.abcMetadata)
+					{
+						if(result.abcMetadata[iter])
+						{
+							for(var token:* in result.abcMetadata[iter].tokens)
+							{
+								var name:String = getQualifiedClassName(token);
+								
+								if(!stats[name])
+								{
+									stats[name] = {total: 0, count: 0};
+								}
+								
+								stats[name].total += result.abcMetadata[iter].tokens[token].duration;
+								stats[name].count++;
+								stats[name].average = stats[name].total / stats[name].count;
+							}
+						}
+					}
+					
+					log(debug.dumpToString(stats));
+					
 					if(!instance)
 					{
 						debug.dump(result, 4);
@@ -1122,7 +1149,7 @@
 				}
 			}
 			
-			private function save(bytes:ByteArray, location:String):void
+			private function save(data:*, location:String):void
 			{
 				try
 				{
@@ -1136,7 +1163,14 @@
 					var fs:FileStream = new FileStream();
 					log('Writing to: '+f.nativePath);
 					fs.open(f, FileMode.WRITE);
-					fs.writeBytes(bytes);
+					if(data is ByteArray)
+					{
+						fs.writeBytes(data);
+					}
+					else
+					{
+						fs.writeUTFBytes(data);
+					}
 					fs.close();
 				}
 				catch(e:*)
@@ -1472,8 +1506,9 @@
 			
 			protected function saveConsole_clickHandler(ev:MouseEvent):void
 			{
-				var fileReference:FileReference = new FileReference();
-				fileReference.save(console.text, 'SWFWire_console_'+(new Date().getTime())+'.log');
+				var url:String = File.documentsDirectory.resolvePath('console.'+(new Date().getTime())+'.log').url;
+				save(console.text, url);
+				updateStatus('Saved log.  <a href="'+url+'">'+url+'</a>');
 			}
 			
 			protected function watchScroll():void

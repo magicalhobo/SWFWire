@@ -27,6 +27,8 @@ package com.swfwire.debugger.injected
 		public static var skipRender:Boolean = true;
 		public static var skipFrameConstructed:Boolean = true;
 		public static var skipTimer:Boolean = true;
+		public static var skipAdded:Boolean = true;
+		public static var skipRemoved:Boolean = true;
 		public static var skipFL:Boolean = true;
 		public static var skipMX:Boolean = true;
 		public static var skipFlashX:Boolean = true;
@@ -40,6 +42,7 @@ package com.swfwire.debugger.injected
 		
 		public static var output:*;
 		public static var buffer:String = '';
+		public static var autoScroll:Boolean = true;
 		
 		private static var objectReferences:Dictionary = new Dictionary(true);
 		
@@ -48,6 +51,8 @@ package com.swfwire.debugger.injected
 		private static var inRender:Boolean;
 		private static var inFrameConstructed:Boolean;
 		private static var inTimer:Boolean;
+		private static var inAdded:Boolean;
+		private static var inRemoved:Boolean;
 		private static var show2:Boolean;
 		
 		private static var indent:int = 0;
@@ -65,16 +70,8 @@ package com.swfwire.debugger.injected
 				}
 				if(logToOutput && output)
 				{
-					/*
-					var str:String = StringUtil.repeat('	', indent) + message;
-					if(!(message is String))
-					{
-						str = ObjectUtil.objectToString(message, 1, 3, 100, 1000, '	');
-					}
-					*/
-					var shouldScroll:Boolean = output.verticalScrollPosition == output.maxVerticalScrollPosition;
 					output.appendText(buffer);
-					if(shouldScroll)
+					if(autoScroll)
 					{
 						output.validateNow();
 						output.verticalScrollPosition = output.maxVerticalScrollPosition;
@@ -131,6 +128,14 @@ package com.swfwire.debugger.injected
 						{
 							inTimer = true;
 						}
+						else if(t == 'added')
+						{
+							inAdded = true;
+						}
+						else if(t == 'removed')
+						{
+							inRemoved = true;
+						}
 					}
 					break;
 				}
@@ -138,7 +143,9 @@ package com.swfwire.debugger.injected
 						(!skipExitFrame || !inExitFrame) &&
 						(!skipRender || !inRender) &&
 						(!skipFrameConstructed || !inFrameConstructed) &&
-						(!skipTimer || !inTimer);
+						(!skipTimer || !inTimer) &&
+						(!skipAdded || !inAdded) &&
+						(!skipRemoved || !inRemoved);
 			}
 			
 			var show3:Boolean = show2 && stack.length < maxStack &&
@@ -200,6 +207,8 @@ package com.swfwire.debugger.injected
  				inRender = false;
  				inFrameConstructed = false;
  				inTimer = false;
+				inAdded = false;
+				inRemoved = false;
 				
 				show2 = true;
 			}
