@@ -290,7 +290,7 @@ package com.swfwire.decompiler.utils
 						if(trait.kind == TraitsInfoToken.KIND_TRAIT_SLOT)
 						{
 							var slotToken:TraitSlotToken = trait.data as TraitSlotToken;
-							r.slots[slotToken.slotId] = abcFile.cpool.strings[MultinameQNameToken(abcFile.cpool.multinames[trait.name].data).name].utf8;
+							r.slots[slotToken.slotId] = namespaceToString(MultinameQNameToken(abcFile.cpool.multinames[trait.name].data).ns) + "::" + abcFile.cpool.strings[MultinameQNameToken(abcFile.cpool.multinames[trait.name].data).name].utf8;
 						}
 					}
 				}
@@ -425,7 +425,7 @@ package com.swfwire.decompiler.utils
 			
 			if(!scope)
 			{
-				scope = new ScopeStack(0);
+				scope = new ScopeStack(new Vector.<Object>,true);
 			}
 			if(!definedLocals)
 			{
@@ -453,7 +453,7 @@ package com.swfwire.decompiler.utils
 			}
 			if(!stack)
 			{
-				stack = new OperandStack();
+				stack = new OperandStack(new Vector.<Object>,true);
 			}
 			var localCount:uint = 0;
 			
@@ -505,7 +505,7 @@ package com.swfwire.decompiler.utils
 			{
 				sourceUntil[iter] = lines.join('\n');
 				
-				var key:String = iter+':'+stack.values.join('|');
+				var key:String = iter+'$'+stack.values.join('|');
 				//trace('for: '+key+' ('+stack.values.length+')');
 				
 				if(hitmap[iter])
@@ -663,21 +663,20 @@ package com.swfwire.decompiler.utils
 						var hitmapCopy3:Object = cloneObject(hitmap);
 						var hitmapCopy4:Object = cloneObject(hitmap);
 						
-						var stackCopy1:OperandStack = new OperandStack();
-						stackCopy1.values = stack.values.slice();
-						var stackCopy2:OperandStack = new OperandStack();
-						stackCopy2.values = stack.values.slice();
-						
+						var stackCopy1:OperandStack = new OperandStack(stack.values,true);
+						var stackCopy2:OperandStack = new OperandStack(stack.values,true);
+						var scope1:ScopeStack = new ScopeStack(scope.values, true);
+						var scope2:ScopeStack = new ScopeStack(scope.values, true);
 						trace('			branch point: '+iter);
 						trace('			start branch from: '+target1);
 						var r1:Object = instructionsToString(methodName, startTime, instructions,
 							argumentNames, slotNames, localCount, target1, cache2, hitmapCopy3, hitmapCopy1,
-							knownConditions1, positionLookup, true, scope, locals, stackCopy1, -1, depth + 1, definedLocals);
+							knownConditions1, positionLookup, true, scope1, locals, stackCopy1, -1, depth + 1, definedLocals);
 						trace('			end branch from: '+target1);
 						trace('			start branch from: '+target2);
 						var r2:Object = instructionsToString(methodName, startTime, instructions,
 							argumentNames, slotNames, localCount, target2, cache2, hitmapCopy4, hitmapCopy2,
-							knownConditions2, positionLookup, true, scope, locals, stackCopy2, -1, depth + 1, definedLocals);
+							knownConditions2, positionLookup, true, scope2, locals, stackCopy2, -1, depth + 1, definedLocals);
 						trace('			end branch from: '+target2);
 						
 						var isWhile:Boolean = false;
@@ -698,7 +697,7 @@ package com.swfwire.decompiler.utils
 								if(r1.flow[iter4] == r2.flow[iter5])
 								{
 									a2 = r1.flow[iter4];
-									var splitPoint:int = a2.indexOf(':');
+									var splitPoint:int = a2.indexOf('$');
 									a1 = int(a2.substr(0, splitPoint));
 									var tempStack:String = a2.substr(splitPoint + 1);
 									if(tempStack)
@@ -810,8 +809,8 @@ package com.swfwire.decompiler.utils
 						tempStr1 = tempStr1 ? StringUtil.indent(tempStr1, '	') : '';
 						tempStr2 = tempStr2 ? StringUtil.indent(tempStr2, '	') : '';
 						
-						tempStr1 = tempStr1 ? tempStr1 : '';
-						tempStr2 = tempStr2 ? tempStr2 : '';
+						tempStr1 = (tempStr1 && r1.hassource) ? tempStr1 : '';
+						tempStr2 = (tempStr2 && r2.hassource) ? tempStr2 : '';
 						
 						var localResult:Object = {
 							flow1: r1.flow, flow2: r2.flow, 
@@ -823,45 +822,53 @@ package com.swfwire.decompiler.utils
 						};
 						return localResult;
 					}
-					
+					var boolrexp:RegExp =/^(!+)?(Boolean)?\((.+)\)$/;
+					function unwrapbool(cond:String):Object {
+						var ret:Object = { xorexprop:Boolean(false),condexpr:cond};
+						if (boolrexp.test(cond)){
+							var condtounwraped:String = cond.slice();
+							while(true){
+							var result:Object = boolrexp.exec(condtounwraped);
+								if (result) {
+									condtounwraped = '';
+									if (result[1]&&(result[1].length % 2 == 1)) {
+										ret.xorexprop = !ret.xorexprop;
+									}
+									if (result[3]) condtounwraped += result[3];
+								}
+								else break;
+							}
+							ret.condexpr = condtounwraped;
+						}
+						return ret;
+					}
+					function prunedup(cond:String):String {
+						cond = cond.replace(/^<dup>/, '');
+						return cond;
+					}
+					function xor(x:Boolean, y:Boolean):Boolean {
+						return !( x && y ) && ( x || y );
+					}
 					function conditional(condition:String, inequality:Boolean):void
 					{
 						tempInt = positionLookup[Object(op).reference];
-						
-						var dup:Boolean = false;
-						if(condition.substr(0, 5) == '<dup>')
-						{
-							condition = condition.substr(5);
-							dup = true;
-						}
-						
-						var coercion:RegExp = /^Boolean\((.*)\)$/i;
-						var result:Array = condition.match(coercion);
-						if(result)
-						{
-							condition = result[1];
-						}
-						
-						if(dup)
-						{
-							if(condition && knownConditions.hasOwnProperty(condition))
+						condition = prunedup(condition);
+						var canonicalboolexp:Object= unwrapbool(condition);
+						var canonicalcondition:String=canonicalboolexp.condexpr;
+						var isdecidable:Boolean = canonicalcondition && knownConditions.hasOwnProperty(canonicalcondition);
+							if(isdecidable)
 							{
-								var execute:Boolean = knownConditions[condition];
-								
+								var bcondition:Boolean = xor(knownConditions[canonicalcondition], canonicalboolexp.xorexprop);
+								var execute:Boolean = bcondition == !inequality;
 								if(execute)
 								{
-									iter = iter + 1;
+									iter = tempInt-1;
 								}
-								else
-								{
-									iter = tempInt;
-								}
-								trace('KNOWN CONDITION: '+condition+' = '+knownConditions[condition]+', skipping to: '+iter);
+								trace('KNOWN CONDITION: ' + canonicalcondition + ' = ' + knownConditions[canonicalcondition] + ', skipping to: ' + iter);
 								return;
 							}
-						}
 						
-						var key2:String = iter+':'+stack.values.join('|');
+						var key2:String = iter+'$'+stack.values.join('|');
 						var cached:Object;
 						
 						if(cache2[key2])
@@ -880,10 +887,9 @@ package com.swfwire.decompiler.utils
 							var knownConditions1:Object = cloneObject(knownConditions);
 							var knownConditions2:Object = cloneObject(knownConditions);
 							
-							knownConditions1[condition] = true;
-							knownConditions2[condition] = false;
-							
-							if(inequality)
+							knownConditions1[canonicalcondition] = !canonicalboolexp.xorexprop;
+							knownConditions2[canonicalcondition] = canonicalboolexp.xorexprop;
+							if(xor(inequality, canonicalboolexp.xorexprop))
 							{
 								b = branch(tempInt, iter + 1, knownConditions1, knownConditions2);
 							}
@@ -917,9 +923,10 @@ package com.swfwire.decompiler.utils
 						}
 						
 						tempStr2 = '';
-						if(b.flow1.length > 0)
+						var hasstatement:Array = [(b.flow1.length > 0) && (b.source1.length > 0),(b.flow2.length > 0) && (b.source2.length > 0)];
+						if(hasstatement[0])
 						{
-							if(b.flow2.length > 0)
+							if(hasstatement[1])
 							{
 								var matches3:Array = b.source1.match(/^[\s]*(if\([^)]+\)[\s]*{.*}[\s]*$)/s);
 								var elseBlock:String;
@@ -940,7 +947,7 @@ package com.swfwire.decompiler.utils
 						}
 						else
 						{
-							if(b.flow2.length > 0)
+							if(hasstatement[1])
 							{
 								tempStr2 = cond+'('+condition+')\n{\n'+b.source2+'\n}';
 							}
@@ -1177,7 +1184,13 @@ package com.swfwire.decompiler.utils
 					else if(op is Instruction_iftrue)
 					{
 						tempStr4 = stack.pop();
+						if(tempStr4 == 'true')
+						{						
+							iter = positionLookup[Instruction_iftrue(op).reference] - 1;						
+						}						
+						else {						
 						conditional(tempStr4, false);
+						}
 					}
 					else if(op is Instruction_iffalse)
 					{
@@ -1899,6 +1912,12 @@ package com.swfwire.decompiler.utils
 						tempStr2 = stack.pop();
 						stack.push(tempStr2+' is '+tempStr);
 					}
+					else if(op is Instruction_inclocal_i)
+					{					
+						var index:int = Instruction_inclocal_i(op).index;					
+						source += ["++",locals.getName(index),";"].join("");					
+						locals.setValue(index, [locals.getValue(index), "+1"].join(""));					
+					}					
 					else if(op is Instruction_in)
 					{
 						tempStr = stack.pop();
@@ -1929,6 +1948,10 @@ package com.swfwire.decompiler.utils
 					{
 						stack.push(stack.pop()+' - 1');
 					}
+					else if(op is Instruction_pushwith)					
+					{					
+						scope.push(stack.pop());					
+					}					
 					else if(op is Instruction_pushscope)
 					{
 						scope.push(stack.pop());
@@ -2080,8 +2103,8 @@ package com.swfwire.decompiler.utils
 						lines.push('				stack: ' + stack.values.join(', ')+'  ('+stack.values.length+')');
 						lines.push('				local: ' + locals.names.join(', '));
 					}
-					
-					if(source)
+					var hassource:Boolean = source.length > 0;
+					if(hassource)
 					{
 						lines.push(source);
 					}
@@ -2104,7 +2127,7 @@ package com.swfwire.decompiler.utils
 			resultObj = {
 				result: lines.join('\n'), flow: flow, 
 				breakOn: breakOn, sourceUntil: sourceUntil, 
-				firstNextName: firstNextName, firstNextValue: firstNextValue
+				firstNextName: firstNextName, firstNextValue: firstNextValue, hassource:hassource
 			};
 			return resultObj;
 		}
