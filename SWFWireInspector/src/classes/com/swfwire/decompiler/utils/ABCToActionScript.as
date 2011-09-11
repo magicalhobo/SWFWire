@@ -492,7 +492,7 @@ package com.swfwire.decompiler.utils
 			var firstWasNextValue:Boolean = false;
 			var resultObj2:Object;
 			var importantFlow:Array = [];
-			
+			var hassource:Boolean = false;
 			/*
 			if(getTimer() - startTime > 10000)
 			{
@@ -2103,9 +2103,11 @@ package com.swfwire.decompiler.utils
 						lines.push('				stack: ' + stack.values.join(', ')+'  ('+stack.values.length+')');
 						lines.push('				local: ' + locals.names.join(', '));
 					}
-					var hassource:Boolean = source.length > 0;
-					if(hassource)
+					var hassourcefornow:Boolean = (source.length > 0) && source.split('\n').some((function(a:String):Boolean { return (a.length>0) && !/^\/\//.test(a); } ));
+					if(hassourcefornow)
 					{
+						if (!hassource)
+							hassource = true;
 						lines.push(source);
 					}
 					
