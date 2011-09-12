@@ -780,7 +780,8 @@
 			protected function saveHandler(event:MouseEvent):void
 			{
 				var file:FileReference = new FileReference();
-				file.save(detailsPanel.actionScript.classes.text);
+				var item:Object = detailsPanel.actionScript.classesList.selectedItem;
+				file.save(detailsPanel.actionScript.classes.text, [item.packageName, '.', item.className,'.as' ].join(''));
 				/*
 				var bytes:ByteArray = new ByteArray();
 				bytes.writeUTFBytes(detailsPanel.actionScript.classes.text);
