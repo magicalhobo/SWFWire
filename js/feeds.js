@@ -11,6 +11,7 @@ function commitHandler(result)
 			var div = '<div class="commit">' +
 				'<a class="date" href="http://github.com'+data.url+'">'+date.toLocaleDateString()+'</a>' +
 				'<div class="message">'+data.message+'</div>' +
+				'<div class="author">'+data.author.name+'</div>' +
 				'</div>';
 			divs.push(div);
 		}

@@ -232,6 +232,7 @@ body#inspector .screenshot
 	border-right: 1px solid #eee;
 	border-radius: 4px;
 	background-color: #d0d0d0;
+	overflow: auto;
 }
 .commit .date
 {
@@ -240,9 +241,14 @@ body#inspector .screenshot
     color: #666666 !important;
     text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.7);
 }
+.commit .author
+{
+	text-align: right;
+}
 .commit .message, .tweet .message
 {
 	font-size: 20px;
+	white-space: pre-wrap;
 }
 .tweet .date
 {
