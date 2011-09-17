@@ -811,6 +811,7 @@
 			}
 			.kwd {
 				color: #0033ff;
+				font-weight: bold;
 			}
 			.com {
 				color: #009900;
@@ -821,11 +822,8 @@
 				color: #3f5fbf;
 			}
 			.typ {
-				color: #0000ff;
-				font-weight: bold;
-				font-family: Arial;
-				font-size: 16px;
-				font-style: italic;
+				color: #000000;
+				font-weight: normal;
 			}
 			.lit {
 				color: #000000;
@@ -840,9 +838,7 @@
 			}
 			.pln {
 				color: #000000;
-				font-weight: bold;
-				font-family: Arial;
-				font-size: 16px;
+				font-weight: normal;
 			}
 			.tag {
 				color: #000088;

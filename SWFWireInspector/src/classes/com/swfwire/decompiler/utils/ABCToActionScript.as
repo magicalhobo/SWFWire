@@ -2082,7 +2082,7 @@ package com.swfwire.decompiler.utils
 						lines.push('				stack: ' + stack.stackinfo);
 						lines.push('				local: ' + locals.names.join(', '));
 					}
-					var hassourcefornow:Boolean = (source.length > 0) && source.split('\n').some((function(a:String):Boolean { return (a.length>0) && !/^\/\//.test(a); } ));
+					var hassourcefornow:Boolean = (source.length > 0) && source.split('\n').some((function(a:String, ...args):Boolean { return (a.length>0) && !/^\/\//.test(a); } ));
 					if(hassourcefornow)
 					{
 						if (!hassource)
