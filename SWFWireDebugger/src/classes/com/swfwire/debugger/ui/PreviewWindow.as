@@ -7,6 +7,7 @@ package com.swfwire.debugger.ui
 	import flash.display.Loader;
 	import flash.display.NativeWindow;
 	import flash.display.NativeWindowInitOptions;
+	import flash.display.NativeWindowRenderMode;
 	import flash.display.NativeWindowType;
 	import flash.display.Shape;
 	import flash.display.Sprite;
@@ -30,6 +31,7 @@ package com.swfwire.debugger.ui
 		public function PreviewWindow()
 		{
 			var initOptions:NativeWindowInitOptions = new NativeWindowInitOptions();
+			initOptions.renderMode = NativeWindowRenderMode.DIRECT;
 			super(initOptions);
 			
 			stage.scaleMode = StageScaleMode.NO_SCALE;
