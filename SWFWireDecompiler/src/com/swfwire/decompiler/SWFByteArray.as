@@ -127,6 +127,11 @@ package com.swfwire.decompiler
 			return bytes.length;
 		}
 		
+		public function setLength(newLength:uint):void
+		{
+			bytes.length = newLength;
+		}
+		
 		public function compress():void
 		{
 			bytes.compress();

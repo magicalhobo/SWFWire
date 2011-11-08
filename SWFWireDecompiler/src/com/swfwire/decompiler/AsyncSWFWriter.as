@@ -134,8 +134,8 @@ package com.swfwire.decompiler
 			
 			var tagBytes:Vector.<ByteArray> = _currentContext.tagBytes;
 			
-			var bytes1:ByteArray = new ByteArray();
-			var bytes:SWFByteArray = new SWFByteArray(bytes1);
+			var rawBytes:ByteArray = new ByteArray();
+			var bytes:SWFByteArray = new SWFByteArray(rawBytes);
 			_currentContext.bytes = bytes;
 			
 			writeSWFHeader(_currentContext, _currentSWF.header);
@@ -151,12 +151,27 @@ package com.swfwire.decompiler
 				bytes.writeBytes(tagBytes[iter]);
 			}
 			
+			var length:uint = bytes.getLength();
+			
+			if(_currentSWF.header.signature == SWFHeader.COMPRESSED_SIGNATURE)
+			{
+				bytes.setBytePosition(8);
+				
+				var buffer:ByteArray = new ByteArray();
+				bytes.readBytes(buffer);
+				buffer.compress();
+				
+				bytes.setLength(8);
+				bytes.setBytePosition(8);
+				bytes.writeBytes(buffer);
+			}			
+			
 			bytes.setBytePosition(4);
-			var tl:uint = bytes.getLength();
-			bytes.writeUI32(tl);
+			bytes.writeUI32(length);
 			
 			bytes.setBytePosition(0);
-			_currentWriteResult.bytes = bytes1;
+			
+			_currentWriteResult.bytes = rawBytes;
 			
 			dispatchEvent(new AsyncSWFWriterEvent(AsyncSWFWriterEvent.WRITE_COMPLETE, _currentContext, _currentWriteResult, 1));
 		}

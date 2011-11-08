@@ -87,8 +87,8 @@ package com.swfwire.decompiler
 				}
 			}
 			
-			var bytes1:ByteArray = new ByteArray();
-			var bytes:SWFByteArray = new SWFByteArray(bytes1);
+			var rawBytes:ByteArray = new ByteArray();
+			var bytes:SWFByteArray = new SWFByteArray(rawBytes);
 			context.bytes = bytes;
 			
 			writeSWFHeader(context, swf.header);
@@ -108,13 +108,28 @@ package com.swfwire.decompiler
 				writeTagHeaderRecord(context, header);
 				bytes.writeBytes(tagBytes[iter]);
 			}
+
+			var length:uint = bytes.getLength();
+			
+			if(swf.header.signature == SWFHeader.COMPRESSED_SIGNATURE)
+			{
+				bytes.setBytePosition(8);
+				
+				var buffer:ByteArray = new ByteArray();
+				bytes.readBytes(buffer);
+				buffer.compress();
+				
+				bytes.setLength(8);
+				bytes.setBytePosition(8);
+				bytes.writeBytes(buffer);
+			}			
 			
 			bytes.setBytePosition(4);
-			var tl:uint = bytes.getLength();
-			bytes.writeUI32(tl);
+			bytes.writeUI32(length);
 			
 			bytes.setBytePosition(0);
-			result.bytes = bytes1;
+			
+			result.bytes = rawBytes;
 			
 			return result;
 		}
@@ -124,7 +139,7 @@ package com.swfwire.decompiler
 			var bytes:SWFByteArray = context.bytes;
 			bytes.writeStringWithLength(header.signature, 3);
 			bytes.writeUI8(header.fileVersion);
-			bytes.writeUI32(bytes.getLength());
+			bytes.writeUI32(0);
 			writeRectangleRecord(context, header.frameSize);
 			bytes.writeFixed8_8(header.frameRate);
 			bytes.writeUI16(header.frameCount);
