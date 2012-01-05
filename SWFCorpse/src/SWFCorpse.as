@@ -192,6 +192,20 @@ package
 		internal static var internalStaticVar:Boolean;
 		custom static var customStaticVar:Boolean;
 		*/
+
+		public static function testStrangeLoops():void
+		{
+			var o:Object = {foo: 'bar', hello: 'world', one: 'one', two: 'two'};
+			 
+			var v:Array = [];
+			for each(v[v.length] in o);
+			trace(v);
+			 
+			var k:Array = [];
+			for(k[k.length] in o);
+			trace(k);
+		}
+
 		public static function testFor():void
 		{
 			for(var i:uint = 0; i < 10; i++)
