@@ -18,26 +18,30 @@ package com.swfwire.debugger.injected
 		public static var applicationRoot:String = '';
 		public static var referer:String = '';
 		
-		private static var urlMap:Dictionary = new Dictionary(true);
+		private static var parameters:Dictionary = new Dictionary(true);
 		
 		private static function openHandler(ev:Event):void
 		{
-			globalEvents.dispatchEvent(new DynamicEvent(ev.type, {instance: ev.currentTarget, url: urlMap[ev.currentTarget]}));
+			var params:Object = parameters[ev.currentTarget];
+			globalEvents.dispatchEvent(new DynamicEvent(ev.type, {instance: ev.currentTarget, url: params.url, data: params.data}));
 		}
 		
 		private static function progressHandler(ev:ProgressEvent):void
 		{
-			globalEvents.dispatchEvent(new DynamicEvent(ev.type, {instance: ev.currentTarget, url: urlMap[ev.currentTarget]}));
+			var params:Object = parameters[ev.currentTarget];
+			globalEvents.dispatchEvent(new DynamicEvent(ev.type, {instance: ev.currentTarget, url: params.url, data: params.data}));
 		}
 		
 		private static function completeHandler(ev:Event):void
 		{
-			globalEvents.dispatchEvent(new DynamicEvent(ev.type, {instance: ev.currentTarget, url: urlMap[ev.currentTarget]}));
+			var params:Object = parameters[ev.currentTarget];
+			globalEvents.dispatchEvent(new DynamicEvent(ev.type, {instance: ev.currentTarget, url: params.url, data: params.data}));
 		}
 		
 		private static function errorHandler(ev:Event):void
 		{
-			globalEvents.dispatchEvent(new DynamicEvent(ev.type, {instance: ev.currentTarget, url: urlMap[ev.currentTarget]}));
+			var params:Object = parameters[ev.currentTarget];
+			globalEvents.dispatchEvent(new DynamicEvent(ev.type, {instance: ev.currentTarget, url: params.url, data: params.data}));
 		}
 		
 		public function URLLoader(request:URLRequest = null)
@@ -53,7 +57,7 @@ package com.swfwire.debugger.injected
 		
 		override public function load(request:URLRequest):void
 		{
-			urlMap[this] = request.url;
+			parameters[this] = {url: request.url, data: request.data};
 			
 			if(request.url.indexOf('://') == -1)
 			{
@@ -62,6 +66,8 @@ package com.swfwire.debugger.injected
 				request.url = applicationRoot + request.url;
 			}
 			
+			request.data;
+			
 			request.requestHeaders.push(new URLRequestHeader('Referer', referer));
 			
 			super.load(request);
@@ -69,7 +75,8 @@ package com.swfwire.debugger.injected
 		
 		override public function close():void
 		{
-			globalEvents.dispatchEvent(new DynamicEvent(Event.CLOSE, {instance: this, url: urlMap[this]}));
+			var params:Object = parameters[this];
+			globalEvents.dispatchEvent(new DynamicEvent(Event.CLOSE, {instance: this, url: params.url, data: params.data}));
 			super.close();
 		}
 	}

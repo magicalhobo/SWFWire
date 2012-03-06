@@ -36,11 +36,33 @@
 						progressBar.label = 'Closed (%1 bytes/%2 bytes)';
 						progressBar.indeterminate = false;
 						break;
+					case 'ncConnect':
+						progressBar.label = 'Connecting...';
+						progressBar.indeterminate = true;
+						break;
+					case 'ncConnected':
+						progressBar.label = 'Connected';
+						break;
+					case 'ncRejected':
+						progressBar.label = 'Rejected';
+						break;
+					case 'ncDisconnected':
+						progressBar.label = 'Disconnected';
+						break;
+					case 'ncCall':
+						progressBar.label = 'Calling...';
+						progressBar.indeterminate = true;
+						break;
+					case 'ncClose':
+						progressBar.label = 'Closed';
+						progressBar.indeterminate = false;
+						break;
 					default:
 						progressBar.label = 'Unknown';
 						progressBar.indeterminate = true;
 						break;
 				}
+				progressBar.indeterminate = false;
 			}
 		]]>
 	</fx:Script>

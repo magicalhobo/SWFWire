@@ -53,6 +53,11 @@ mx|DataGrid
 	text-roll-over-color: #000000;
 }
 
+mx|DataGrid mx|Text
+{
+	color: #000000;
+}
+
 mx|Alert
 {
 	modal-transparency: 0;
