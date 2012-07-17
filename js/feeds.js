@@ -1,17 +1,17 @@
 function commitHandler(result)
 {
-	if(result && result.commits)
+	if(result && result.data)
 	{
 		var divs = [];
-		var count = Math.min(result.commits.length, 5);
+		var count = Math.min(result.data.length, 5);
 		for(var iter = 0; iter < count; iter++)
 		{
-			var data = result.commits[iter];
-			var date = new Date(data.committed_date);
+			var data = result.data[iter];
+			var date = new Date(data.commit.author.date);
 			var div = '<div class="commit">' +
-				'<a class="date" href="http://github.com'+data.url+'">'+date.toLocaleDateString()+'</a>' +
-				'<div class="message">'+data.message+'</div>' +
-				'<div class="author">'+data.author.name+'</div>' +
+				'<a class="date" href="https://github.com/magicalhobo/SWFWire/commit/'+data.sha+'">'+date.toLocaleDateString()+'</a>' +
+				'<div class="message">'+data.commit.message+'</div>' +
+				'<div class="author"><a href="https://github.com/'+data.author.login+'">'+data.commit.author.name+'</a></div>' +
 				'</div>';
 			divs.push(div);
 		}
