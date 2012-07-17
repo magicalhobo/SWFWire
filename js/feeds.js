@@ -9,8 +9,8 @@ function commitHandler(result)
 			var data = result.data[iter];
 			var date = new Date(data.commit.author.date);
 			var div = '<div class="commit">' +
-				'<a class="date" href="https://github.com/magicalhobo/SWFWire/commit/'+data.sha+'">'+date.toLocaleDateString()+'</a>' +
-				'<div class="message">'+data.commit.message+'</div>' +
+				'<span class="date">'+date.toLocaleDateString()+'</span>' +
+				'<div class="message"><a href="https://github.com/magicalhobo/SWFWire/commit/'+data.sha+'">'+data.commit.message+'</a></div>' +
 				'<div class="author"><a href="https://github.com/'+data.author.login+'">'+data.commit.author.name+'</a></div>' +
 				'</div>';
 			divs.push(div);

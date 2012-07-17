@@ -238,12 +238,16 @@ body#inspector .screenshot
 {
 	float: right;
 	margin-left: 10px;
-    color: #666666 !important;
+	color: #666;
     text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.7);
 }
 .commit .author
 {
 	text-align: right;
+}
+.commit a
+{
+    color: #333 !important;
 }
 .commit .message, .tweet .message
 {
