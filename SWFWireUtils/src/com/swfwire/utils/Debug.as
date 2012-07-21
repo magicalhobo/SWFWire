@@ -18,6 +18,14 @@ package com.swfwire.utils
 			this.swfId = swfId;
 		}
 		
+		public function logToString(location:String, message:* = '', relatedVariable:Object = null):String
+		{
+			var messageString:String = message ? ': '+String(message) : '';
+			var dumpString:String = relatedVariable ? '\n' + StringUtil.indent(dumpToString(relatedVariable), '    ') : '';
+			var str:String = '['+getTimer()+'  '+swfId+'/'+location+'()  ]'+messageString+dumpString;
+			return str;
+		}
+		
 		public function log(location:String, message:* = '', relatedVariable:Object = null):void
 		{
 			if(enabled)
