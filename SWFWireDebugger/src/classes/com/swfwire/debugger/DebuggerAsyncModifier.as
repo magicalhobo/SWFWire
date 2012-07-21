@@ -487,15 +487,17 @@ package com.swfwire.debugger
 							abcTag.abcFile.methodBodies[l[iter7].methodBody].maxStack += 1;
 						}
 						
+						var t1:IInstruction = new Instruction_dup();
+						var t2:IInstruction = new Instruction_getlex(loggerClassIndex);
+						var t3:IInstruction = new Instruction_swap();
+						var t4:IInstruction = new Instruction_callpropvoid(newObjectIndex, 1);
+						
 						wrapper.replaceInstruction2(l, function(z:InstructionLocation, a:Vector.<IInstruction>):Vector.<IInstruction>
 						{
 							var mb:MethodBodyInfoToken = abcTag.abcFile.methodBodies[z.methodBody];
 							if(mb.initScopeDepth >= minScopeDepth)
 							{
-								a.push(new Instruction_dup());
-								a.push(new Instruction_getlex(loggerClassIndex));
-								a.push(new Instruction_swap());
-								a.push(new Instruction_callpropvoid(newObjectIndex, 1));
+								a.push(t1, t2, t3, t4);
 							}
 							wrapper.redirectReferences(z.methodBody, a[a.length - 1], a[0]);
 							return a;

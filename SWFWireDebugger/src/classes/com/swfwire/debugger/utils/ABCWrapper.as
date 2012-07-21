@@ -274,14 +274,15 @@ package com.swfwire.debugger.utils
 			for(var i:int = locations.length - 1; i >= 0; i--)
 			{
 				var location:InstructionLocation = locations[i];
-				var search:Vector.<IInstruction> = abcFile.methodBodies[location.methodBody].instructions.slice(location.id, location.id + 1);
+				var instructions:Vector.<IInstruction> = abcFile.methodBodies[location.methodBody].instructions;
+				var search:Vector.<IInstruction> = instructions.slice(location.id, location.id + 1);
 				var result:Vector.<IInstruction> = callback(location, search);
 				var args:Array = [location.id, 1];
 				for(var iter:* in result)
 				{
 					args.push(result[iter]);
 				}
-				abcFile.methodBodies[location.methodBody].instructions.splice.apply(null, args);//(location.id, 1, callback(search));
+				instructions.splice.apply(null, args);
 			}
 		}
 		
