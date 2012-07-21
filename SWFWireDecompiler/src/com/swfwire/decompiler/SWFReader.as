@@ -5,12 +5,51 @@ package com.swfwire.decompiler
 	import com.swfwire.decompiler.abc.ABCByteArray;
 	import com.swfwire.decompiler.data.swf.SWF;
 	import com.swfwire.decompiler.data.swf.SWFHeader;
-	import com.swfwire.decompiler.data.swf.records.*;
+	import com.swfwire.decompiler.data.swf.records.CXFormRecord;
+	import com.swfwire.decompiler.data.swf.records.CurvedEdgeRecord;
+	import com.swfwire.decompiler.data.swf.records.EndShapeRecord;
+	import com.swfwire.decompiler.data.swf.records.FillStyleArrayRecord;
 	import com.swfwire.decompiler.data.swf.records.FillStyleRecord;
+	import com.swfwire.decompiler.data.swf.records.FrameLabelRecord;
+	import com.swfwire.decompiler.data.swf.records.GlyphEntryRecord;
+	import com.swfwire.decompiler.data.swf.records.GradientControlPointRecord;
+	import com.swfwire.decompiler.data.swf.records.GradientRecord;
+	import com.swfwire.decompiler.data.swf.records.IShapeRecord;
+	import com.swfwire.decompiler.data.swf.records.LanguageCodeRecord;
+	import com.swfwire.decompiler.data.swf.records.LineStyleArrayRecord;
+	import com.swfwire.decompiler.data.swf.records.LineStyleRecord;
+	import com.swfwire.decompiler.data.swf.records.MatrixRecord;
+	import com.swfwire.decompiler.data.swf.records.RGBRecord;
+	import com.swfwire.decompiler.data.swf.records.RectangleRecord;
+	import com.swfwire.decompiler.data.swf.records.SceneRecord;
+	import com.swfwire.decompiler.data.swf.records.ShapeWithStyleRecord;
+	import com.swfwire.decompiler.data.swf.records.StraightEdgeRecord;
+	import com.swfwire.decompiler.data.swf.records.StyleChangeRecord;
+	import com.swfwire.decompiler.data.swf.records.TagHeaderRecord;
+	import com.swfwire.decompiler.data.swf.records.TextRecord;
 	import com.swfwire.decompiler.data.swf.structures.MatrixRotateStructure;
 	import com.swfwire.decompiler.data.swf.structures.MatrixScaleStructure;
 	import com.swfwire.decompiler.data.swf.structures.MatrixTranslateStructure;
-	import com.swfwire.decompiler.data.swf.tags.*;
+	import com.swfwire.decompiler.data.swf.tags.DefineBitsTag;
+	import com.swfwire.decompiler.data.swf.tags.DefineButtonTag;
+	import com.swfwire.decompiler.data.swf.tags.DefineFontInfoTag;
+	import com.swfwire.decompiler.data.swf.tags.DefineFontTag;
+	import com.swfwire.decompiler.data.swf.tags.DefineSceneAndFrameLabelDataTag;
+	import com.swfwire.decompiler.data.swf.tags.DefineShapeTag;
+	import com.swfwire.decompiler.data.swf.tags.DefineSoundTag;
+	import com.swfwire.decompiler.data.swf.tags.DefineTextTag;
+	import com.swfwire.decompiler.data.swf.tags.EndTag;
+	import com.swfwire.decompiler.data.swf.tags.JPEGTablesTag;
+	import com.swfwire.decompiler.data.swf.tags.MetadataTag;
+	import com.swfwire.decompiler.data.swf.tags.PlaceObjectTag;
+	import com.swfwire.decompiler.data.swf.tags.RemoveObjectTag;
+	import com.swfwire.decompiler.data.swf.tags.SWFTag;
+	import com.swfwire.decompiler.data.swf.tags.SetBackgroundColorTag;
+	import com.swfwire.decompiler.data.swf.tags.ShowFrameTag;
+	import com.swfwire.decompiler.data.swf.tags.SoundStreamBlockTag;
+	import com.swfwire.decompiler.data.swf.tags.SoundStreamHeadTag;
+	import com.swfwire.decompiler.data.swf.tags.StartSoundTag;
+	import com.swfwire.decompiler.data.swf.tags.UnknownTag;
 	import com.swfwire.utils.ByteArrayUtil;
 	
 	import flash.display.Scene;
@@ -97,7 +136,8 @@ package com.swfwire.decompiler
 				}
 				bytes.setBytePosition(expectedEndPosition);
 
-				result.tagMetadata[tagId] = {name: getQualifiedClassName(tag), start: preHeaderStart, contentStart: startPosition, contentLength: tag.header.length, length: (expectedEndPosition - preHeaderStart)};
+				var metadata:SWFReaderTagMetadata = new SWFReaderTagMetadata(getQualifiedClassName(tag), preHeaderStart, (expectedEndPosition - preHeaderStart), startPosition, tag.header.length);
+				result.tagMetadata[tagId] = metadata;
 				
 				if(tag is UnknownTag)
 				{

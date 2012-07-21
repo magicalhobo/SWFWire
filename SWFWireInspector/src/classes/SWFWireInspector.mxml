@@ -8,41 +8,64 @@
 	<mx:Style source="../assets/style.css"/>
 	<mx:Script>
 		<![CDATA[
-			import air.update.ApplicationUpdaterUI;
-			import air.update.events.UpdateEvent;
-			
-			import com.swfwire.decompiler.*;
+			import com.swfwire.decompiler.AsyncSWFReader;
+			import com.swfwire.decompiler.SWF10Writer;
+			import com.swfwire.decompiler.SWFByteArray;
+			import com.swfwire.decompiler.SWFReadResult;
+			import com.swfwire.decompiler.SWFWriteResult;
 			import com.swfwire.decompiler.abc.ABCReaderMetadata;
-			import com.swfwire.decompiler.abc.instructions.*;
-			import com.swfwire.decompiler.abc.tokens.*;
+			import com.swfwire.decompiler.abc.tokens.ConstantPoolToken;
+			import com.swfwire.decompiler.abc.tokens.NamespaceToken;
+			import com.swfwire.decompiler.abc.tokens.ScriptInfoToken;
+			import com.swfwire.decompiler.abc.tokens.TraitsInfoToken;
 			import com.swfwire.decompiler.abc.tokens.traits.TraitSlotToken;
-			import com.swfwire.decompiler.data.swf.*;
-			import com.swfwire.decompiler.data.swf.records.*;
+			import com.swfwire.decompiler.data.swf.SWF;
+			import com.swfwire.decompiler.data.swf.SWFHeader;
+			import com.swfwire.decompiler.data.swf.records.MatrixRecord;
+			import com.swfwire.decompiler.data.swf.records.RectangleRecord;
+			import com.swfwire.decompiler.data.swf.records.TagHeaderRecord;
 			import com.swfwire.decompiler.data.swf.structures.MatrixTranslateStructure;
-			import com.swfwire.decompiler.data.swf.tags.*;
+			import com.swfwire.decompiler.data.swf.tags.DefineShapeTag;
+			import com.swfwire.decompiler.data.swf.tags.EndTag;
+			import com.swfwire.decompiler.data.swf.tags.SWFTag;
+			import com.swfwire.decompiler.data.swf.tags.ShowFrameTag;
+			import com.swfwire.decompiler.data.swf.tags.UnknownTag;
 			import com.swfwire.decompiler.data.swf2.tags.DefineBitsJPEG2Tag;
 			import com.swfwire.decompiler.data.swf2.tags.DefineShape2Tag;
 			import com.swfwire.decompiler.data.swf3.tags.DefineBitsJPEG3Tag;
-			import com.swfwire.decompiler.data.swf3.tags.DefineBitsLossless2Tag;
 			import com.swfwire.decompiler.data.swf3.tags.DefineShape3Tag;
 			import com.swfwire.decompiler.data.swf3.tags.PlaceObject2Tag;
 			import com.swfwire.decompiler.data.swf8.tags.DefineShape4Tag;
 			import com.swfwire.decompiler.data.swf9.tags.DoABCTag;
 			import com.swfwire.decompiler.events.AsyncSWFReaderEvent;
-			import com.swfwire.decompiler.utils.*;
+			import com.swfwire.decompiler.utils.ABCToActionScript;
+			import com.swfwire.decompiler.utils.ReadableMultiname;
+			import com.swfwire.decompiler.utils.ReadableTrait;
 			import com.swfwire.inspector.Config;
+			import com.swfwire.decompiler.Serializable;
 			import com.swfwire.inspector.debug;
-			import com.swfwire.utils.*;
+			import com.swfwire.utils.ByteArrayUtil;
+			import com.swfwire.utils.Debug;
+			import com.swfwire.utils.ObjectUtil;
 			import com.swfwire.utils.air.WindowTracker;
 			
+			import flash.net.FileReference;
+			import flash.net.SharedObject;
+			import flash.net.URLLoader;
+			import flash.net.URLLoaderDataFormat;
+			import flash.net.URLRequest;
+			import flash.net.navigateToURL;
 			import flash.utils.getTimer;
 			
 			import mx.controls.Alert;
 			import mx.events.ListEvent;
 			import mx.managers.DragManager;
 			
+			import air.update.ApplicationUpdaterUI;
+			import air.update.events.UpdateEvent;
+			
 			import net.anirudh.as3syntaxhighlight.CodePrettyPrint;
-
+			
 			private var loader:Loader;
 			private var urlLoader:URLLoader;
 			private var windowTracker:WindowTracker;
@@ -71,7 +94,9 @@
 			{
 				debug = new Debug(true, 'SWFWireInspector');
 				debug.log('main');
-
+				
+				Serializable.registerAll();
+				
 				addMenuItem('SWFWireInspector Version '+Config.VERSION);
 				
 				addMenuItem('Usage Wiki...', true, function(ev:*):void
@@ -248,19 +273,31 @@
 
 				lastSource = bytes;
 
-				//ByteArrayUtil.dumpHex(bytes);
-
-				var swfBytes:SWFByteArray = new SWFByteArray(bytes);
-				var swf:AsyncSWFReader = new AsyncSWFReader();
+				bytes.shareable = true;
 				
-				swf.catchErrors = false;
-
-				swf.addEventListener(AsyncSWFReaderEvent.TAG_READ, tagReadHandler);
-				swf.addEventListener(AsyncSWFReaderEvent.READ_COMPLETE, readCompleteHandler);
-
+				var worker:Worker = WorkerDomain.current.createWorker(Workers.com_swfwire_inspector_workers_SWFReaderWorker);
+				var inChannel:MessageChannel = worker.createMessageChannel(Worker.current);
+				var outChannel:MessageChannel = Worker.current.createMessageChannel(worker);
+				
+				worker.setSharedProperty('outChannel', inChannel);
+				worker.setSharedProperty('inChannel', outChannel);
+				
+				inChannel.addEventListener(Event.CHANNEL_MESSAGE, function(ev:Event):void
+				{
+					var event:Object = inChannel.receive();
+					if(event && event.type == 'result')
+					{
+						result = event.data.result;
+						
+						doneHandler();
+					}
+				});
+				outChannel.send(bytes);
+				
 				loadProgress.setProgress(0, 0);
 				parseStart = getTimer();
-				result = swf.read(swfBytes);
+				
+				worker.start();
 			}
 
 			private function tagReadHandler(ev:AsyncSWFReaderEvent):void
@@ -351,9 +388,6 @@
 				if(Config.TESTING)
 				{
 					detailsPanel.tagList.selectedIndex = 10;
-					//detailsPanel.tagList.selectedIndex = 13;
-					//detailsPanel.tagList.selectedIndex = 149;
-					//detailsPanel.tagList.selectedIndex = 249;
 				}
 				else
 				{
@@ -393,14 +427,12 @@
 					var iter:uint = 0;
 					for each(var script:ScriptInfoToken in tag.abcFile.scripts)
 					{
-						var size:uint = metadata.tokens[script].length;
 						for(var iter2:uint = 0; iter2 < script.traitCount; iter2++)
 						{
 							var trait:TraitsInfoToken = script.traits[iter2];
-							size += metadata.tokens[trait].length;
 							var r:ReadableTrait = new ReadableTrait();
 							translator.getReadableTrait(trait, r);
-							classes.push({id: iter, className: r.declaration.name, packageName: r.declaration.namespace, trait: script.traits[iter2], size: size});
+							classes.push({id: iter, className: r.declaration.name, packageName: r.declaration.namespace, trait: script.traits[iter2]});
 							iter++;
 						}
 					}
@@ -612,6 +644,7 @@
 					var item:Object = detailsPanel.tagList.selectedItem;
 					var tagId:int = item.id;
 					var object:Object;
+					var metadata:Object;
 					if(tagId == -1)
 					{
 						object = lastResult.swf.header;
@@ -621,7 +654,10 @@
 						object = lastResult.swf.tags[tagId];
 					}
 
-					var metadata:Object = lastResult.tagMetadata[tagId];
+					if(tagId >= 0)
+					{
+						metadata = lastResult.tagMetadata[tagId];
+					}
 
 					var characterId:int = -1;
 					var type:uint = 0;

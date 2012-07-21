@@ -18,6 +18,11 @@ package com.swfwire.decompiler.data.swf
 		public function SWFHeader(signature:String = null, fileVersion:uint = 0, uncompressedSize:uint = 0,
 								  frameSize:RectangleRecord = null, frameRate:Number = NaN, frameCount:uint = 0)
 		{
+			if(!frameSize)
+			{
+				frameSize = new RectangleRecord();
+			}
+			
 			this.signature = signature;
 			this.fileVersion = fileVersion;
 			this.uncompressedSize = uncompressedSize;

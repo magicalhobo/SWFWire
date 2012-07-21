@@ -27,7 +27,6 @@
 			<mx:CheckBox label="Branch Info" id="showBranchInfo"/>
 			<mx:Spacer width="100%"/>
 			<mx:Button label="Save" id="save"/>
-			<!--<mx:Button id="exportLabel" label="Export as SWC"/>-->
 		</mx:HBox>
 		<mx:TextArea id="cpool" width="100%" height="100%" editable="false" wordWrap="false" fontFamily="Courier New" fontSize="12"/>
 		<mx:HDividedBox id="classesPanel" width="100%" height="100%">
@@ -36,7 +35,6 @@
 					<mx:DataGridColumn dataField="id" headerText="ID" width="34"/>
 					<mx:DataGridColumn dataField="packageName" headerText="Package"/>
 					<mx:DataGridColumn dataField="className" headerText="Class"/>
-					<mx:DataGridColumn dataField="size" headerText="Bytes" width="62"/>
 				</mx:columns>
 			</mx:DataGrid>
 			<mx:TextArea id="classes" width="100%" height="100%" editable="false" wordWrap="false" fontFamily="Courier New" fontSize="12"/>

@@ -149,7 +149,7 @@ package com.swfwire.decompiler.abc
 		
 		public function get stackinfo():String
 		{
-			return values.map((function(a:int):String { return distinctvalue[a]; } )).join(' ') + ['(', values.length, ')'].join('');
+			return values.map((function(a:int, ...args):String { return distinctvalue[a]; } )).join(' ') + ['(', values.length, ')'].join('');
 		}
 	}
 }

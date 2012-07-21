@@ -1,8 +1,11 @@
 package com.swfwire.decompiler
 {
-	import com.swfwire.decompiler.data.swf.*;
-	import com.swfwire.decompiler.data.swf.records.*;
-	import com.swfwire.decompiler.data.swf.tags.*;
+	import com.swfwire.decompiler.data.swf.SWF;
+	import com.swfwire.decompiler.data.swf.SWFHeader;
+	import com.swfwire.decompiler.data.swf.records.TagHeaderRecord;
+	import com.swfwire.decompiler.data.swf.tags.EndTag;
+	import com.swfwire.decompiler.data.swf.tags.SWFTag;
+	import com.swfwire.decompiler.data.swf.tags.UnknownTag;
 	import com.swfwire.decompiler.events.AsyncSWFReaderEvent;
 	
 	import flash.events.Event;
@@ -150,7 +153,9 @@ package com.swfwire.decompiler
 				}
 				bytes.setBytePosition(expectedEndPosition);
 				
-				result.tagMetadata[tagId] = {name: getQualifiedClassName(tag), start: preHeaderStart, length: (expectedEndPosition - preHeaderStart), contentStart: startPosition, contentLength: tag.header.length};
+				var metadata:SWFReaderTagMetadata = new SWFReaderTagMetadata(getQualifiedClassName(tag), preHeaderStart, (expectedEndPosition - preHeaderStart), startPosition, tag.header.length);
+				
+				result.tagMetadata[tagId] = metadata;
 				
 				if(tag is UnknownTag)
 				{

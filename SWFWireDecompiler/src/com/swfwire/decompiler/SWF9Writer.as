@@ -4,19 +4,30 @@ package com.swfwire.decompiler
 	import com.swfwire.decompiler.abc.ABCWriter;
 	import com.swfwire.decompiler.data.swf.records.SymbolClassRecord;
 	import com.swfwire.decompiler.data.swf.tags.SWFTag;
+	import com.swfwire.decompiler.data.swf9.tags.DefineBinaryDataTag;
 	import com.swfwire.decompiler.data.swf9.tags.DefineFontNameTag;
 	import com.swfwire.decompiler.data.swf9.tags.DoABCTag;
+	import com.swfwire.decompiler.data.swf9.tags.StartSound2Tag;
 	import com.swfwire.decompiler.data.swf9.tags.SymbolClassTag;
 	
 	import flash.utils.ByteArray;
 
 	public class SWF9Writer extends SWF8Writer
 	{
+		public static const TAG_IDS:Object = {
+			76: SymbolClassTag,
+			82: DoABCTag,
+			87: DefineBinaryDataTag,
+			88: DefineFontNameTag,
+			89: StartSound2Tag
+		};
+		
 		private static var FILE_VERSION:uint = 9;
 		
 		public function SWF9Writer()
 		{
 			version = FILE_VERSION;
+			registerTags(TAG_IDS);
 		}
 		
 		override protected function writeTag(context:SWFWriterContext, tag:SWFTag):void

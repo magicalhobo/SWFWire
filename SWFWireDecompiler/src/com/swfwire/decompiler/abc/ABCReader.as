@@ -87,7 +87,6 @@ package com.swfwire.decompiler.abc
 			var metadata:ABCReaderMetadata = context.result.metadata;
 			
 			var constantPoolToken:ConstantPoolToken = new ConstantPoolToken();
-			var start:uint = bytes.getBytePosition();
 			
 			var iter:uint;
 			
@@ -146,8 +145,6 @@ package com.swfwire.decompiler.abc
 			{
 				constantPoolToken.multinames[iter] = readMultinameToken(context);
 			}
-			
-			metadata.tokens[constantPoolToken] = {start: start, length: bytes.getBytePosition() - start};
 			
 			return constantPoolToken;
 		}		
@@ -308,7 +305,6 @@ package com.swfwire.decompiler.abc
 			var bytes:ABCByteArray = context.bytes;
 			
 			var methodInfoToken:MethodInfoToken = new MethodInfoToken();
-			var start:uint = bytes.getBytePosition();
 
 			var iter:uint;
 			
@@ -334,7 +330,6 @@ package com.swfwire.decompiler.abc
 				}
 			}
 			
-			context.result.metadata.tokens[methodInfoToken] = {start: start, length: bytes.getBytePosition() - start};
 			return methodInfoToken;
 		}
 		
@@ -354,7 +349,6 @@ package com.swfwire.decompiler.abc
 			var bytes:ABCByteArray = context.bytes;
 			
 			var metadataInfoToken:MetadataInfoToken = new MetadataInfoToken();
-			var start:uint = bytes.getBytePosition();
 			
 			metadataInfoToken.name = bytes.readU30();
 			metadataInfoToken.itemCount = bytes.readU30();
@@ -365,7 +359,6 @@ package com.swfwire.decompiler.abc
 				metadataInfoToken.items[iter] = readItemInfoToken(context);
 			}
 			
-			context.result.metadata.tokens[metadataInfoToken] = {start: start, length: bytes.getBytePosition() - start};
 			return metadataInfoToken;
 		}
 		
@@ -384,7 +377,6 @@ package com.swfwire.decompiler.abc
 			var bytes:ABCByteArray = context.bytes;
 			
 			var instanceToken:InstanceToken = new InstanceToken();
-			var start:uint = bytes.getBytePosition();
 
 			instanceToken.name = bytes.readU30();
 			instanceToken.superName = bytes.readU30();
@@ -408,7 +400,6 @@ package com.swfwire.decompiler.abc
 				instanceToken.traits[iter] = readTraitsInfoToken(context);
 			}
 			
-			context.result.metadata.tokens[instanceToken] = {start: start, length: bytes.getBytePosition() - start};
 			return instanceToken;
 		}
 		
@@ -419,7 +410,6 @@ package com.swfwire.decompiler.abc
 			var trait:TraitsInfoToken = new TraitsInfoToken();
 
 			var iter:uint;
-			var start:uint = bytes.getBytePosition();
 			
 			trait.name = bytes.readU30();
 			var kindAndAttributes:uint = bytes.readU8();
@@ -459,7 +449,6 @@ package com.swfwire.decompiler.abc
 				}
 			}
 			
-			context.result.metadata.tokens[trait] = {start: start, length: bytes.getBytePosition() - start};
 			return trait;
 		}
 		
@@ -521,7 +510,6 @@ package com.swfwire.decompiler.abc
 			var bytes:ABCByteArray = context.bytes;
 			
 			var classToken:ClassInfoToken = new ClassInfoToken();
-			var start:uint = bytes.getBytePosition();
 
 			var iter:uint;
 			classToken.cinit = bytes.readU30();
@@ -532,7 +520,6 @@ package com.swfwire.decompiler.abc
 				classToken.traits[iter] = readTraitsInfoToken(context);
 			}
 			
-			context.result.metadata.tokens[classToken] = {start: start, length: bytes.getBytePosition() - start};
 			return classToken;
 		}
 		
@@ -541,7 +528,6 @@ package com.swfwire.decompiler.abc
 			var bytes:ABCByteArray = context.bytes;
 			
 			var scriptToken:ScriptInfoToken = new ScriptInfoToken();
-			var start:uint = bytes.getBytePosition();
 			
 			var iter:uint;
 			scriptToken.init = bytes.readU30();
@@ -552,7 +538,6 @@ package com.swfwire.decompiler.abc
 				scriptToken.traits[iter] = readTraitsInfoToken(context);
 			}
 			
-			context.result.metadata.tokens[scriptToken] = {start: start, length: bytes.getBytePosition() - start};
 			return scriptToken;
 		}
 		
@@ -561,7 +546,6 @@ package com.swfwire.decompiler.abc
 			var bytes:ABCByteArray = context.bytes;
 			
 			var methodBodyInfo:MethodBodyInfoToken = new MethodBodyInfoToken();
-			var start:uint = bytes.getBytePosition();
 			
 			var iter:uint;
 			methodBodyInfo.method = bytes.readU30();
@@ -589,7 +573,6 @@ package com.swfwire.decompiler.abc
 				methodBodyInfo.traits[iter] = readTraitsInfoToken(context);
 			}
 			
-			context.result.metadata.tokens[methodBodyInfo] = {start: start, length: bytes.getBytePosition() - start};
 			return methodBodyInfo;
 		}
 		
