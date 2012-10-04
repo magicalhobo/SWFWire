@@ -20,7 +20,7 @@ package com.swfwire.decompiler
 	/**
 	 * Reads SWF tags asynchronously, so a progress bar can be displayed.
 	 */
-	public class AsyncSWFReader extends SWF10Reader
+	public class AsyncSWFReader extends SWF13Reader
 	{
 		public function get active():Boolean
 		{

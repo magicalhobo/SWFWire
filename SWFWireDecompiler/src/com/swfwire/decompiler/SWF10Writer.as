@@ -5,13 +5,18 @@ package com.swfwire.decompiler
 
 	public class SWF10Writer extends SWF9Writer
 	{
+		public static const TAG_IDS:Object = {
+			41: ProductInfoTag
+		};
+		
 		private static var FILE_VERSION:uint = 10;
 		
 		public function SWF10Writer()
 		{
 			version = FILE_VERSION;
+			registerTags(TAG_IDS);
 		}
-		
+				
 		override protected function writeTag(context:SWFWriterContext, tag:SWFTag):void
 		{
 			switch(Object(tag).constructor)

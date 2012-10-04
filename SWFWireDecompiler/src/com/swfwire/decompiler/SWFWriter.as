@@ -101,9 +101,10 @@ package com.swfwire.decompiler
 				}
 				bytes.alignBytes();
 				var header:TagHeaderRecord = swf.tags[iter].header;
-				
-				var type:uint = registeredTags[Object(swf.tags[iter]).constructor];
-				header.type = type;
+				if(registeredTags.hasOwnProperty(Object(swf.tags[iter]).constructor))
+				{
+					header.type = registeredTags[Object(swf.tags[iter]).constructor];
+				}
 				writeTagHeaderRecord(context, header);
 				bytes.writeBytes(tagBytes[iter]);
 			}

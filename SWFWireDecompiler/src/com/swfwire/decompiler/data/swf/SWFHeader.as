@@ -5,7 +5,8 @@ package com.swfwire.decompiler.data.swf
 	public class SWFHeader
 	{
 		public static const UNCOMPRESSED_SIGNATURE:String = 'FWS';
-		public static const COMPRESSED_SIGNATURE:String = 'CWS';
+		public static const ZLIB_COMPRESSED_SIGNATURE:String = 'CWS';
+		public static const LZMA_COMPRESSED_SIGNATURE:String = 'ZWS';
 		
 		public var signature:String;
 		public var fileVersion:uint;

@@ -57,6 +57,7 @@ package com.swfwire.decompiler
 	import flash.geom.Matrix;
 	import flash.sampler.NewObjectSample;
 	import flash.utils.ByteArray;
+	import flash.utils.CompressionAlgorithm;
 	import flash.utils.Dictionary;
 	import flash.utils.Endian;
 	import flash.utils.getQualifiedClassName;
@@ -161,15 +162,26 @@ package com.swfwire.decompiler
 			header.signature = bytes.readStringWithLength(3);
 			header.fileVersion = bytes.readUI8();
 			header.uncompressedSize = bytes.readUI32();
-			if(header.signature == SWFHeader.COMPRESSED_SIGNATURE)
-			{
-				decompress(bytes);
-			}
+			decompress(header, bytes);
 			header.frameSize = readRectangleRecord(context);
 			header.frameRate = bytes.readFixed8_8();
 			header.frameCount = bytes.readUI16();
 		}
 		
+		protected function decompress(header:SWFHeader, bytes:SWFByteArray):void
+		{
+			if(header.signature == SWFHeader.ZLIB_COMPRESSED_SIGNATURE)
+			{
+				var startPosition:uint = bytes.getBytePosition();
+				var uncompressedBytes:ByteArray = new ByteArray();
+				bytes.readBytes(uncompressedBytes);
+				uncompressedBytes.uncompress();
+				bytes.setBytePosition(startPosition);
+				bytes.writeBytes(uncompressedBytes);
+				bytes.setBytePosition(startPosition);
+			}
+		}
+
 		protected function readTag(context:SWFReaderContext, header:TagHeaderRecord):SWFTag
 		{
 			var tag:SWFTag;
@@ -799,17 +811,6 @@ package com.swfwire.decompiler
 			record.green = context.bytes.readUI8();
 			record.blue = context.bytes.readUI8();
 			return record;
-		}
-		
-		private function decompress(bytes:SWFByteArray):void
-		{
-			var startPosition:uint = bytes.getBytePosition();
-			var uncompressedBytes:ByteArray = new ByteArray();
-			bytes.readBytes(uncompressedBytes);
-			uncompressedBytes.uncompress();
-			bytes.setBytePosition(startPosition);
-			bytes.writeBytes(uncompressedBytes);
-			bytes.setBytePosition(startPosition);
 		}
 	}
 }
