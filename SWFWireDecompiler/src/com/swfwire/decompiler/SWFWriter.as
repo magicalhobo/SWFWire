@@ -111,7 +111,7 @@ package com.swfwire.decompiler
 
 			var length:uint = bytes.getLength();
 			
-			if(swf.header.signature == SWFHeader.COMPRESSED_SIGNATURE)
+			if(swf.header.signature == SWFHeader.ZLIB_COMPRESSED_SIGNATURE)
 			{
 				bytes.setBytePosition(8);
 				
