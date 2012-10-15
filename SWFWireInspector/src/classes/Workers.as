@@ -13,11 +13,11 @@ package
 	public class Workers
 	{
 		
-		[Embed(source="workerswfs/com/swfwire/inspector/workers/SWFReaderWorker.swf", mimeType="application/octet-stream")]
-		private static var com_swfwire_inspector_workers_SWFReaderWorker_ByteClass:Class;
-		public static function get com_swfwire_inspector_workers_SWFReaderWorker():ByteArray
+		[Embed(source="../../workerswfs/com/swfwire/decompiler/SWFReaderWorker.swf", mimeType="application/octet-stream")]
+		private static var com_swfwire_decompiler_SWFReaderWorker_ByteClass:Class;
+		public static function get com_swfwire_decompiler_SWFReaderWorker():ByteArray
 		{
-			return new com_swfwire_inspector_workers_SWFReaderWorker_ByteClass();
+			return new com_swfwire_decompiler_SWFReaderWorker_ByteClass();
 		}
 		
 	}

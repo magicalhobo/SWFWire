@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<actionScriptProperties analytics="false" disableLegacyCompiler="false" mainApplicationPath="SWFWireInspector.mxml" projectUUID="b5d22865-1552-45e8-9a41-4cbbdab141ae" version="11">
-  <compiler additionalCompilerArguments="-locale en_US" autoRSLOrdering="false" copyDependentFiles="true" flexSDK="Flex 4.6.0 + AIR 3.4" fteInMXComponents="false" generateAccessible="false" htmlExpressInstall="true" htmlGenerate="true" htmlHistoryManagement="true" htmlPlayerVersionCheck="true" includeNetmonSwc="false" outputFolderPath="bin-debug" removeUnusedRSL="true" sourceFolderPath="src/classes" strict="true" targetPlayerVersion="0.0.0" useApolloConfig="false" useDebugRSLSwfs="true" verifyDigests="true" warn="true">
+<actionScriptProperties analytics="false" mainApplicationPath="SWFWireInspector.mxml" projectUUID="b5d22865-1552-45e8-9a41-4cbbdab141ae" version="11">
+  <compiler additionalCompilerArguments="-locale en_US -swf-version=17 -define=CONFIG::enableWorkers,true" autoRSLOrdering="false" copyDependentFiles="true" flexSDK="Flex 4.6.0 + AIR 3.4" fteInMXComponents="false" generateAccessible="false" htmlExpressInstall="true" htmlGenerate="true" htmlHistoryManagement="true" htmlPlayerVersionCheck="true" includeNetmonSwc="false" outputFolderPath="bin-debug" removeUnusedRSL="true" sourceFolderPath="src/classes" strict="true" targetPlayerVersion="0.0.0" useApolloConfig="false" useDebugRSLSwfs="true" useFlashSDK="false" verifyDigests="true" warn="true">
     <compilerSourcePath>
       <compilerSourcePathEntry kind="1" linkType="1" path="src/include"/>
+      <compilerSourcePathEntry kind="1" linkType="1" path="src/assets"/>
     </compilerSourcePath>
     <libraryPath defaultLinkType="1">
       <libraryPathEntry kind="4" path="">
@@ -21,16 +22,20 @@
     </application>
   </applications>
   <modules/>
-  <workers>
+  <workers managerFilePath="src/classes/Workers.as">
     <worker embed="true" path="src/classes/com/swfwire/decompiler/SWFReaderWorker.as"/>
   </workers>
   <buildCSSFiles/>
   <flashCatalyst validateFlashCatalystCompatibility="false"/>
   <buildTargets>
-    <buildTarget buildTargetName="default">
-      <airSettings airCertificatePath="F:/www/hobo.webhop.net/htdocs/workspaces/fb_i6_swfwire/swfwire.p12" airTimestamp="true" anePathSet="false" version="1">
+    <buildTarget buildTargetName="default" platformId="default">
+      <airSettings airCertificatePath="C:/www/workspaces/fb_4.7_swfwire/swfwire.p12" airTimestamp="true" anePathSet="true" version="1">
         <airExcludes/>
         <anePaths/>
+        <newLaunchParams/>
+        <modifiedLaunchParams/>
+        <newPackagingParams/>
+        <modifiedPackagingParams/>
       </airSettings>
       <actionScriptSettings version="1"/>
     </buildTarget>

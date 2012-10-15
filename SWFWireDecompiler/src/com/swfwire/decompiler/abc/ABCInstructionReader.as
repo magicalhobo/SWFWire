@@ -517,7 +517,7 @@ package com.swfwire.decompiler.abc
 					op = read_0xF2(abc);
 					break;
 				default:
-					throw new Error('Invalid instruction encountered: '+opcode.toString(16));
+					op = new UnknownInstruction(opcode);
 					break;
 			}
 			

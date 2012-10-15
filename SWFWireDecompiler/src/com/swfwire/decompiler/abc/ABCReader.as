@@ -4,6 +4,7 @@ package com.swfwire.decompiler.abc
 	import com.swfwire.decompiler.abc.tokens.*;
 	import com.swfwire.decompiler.abc.tokens.multinames.*;
 	import com.swfwire.decompiler.abc.tokens.traits.*;
+	import com.swfwire.utils.ByteArrayUtil;
 	
 	import flash.utils.ByteArray;
 	import flash.utils.Dictionary;
@@ -644,16 +645,13 @@ package com.swfwire.decompiler.abc
 				offsetLookup[instructionId] = position;
 				reverseOffsetLookup[position] = instructionId;
 				var opcode:uint = abc.readU8();
-				var InstructionClass:Class = ABCInstructions.getClass(opcode);
-				if(InstructionClass)
-				{
-					instructions[instructionId] = readInstruction(opcode, abc);
-				}
-				if(!instructions[instructionId])
+				var instruction:IInstruction = readInstruction(opcode, abc);
+				if(instruction is UnknownInstruction)
 				{
 					invalid = true;
-					dump.push('			Invalid instruction encountered ('+opcode.toString(16)+') at id '+instructionId+'.');
+					dump.push('	Invalid instruction encountered ('+ByteArrayUtil.toHexString(opcode, 8)+') at id '+instructionId+'.');
 				}
+				instructions[instructionId] = instruction;
 				newPosition = abc.getBytePosition();
 				lengthLookup[instructionId] = newPosition - position;
 				instructionId++;
@@ -665,10 +663,9 @@ package com.swfwire.decompiler.abc
 			
 			if(invalid)
 			{
-				trace(dump.join('\n'));
-				throw new Error('Encountered an unknown instruction.');
+				trace('Unknown instruction(s) encountered: \n' + dump.join('\n'));
 			}
-
+			
 			function getRef(baseId:uint, offset:int):IInstruction
 			{
 				offset = offsetLookup[baseId] + offset;

@@ -5,7 +5,7 @@
 						width="800" height="800" applicationComplete="main()" creationPolicy="all"
 						currentState="waiting" frameRate="60" layout="absolute"
 						showStatusBar="false">
-	<mx:Style source="../assets/style.css"/>
+	<mx:Style source="style.css"/>
 	<mx:Script>
 		<![CDATA[
 			import com.swfwire.decompiler.AsyncSWFReader;
@@ -13,6 +13,7 @@
 			import com.swfwire.decompiler.SWFByteArray;
 			import com.swfwire.decompiler.SWFReadResult;
 			import com.swfwire.decompiler.SWFWriteResult;
+			import com.swfwire.decompiler.Serializable;
 			import com.swfwire.decompiler.abc.ABCReaderMetadata;
 			import com.swfwire.decompiler.abc.tokens.ConstantPoolToken;
 			import com.swfwire.decompiler.abc.tokens.NamespaceToken;
@@ -42,7 +43,6 @@
 			import com.swfwire.decompiler.utils.ReadableMultiname;
 			import com.swfwire.decompiler.utils.ReadableTrait;
 			import com.swfwire.inspector.Config;
-			import com.swfwire.decompiler.Serializable;
 			import com.swfwire.inspector.debug;
 			import com.swfwire.utils.ByteArrayUtil;
 			import com.swfwire.utils.Debug;
@@ -270,34 +270,64 @@
 				log('Parsing '+bytes.length+' bytes...');
 
 				var context:LoaderContext = new LoaderContext(false, ApplicationDomain.currentDomain);
+				
+				var workersAvailable:Boolean = false;
 
-				lastSource = bytes;
-
-				bytes.shareable = true;
-				
-				var worker:Worker = WorkerDomain.current.createWorker(Workers.com_swfwire_inspector_workers_SWFReaderWorker);
-				var inChannel:MessageChannel = worker.createMessageChannel(Worker.current);
-				var outChannel:MessageChannel = Worker.current.createMessageChannel(worker);
-				
-				worker.setSharedProperty('outChannel', inChannel);
-				worker.setSharedProperty('inChannel', outChannel);
-				
-				inChannel.addEventListener(Event.CHANNEL_MESSAGE, function(ev:Event):void
+				CONFIG::enableWorkers
 				{
-					var event:Object = inChannel.receive();
-					if(event && event.type == 'result')
+					try
 					{
-						result = event.data.result;
+						lastSource = bytes;
+		
+						bytes.shareable = true;
 						
-						doneHandler();
+						var worker:Worker = WorkerDomain.current.createWorker(Workers.com_swfwire_decompiler_SWFReaderWorker);
+						var inChannel:MessageChannel = worker.createMessageChannel(Worker.current);
+						var outChannel:MessageChannel = Worker.current.createMessageChannel(worker);
+						
+						worker.setSharedProperty('outChannel', inChannel);
+						worker.setSharedProperty('inChannel', outChannel);
+						
+						inChannel.addEventListener(Event.CHANNEL_MESSAGE, function(ev:Event):void
+						{
+							var event:Object = inChannel.receive();
+							if(event && event.type == 'result')
+							{
+								result = event.data.result;
+								
+								doneHandler();
+							}
+						});
+						outChannel.send(bytes);
+						
+						loadProgress.setProgress(0, 0);
+						parseStart = getTimer();
+						
+						worker.start();
+						
+						workersAvailable = true;
 					}
-				});
-				outChannel.send(bytes);
+					catch(e:*)
+					{
+						log('Error starting worker: ' + e);
+					}
+				}
 				
-				loadProgress.setProgress(0, 0);
-				parseStart = getTimer();
-				
-				worker.start();
+				if(!workersAvailable)
+				{
+					var swfBytes:SWFByteArray = new SWFByteArray(bytes);
+					var swf:AsyncSWFReader = new AsyncSWFReader();
+					
+					swf.catchErrors = false;
+					
+					swf.addEventListener(AsyncSWFReaderEvent.TAG_READ, tagReadHandler);
+					swf.addEventListener(AsyncSWFReaderEvent.READ_COMPLETE, readCompleteHandler);
+					
+					loadProgress.setProgress(0, 0);
+					parseStart = getTimer();
+					
+					result = swf.read(swfBytes);
+				}
 			}
 
 			private function tagReadHandler(ev:AsyncSWFReaderEvent):void
