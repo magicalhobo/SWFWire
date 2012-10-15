@@ -177,11 +177,16 @@ package com.swfwire.decompiler
 			tag.bitmapFormat = context.bytes.readUI8();
 			tag.bitmapWidth = context.bytes.readUI16();
 			tag.bitmapHeight = context.bytes.readUI16();
-			if(tag.bitmapFormat == 3)
+			
+			const COLOR_MAPPED_IMAGE:uint = 3;
+			const ARGB_IMAGE:uint = 5;
+			
+			if(tag.bitmapFormat == COLOR_MAPPED_IMAGE)
 			{
 				tag.bitmapColorTableSize = context.bytes.readUI8();
 			}
-			if(tag.bitmapFormat == 3 || tag.bitmapFormat == 4 || tag.bitmapFormat == 5)
+			
+			if(tag.bitmapFormat == COLOR_MAPPED_IMAGE || tag.bitmapFormat == 4 || tag.bitmapFormat == ARGB_IMAGE)
 			{
 				var unzippedData:ByteArray = new ByteArray();
 				
@@ -197,12 +202,13 @@ package com.swfwire.decompiler
 				
 				var unzippedDataContext:SWFReaderContext = new SWFReaderContext(new SWFByteArray(unzippedData), context.fileVersion, context.result);
 				
-				if(tag.bitmapFormat == 3)
+				if(tag.bitmapFormat == COLOR_MAPPED_IMAGE)
 				{
-					var imageDataSize:uint = (tag.bitmapWidth + (8 - (tag.bitmapWidth % 8))) * tag.bitmapHeight;
+					var paddedWidth:uint = Math.ceil(tag.bitmapWidth / 8) * 8;
+					var imageDataSize:uint = paddedWidth * tag.bitmapHeight;
 					tag.zlibBitmapData = readAlphaColorMapDataRecord(unzippedDataContext, tag.bitmapColorTableSize + 1, imageDataSize);
 				}
-				else if(tag.bitmapFormat == 4 || tag.bitmapFormat == 5)
+				else if(tag.bitmapFormat == 4 || tag.bitmapFormat == ARGB_IMAGE)
 				{
 					var imageDataSize2:uint = tag.bitmapWidth * tag.bitmapHeight;
 					tag.zlibBitmapData = readAlphaBitmapDataRecord(unzippedDataContext, imageDataSize2);

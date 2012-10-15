@@ -678,7 +678,6 @@ package com.swfwire.decompiler.abc
 				{
 					trace('Encountered an invalid branch.');
 					return instructions[0];
-					return null;
 				}
 			}
 			
@@ -788,11 +787,14 @@ package com.swfwire.decompiler.abc
 						op_lookupswitch.caseReferences[iter2] = getRef(iter, op_lookupswitch.caseOffsets[iter2]);
 					}
 				}
+			}
+			
+			for(var iterException:uint = 0; iterException < methodBody.exceptions.length; iterException++)
+			{
+				var ex:ExceptionInfoToken = methodBody.exceptions[iterException];
 				
-				for(var iter3:uint = 0; iter3 < methodBody.exceptions.length; iter3++)
+				if(reverseOffsetLookup.hasOwnProperty(ex.from) && reverseOffsetLookup.hasOwnProperty(ex.to) && reverseOffsetLookup.hasOwnProperty(ex.target))
 				{
-					var ex:ExceptionInfoToken = methodBody.exceptions[iter3];
-					
 					ex.fromRef = instructions[reverseOffsetLookup[ex.from]];
 					ex.toRef = instructions[reverseOffsetLookup[ex.to]];
 					ex.targetRef = instructions[reverseOffsetLookup[ex.target]];
