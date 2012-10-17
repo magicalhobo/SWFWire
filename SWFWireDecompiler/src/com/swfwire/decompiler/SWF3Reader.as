@@ -204,7 +204,7 @@ package com.swfwire.decompiler
 				
 				if(tag.bitmapFormat == COLOR_MAPPED_IMAGE)
 				{
-					var paddedWidth:uint = Math.ceil(tag.bitmapWidth / 8) * 8;
+					var paddedWidth:uint = Math.ceil(tag.bitmapWidth / 4) * 4;
 					var imageDataSize:uint = paddedWidth * tag.bitmapHeight;
 					tag.zlibBitmapData = readAlphaColorMapDataRecord(unzippedDataContext, tag.bitmapColorTableSize + 1, imageDataSize);
 				}
