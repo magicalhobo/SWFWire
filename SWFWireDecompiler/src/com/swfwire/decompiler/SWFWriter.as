@@ -101,9 +101,11 @@ package com.swfwire.decompiler
 				}
 				bytes.alignBytes();
 				var header:TagHeaderRecord = swf.tags[iter].header;
-				if(registeredTags.hasOwnProperty(Object(swf.tags[iter]).constructor))
+				
+				if(!(swf.tags[iter] is UnknownTag))
 				{
-					header.type = registeredTags[Object(swf.tags[iter]).constructor];
+					var type:uint = registeredTags[Object(swf.tags[iter]).constructor];
+					header.type = type;
 				}
 				writeTagHeaderRecord(context, header);
 				bytes.writeBytes(tagBytes[iter]);
@@ -111,7 +113,29 @@ package com.swfwire.decompiler
 
 			var length:uint = bytes.getLength();
 			
-			if(swf.header.signature == SWFHeader.ZLIB_COMPRESSED_SIGNATURE)
+			compress(swf.header, bytes);
+			
+			bytes.setBytePosition(4);
+
+			if(swf.header.signature == SWFHeader.LZMA_COMPRESSED_SIGNATURE)
+			{
+				bytes.writeUI32(length - 4);
+			}
+			else
+			{
+				bytes.writeUI32(length);
+			}
+			
+			bytes.setBytePosition(0);
+			
+			result.bytes = rawBytes;
+			
+			return result;
+		}
+		
+		protected function compress(header:SWFHeader, bytes:SWFByteArray):void
+		{
+			if(header.signature == SWFHeader.ZLIB_COMPRESSED_SIGNATURE)
 			{
 				bytes.setBytePosition(8);
 				
@@ -122,18 +146,9 @@ package com.swfwire.decompiler
 				bytes.setLength(8);
 				bytes.setBytePosition(8);
 				bytes.writeBytes(buffer);
-			}			
-			
-			bytes.setBytePosition(4);
-			bytes.writeUI32(length);
-			
-			bytes.setBytePosition(0);
-			
-			result.bytes = rawBytes;
-			
-			return result;
+			}
 		}
-		
+
 		protected function writeSWFHeader(context:SWFWriterContext, header:SWFHeader):void
 		{
 			var bytes:SWFByteArray = context.bytes;
