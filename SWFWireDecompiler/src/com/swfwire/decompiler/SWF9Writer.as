@@ -43,6 +43,9 @@ package com.swfwire.decompiler
 				case DefineFontNameTag:
 					writeDefineFontNameTag(context, DefineFontNameTag(tag));
 					break;
+				case DefineBinaryDataTag:
+					writeDefineBinaryDataTag(context, DefineBinaryDataTag(tag));
+					break;
 				default:
 					super.writeTag(context, tag);
 					break;
@@ -87,6 +90,13 @@ package com.swfwire.decompiler
 			context.bytes.writeUI16(tag.fontId);
 			context.bytes.writeString(tag.fontName);
 			context.bytes.writeString(tag.fontCopyright);
+		}
+		
+		protected function writeDefineBinaryDataTag(context:SWFWriterContext, tag:DefineBinaryDataTag):void 
+		{
+			context.bytes.writeUI16(tag.characterId);
+			context.bytes.writeUI32(tag.reserved);
+			context.bytes.writeBytes(tag.data);
 		}
 	}
 }
