@@ -4,6 +4,7 @@ package com.swfwire.decompiler.abc
 	import com.swfwire.decompiler.abc.tokens.*;
 	import com.swfwire.decompiler.abc.tokens.multinames.*;
 	import com.swfwire.decompiler.abc.tokens.traits.*;
+	import com.swfwire.utils.ByteArrayUtil;
 	
 	import flash.utils.ByteArray;
 	import flash.utils.Dictionary;
@@ -644,16 +645,13 @@ package com.swfwire.decompiler.abc
 				offsetLookup[instructionId] = position;
 				reverseOffsetLookup[position] = instructionId;
 				var opcode:uint = abc.readU8();
-				var InstructionClass:Class = ABCInstructions.getClass(opcode);
-				if(InstructionClass)
-				{
-					instructions[instructionId] = readInstruction(opcode, abc);
-				}
-				if(!instructions[instructionId])
+				var instruction:IInstruction = readInstruction(opcode, abc);
+				if(instruction is UnknownInstruction)
 				{
 					invalid = true;
-					dump.push('			Invalid instruction encountered ('+opcode.toString(16)+') at id '+instructionId+'.');
+					dump.push('	Invalid instruction encountered ('+ByteArrayUtil.toHexString(opcode, 8)+') at id '+instructionId+'.');
 				}
+				instructions[instructionId] = instruction;
 				newPosition = abc.getBytePosition();
 				lengthLookup[instructionId] = newPosition - position;
 				instructionId++;
@@ -665,10 +663,9 @@ package com.swfwire.decompiler.abc
 			
 			if(invalid)
 			{
-				trace(dump.join('\n'));
-				throw new Error('Encountered an unknown instruction.');
+				trace('Unknown instruction(s) encountered: \n' + dump.join('\n'));
 			}
-
+			
 			function getRef(baseId:uint, offset:int):IInstruction
 			{
 				offset = offsetLookup[baseId] + offset;
@@ -681,7 +678,6 @@ package com.swfwire.decompiler.abc
 				{
 					trace('Encountered an invalid branch.');
 					return instructions[0];
-					return null;
 				}
 			}
 			
@@ -791,11 +787,14 @@ package com.swfwire.decompiler.abc
 						op_lookupswitch.caseReferences[iter2] = getRef(iter, op_lookupswitch.caseOffsets[iter2]);
 					}
 				}
+			}
+			
+			for(var iterException:uint = 0; iterException < methodBody.exceptions.length; iterException++)
+			{
+				var ex:ExceptionInfoToken = methodBody.exceptions[iterException];
 				
-				for(var iter3:uint = 0; iter3 < methodBody.exceptions.length; iter3++)
+				if(reverseOffsetLookup.hasOwnProperty(ex.from) && reverseOffsetLookup.hasOwnProperty(ex.to) && reverseOffsetLookup.hasOwnProperty(ex.target))
 				{
-					var ex:ExceptionInfoToken = methodBody.exceptions[iter3];
-					
 					ex.fromRef = instructions[reverseOffsetLookup[ex.from]];
 					ex.toRef = instructions[reverseOffsetLookup[ex.to]];
 					ex.targetRef = instructions[reverseOffsetLookup[ex.target]];

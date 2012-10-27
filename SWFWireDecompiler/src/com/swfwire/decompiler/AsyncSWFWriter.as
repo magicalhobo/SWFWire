@@ -17,7 +17,7 @@ package com.swfwire.decompiler
 	/**
 	 * Writes SWF tags asynchronously, so a progress bar can be displayed.
 	 */
-	public class AsyncSWFWriter extends SWF10Writer
+	public class AsyncSWFWriter extends SWF13Writer
 	{
 		public function get active():Boolean
 		{
@@ -153,18 +153,7 @@ package com.swfwire.decompiler
 			
 			var length:uint = bytes.getLength();
 			
-			if(_currentSWF.header.signature == SWFHeader.COMPRESSED_SIGNATURE)
-			{
-				bytes.setBytePosition(8);
-				
-				var buffer:ByteArray = new ByteArray();
-				bytes.readBytes(buffer);
-				buffer.compress();
-				
-				bytes.setLength(8);
-				bytes.setBytePosition(8);
-				bytes.writeBytes(buffer);
-			}			
+			compress(_currentSWF.header, bytes);
 			
 			bytes.setBytePosition(4);
 			bytes.writeUI32(length);
