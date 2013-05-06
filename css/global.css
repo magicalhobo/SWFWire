@@ -148,6 +148,15 @@ body#inspector #body>.column
 	background-color: #333;
 	padding: 20px;
 }
+.section.jumbotron
+{
+	padding: 80px;
+	text-align: center;
+}
+.section.jumbotron h1
+{
+	font-size: 40px;
+}
 .section.left img
 {
 	float: left;
