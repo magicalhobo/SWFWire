@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <update xmlns="http://ns.adobe.com/air/framework/update/description/2.5">
 	<versionNumber>2.21</versionNumber>
-	<url>https://github.com/downloads/magicalhobo/SWFWire/SWFWireInspector-2.21.air</url>
+	<url>http://www.swfwire.com/download/SWFWireInspector-2.21.air</url>
 	<description>Performance improvement.</description>
 </update>

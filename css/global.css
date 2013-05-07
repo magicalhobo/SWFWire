@@ -50,7 +50,7 @@ h1
 }
 p
 {
-	text-indent: 1em;
+	margin-top: 20px;
 }
 a img
 {
@@ -147,6 +147,10 @@ body#inspector #body>.column
 	line-height: 24px;
 	background-color: #333;
 	padding: 20px;
+}
+.section .date
+{
+	color: #999;
 }
 .section.jumbotron
 {
