@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <update xmlns="http://ns.adobe.com/air/framework/update/description/2.5">
-	<versionNumber>1.6.27</versionNumber>
-	<url>http://www.swfwire.com/download/SWFWireDebugger-1.6.27.air</url>
-	<description>IMPORTANT: This update will not work.  You must uninstall this application, then download and install the new version from http://www.swfwire.com/  Adding support for LZMA.</description>
+	<versionNumber>1.6.28</versionNumber>
+	<url>http://www.swfwire.com/download/SWFWireDebugger-1.6.28.air</url>
+	<description>Adding ability to invoke with a SWF path as a parameter.</description>
 </update>
