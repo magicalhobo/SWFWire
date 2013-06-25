@@ -477,6 +477,8 @@
 					preview.highlight(null);
 				});
 				
+				nativeApplication.addEventListener(InvokeEvent.INVOKE, invokeHandler);
+				
 				netCollection.filterFunction = netFilter;
 				objectCollection.filterFunction = objectFilter;
 				propertiesCollection.filterFunction = propertiesFilter;
@@ -1561,6 +1563,14 @@
 				autoScroll.selected = false;
 				logger.autoScroll = false;
 				console.removeEventListener(ScrollEvent.SCROLL, consoleScrollHandler);
+			}
+			
+			protected function invokeHandler(ev:InvokeEvent):void
+			{
+				if(ev.arguments.length > 0)
+				{
+					load(ev.arguments[0]);
+				}
 			}
 		]]>
 	</mx:Script>
