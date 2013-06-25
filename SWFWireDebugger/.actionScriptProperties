@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<actionScriptProperties analytics="false" disableLegacyCompiler="false" mainApplicationPath="SWFWireDebugger.mxml" projectUUID="4218497d-0743-4524-af84-684840501cb6" version="11">
-  <compiler additionalCompilerArguments="-locale en_US -swf-version=13" autoRSLOrdering="false" copyDependentFiles="true" flexSDK="Flex 4.6.0 + AIR 3.4" fteInMXComponents="false" generateAccessible="true" htmlExpressInstall="true" htmlGenerate="false" htmlHistoryManagement="false" htmlPlayerVersionCheck="true" includeNetmonSwc="false" outputFolderPath="bin-debug" removeUnusedRSL="true" sourceFolderPath="src/classes" strict="true" targetPlayerVersion="0.0.0" useApolloConfig="true" useDebugRSLSwfs="true" verifyDigests="true" warn="true">
+<actionScriptProperties analytics="false" mainApplicationPath="SWFWireDebugger.mxml" projectUUID="4218497d-0743-4524-af84-684840501cb6" version="11">
+  <compiler additionalCompilerArguments="-locale en_US" autoRSLOrdering="false" copyDependentFiles="true" fteInMXComponents="false" generateAccessible="true" htmlExpressInstall="true" htmlGenerate="false" htmlHistoryManagement="false" htmlPlayerVersionCheck="true" includeNetmonSwc="false" outputFolderPath="bin-debug" removeUnusedRSL="true" sourceFolderPath="src/classes" strict="true" targetPlayerVersion="0.0.0" useApolloConfig="true" useDebugRSLSwfs="true" useFlashSDK="false" verifyDigests="true" warn="true">
     <compilerSourcePath>
       <compilerSourcePathEntry kind="1" linkType="1" path="src/include"/>
     </compilerSourcePath>
@@ -27,12 +27,16 @@
   <buildCSSFiles/>
   <flashCatalyst validateFlashCatalystCompatibility="false"/>
   <buildTargets>
-    <buildTarget buildTargetName="default">
+    <buildTarget buildTargetName="default" platformId="default">
       <airSettings airCertificatePath="F:/www/hobo.webhop.net/htdocs/workspaces/fb_i6_swfwire/swfwire.p12" airTimestamp="true" anePathSet="false" version="1">
         <airExcludes>
           <pathEntry path="catalog.xml"/>
         </airExcludes>
         <anePaths/>
+        <newLaunchParams/>
+        <modifiedLaunchParams/>
+        <newPackagingParams/>
+        <modifiedPackagingParams/>
       </airSettings>
       <actionScriptSettings version="1"/>
     </buildTarget>
