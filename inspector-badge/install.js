@@ -3,7 +3,7 @@
 	var flashvars = {};
 	flashvars.airversion = '2.6';
 	flashvars.appname = 'SWFWire Inspector';
-	flashvars.appurl = 'https://github.com/downloads/magicalhobo/SWFWire/SWFWireInspector-2.22.air';
+	flashvars.appurl = 'http://www.swfwire.com/download/SWFWireInspector-2.22.air';
 	flashvars.imageurl = 'inspector-badge/logo.png';
 	flashvars.appid = 'SWFWireInspector';
 	flashvars.appversion = '2.22';
