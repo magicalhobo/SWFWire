@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <update xmlns="http://ns.adobe.com/air/framework/update/description/2.5">
-	<versionNumber>2.21</versionNumber>
-	<url>http://www.swfwire.com/download/SWFWireInspector-2.21.air</url>
-	<description>Performance improvement.</description>
+	<versionNumber>2.22</versionNumber>
+	<url>http://www.swfwire.com/download/SWFWireInspector-2.22.air</url>
+	<description>IMPORTANT: This update will not work. You must uninstall this application, then download and install the new version from http://www.swfwire.com/ Adding support for LZMA.</description>
 </update>
