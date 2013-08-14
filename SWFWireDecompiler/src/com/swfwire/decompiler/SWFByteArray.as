@@ -628,5 +628,15 @@ package com.swfwire.decompiler
 			value = value.substr(0, length);
 			bytes.writeUTFBytes(value);
 		}
+		public function unreadBytes(length:uint):void
+		{
+			alignBytes();
+			if (length >= bytes.position)
+			{
+				bytes.position = 0;
+				return;
+			}
+			bytes.position -= length;
+		}
 	}
 }
