@@ -5,6 +5,7 @@ package com.swfwire.decompiler
 	import com.swfwire.decompiler.abc.ABCByteArray;
 	import com.swfwire.decompiler.data.swf.SWF;
 	import com.swfwire.decompiler.data.swf.SWFHeader;
+	import com.swfwire.decompiler.data.swf.records.ButtonRecord;
 	import com.swfwire.decompiler.data.swf.records.CXFormRecord;
 	import com.swfwire.decompiler.data.swf.records.CurvedEdgeRecord;
 	import com.swfwire.decompiler.data.swf.records.EndShapeRecord;
@@ -192,9 +193,6 @@ package com.swfwire.decompiler
 				case 5: 
 					tag = readRemoveObjectTag(context, header);
 					break;
-				case 7: 
-					tag = readDefineButtonTag(context, header);
-					break;
 				case 10: 
 					tag = readDefineFontTag(context, header);
 					break;
@@ -228,6 +226,9 @@ package com.swfwire.decompiler
 					break;
 				case 6: 
 					tag = readDefineBitsTag(context, header);
+					break;
+				case 7:
+					tag = readDefineButtonTag(context, header);
 					break;
 				case 8: 
 					tag = readJPEGTablesTag(context, header);
@@ -325,7 +326,34 @@ package com.swfwire.decompiler
 		protected function readDefineButtonTag(context:SWFReaderContext, header:TagHeaderRecord):DefineButtonTag
 		{
 			var tag:DefineButtonTag = new DefineButtonTag();
+			tag.buttonId = context.bytes.readUI16();
+			tag.characters = new Vector.<ButtonRecord>();
+			while(true)
+			{
+				if (context.bytes.readUI8() == 0)
+				{
+					break;
+				}
+				context.bytes.unreadBytes(1);
+				tag.characters.push(readButtonRecord(context));
+			}
 			return tag;
+		}
+		
+		protected function readButtonRecord(context:SWFReaderContext):ButtonRecord
+		{
+			var record:ButtonRecord = new ButtonRecord();
+			record.reserved = context.bytes.readUB(2);
+			record.buttonHasBlendMode = context.bytes.readFlag();
+			record.buttonHasFilterList = context.bytes.readFlag();
+			record.stateHitTest = context.bytes.readFlag();
+			record.stateDown = context.bytes.readFlag();
+			record.stateOver = context.bytes.readFlag();
+			record.stateUp = context.bytes.readFlag();
+			record.characterId = context.bytes.readUI16();
+			record.placeDepth = context.bytes.readUI16();
+			record.placeMatrix = readMatrixRecord(context);
+			return record;
 		}
 		
 		protected function readJPEGTablesTag(context:SWFReaderContext, header:TagHeaderRecord):JPEGTablesTag

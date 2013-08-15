@@ -397,6 +397,7 @@
     <classEntry path="com.swfwire.decompiler.abc.ABCInstructionWriter"/>
     <classEntry path="com.swfwire.decompiler.abc.ABCWriterContext"/>
     <classEntry path="com.swfwire.decompiler.abc.ABCWriterMetadata"/>
+    <classEntry path="com.swfwire.decompiler.data.swf3.records.BlendModeRecord"/>
   </includeClasses>
   <includeResources/>
   <namespaceManifests/>

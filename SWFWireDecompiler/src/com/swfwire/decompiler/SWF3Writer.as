@@ -1,17 +1,21 @@
 package com.swfwire.decompiler
 {
 	import com.swfwire.decompiler.data.swf.records.CurvedEdgeRecord;
+	import com.swfwire.decompiler.data.swf.records.DropShadowFilterRecord;
 	import com.swfwire.decompiler.data.swf.records.EndShapeRecord;
+	import com.swfwire.decompiler.data.swf.records.FilterListRecord;
+	import com.swfwire.decompiler.data.swf.records.FilterRecord;
 	import com.swfwire.decompiler.data.swf.records.IShapeRecord;
 	import com.swfwire.decompiler.data.swf.records.StraightEdgeRecord;
 	import com.swfwire.decompiler.data.swf.records.TagHeaderRecord;
 	import com.swfwire.decompiler.data.swf.tags.EndTag;
 	import com.swfwire.decompiler.data.swf.tags.SWFTag;
+	import com.swfwire.decompiler.data.swf3.actions.ButtonCondAction;
 	import com.swfwire.decompiler.data.swf3.records.*;
 	import com.swfwire.decompiler.data.swf3.tags.*;
 	
 	import flash.utils.ByteArray;
-
+	
 	public class SWF3Writer extends SWF2Writer
 	{
 		public static const TAG_IDS:Object = {
@@ -59,6 +63,9 @@ package com.swfwire.decompiler
 					break;
 				case DefineBitsLossless2Tag:
 					writeDefineBitsLossless2Tag(context, DefineBitsLossless2Tag(tag));
+					break;
+				case DefineButton2Tag:
+					writeDefineButton2Tag(context, DefineButton2Tag(tag));
 					break;
 				default:
 					super.writeTag(context, tag);
@@ -469,6 +476,114 @@ package com.swfwire.decompiler
 			{
 				writeGradientControlPointRecord2(context, record.gradientRecords[iter]);
 			}
+		}
+		
+		protected function writeDefineButton2Tag(context:SWFWriterContext, tag:DefineButton2Tag):void
+		{
+			context.bytes.writeUI16(tag.buttonId);
+			context.bytes.writeUB(7, 0);
+			context.bytes.writeFlag(tag.trackAsMenu);
+			context.bytes.writeUI16(tag.actionOffset); // todo : set the right value
+			for each (var character:ButtonRecord2 in tag.characters)
+			{
+				writeButtonRecord2(context, character);
+			}
+			context.bytes.writeUI8(0);
+			var actionsLength:uint = tag.actions.length;
+			for (var actionIndex:uint = 0; actionIndex < actionsLength; actionIndex++)
+			{
+				writeButtonCondAction(context, tag.actions[actionIndex], (actionIndex == (actionsLength - 1)));
+			}
+		}
+		
+		protected function writeButtonRecord2(context:SWFWriterContext, record:ButtonRecord2):void
+		{
+			writeButtonRecord(context, record);
+			writeCXFormWithAlphaRecord(context, record.colorTransform);
+			writeFilterListRecord(context, record.filterList);
+			context.bytes.writeUI8(record.blendMode);
+		}
+		
+		protected function writeFilterListRecord(context:SWFWriterContext, record:FilterListRecord):void
+		{
+			context.bytes.writeUI8(record.filters.length);
+			for each (var filter:FilterRecord in record.filters)
+			{
+				writeFilterRecord(context, filter);
+			}
+		}
+		
+		protected function writeFilterRecord(context:SWFWriterContext, record:FilterRecord):void
+		{
+			context.bytes.writeUI8(record.filterId);
+			switch(record.filterId)
+			{
+				case 0:
+					writeDropShadowFilterRecord(context, record.dropShadowFilter);
+					break;
+				// TODO : Add others filters
+			}
+		}
+		
+		protected function writeDropShadowFilterRecord(context:SWFWriterContext, record:DropShadowFilterRecord):void
+		{
+			writeRGBARecord(context, record.color);
+			context.bytes.writeFixed16_16(record.blurX);
+			context.bytes.writeFixed16_16(record.blurY);
+			context.bytes.writeFixed16_16(record.angle);
+			context.bytes.writeFixed16_16(record.distance);
+			context.bytes.writeFixed8_8(record.strength);
+			context.bytes.writeFlag(record.innerShadow);
+			context.bytes.writeFlag(record.knockout);
+			context.bytes.writeFlag(record.compositeSource);
+			context.bytes.writeUB(5, record.passes);
+		}
+		
+		protected function writeButtonCondAction(context:SWFWriterContext, action:ButtonCondAction, isLastRecord:Boolean):void
+		{
+			context.bytes.writeUI16(isLastRecord ? 0 : action.condActionSize);
+			var size:uint = action.condActionSize - 2;
+			if (size > 0)
+			{
+				context.bytes.writeFlag(action.condIdleToOverDown);
+				context.bytes.writeFlag(action.condOutDownToldle);
+				context.bytes.writeFlag(action.condOutDownToOverDown);
+				context.bytes.writeFlag(action.condOverDownToOutDown);
+				context.bytes.writeFlag(action.condOverDownToOverUp);
+				context.bytes.writeFlag(action.condOverUpToOverDown);
+				context.bytes.writeFlag(action.condOverUpToIdle);
+				context.bytes.writeFlag(action.condIdleToOverUp);
+				size--;
+			}
+			if (size > 0)
+			{
+				context.bytes.writeUB(7, action.condKeyPress);
+				context.bytes.writeFlag(action.condOverDownToIdle);
+				size--;
+			}
+			if (size > 0)
+			{
+				for each (var record:ActionRecord in action.actions)
+				{
+					var startPosition:uint = context.bytes.getBytePosition();
+					action.actions.push(writeActionRecord(context, record));
+					size -= (context.bytes.getBytePosition() - startPosition);
+					if (size == 0)
+					{
+						break;
+					}
+					if (size < 0)
+					{
+						throw new Error("Wrong CondActionSize value");
+					}
+				}
+			}
+			context.bytes.writeUI8(0);
+		}
+		
+		protected function writeActionRecord(context:SWFWriterContext, record:ActionRecord):void
+		{
+			throw("Writing ActionRecord not implemented");
 		}
 	}
 }
