@@ -188,6 +188,9 @@ package com.swfwire.decompiler
 				case DefineSceneAndFrameLabelDataTag: 
 					writeDefineSceneAndFrameLabelDataTag(context, DefineSceneAndFrameLabelDataTag(tag));
 					break;
+				case DefineButtonTag:
+					writeDefineButtonTag(context, DefineButtonTag(tag));
+					break;
 				case UnknownTag:
 					writeUnknownTag(context, UnknownTag(tag));
 					break;
@@ -615,6 +618,30 @@ package com.swfwire.decompiler
 			{
 				context.bytes.writeUB(numLineBits, record.lineStyle);
 			}
+		}
+		
+		protected function writeDefineButtonTag(context:SWFWriterContext, tag:DefineButtonTag):void
+		{
+			context.bytes.writeUI16(tag.buttonId);
+			for each (var character:ButtonRecord in tag.characters)
+			{
+				writeButtonRecord(context, character);
+			}
+			context.bytes.writeUI8(0);
+		}
+		
+		protected function writeButtonRecord(context:SWFWriterContext, record:ButtonRecord):void
+		{
+			context.bytes.writeUB(2, record.reserved);
+			context.bytes.writeFlag(record.buttonHasBlendMode);
+			context.bytes.writeFlag(record.buttonHasFilterList);
+			context.bytes.writeFlag(record.stateHitTest);
+			context.bytes.writeFlag(record.stateDown);
+			context.bytes.writeFlag(record.stateOver);
+			context.bytes.writeFlag(record.stateUp);
+			context.bytes.writeUI16(record.characterId);
+			context.bytes.writeUI16(record.placeDepth);
+			writeMatrixRecord(context, record.placeMatrix);
 		}
 	}
 }

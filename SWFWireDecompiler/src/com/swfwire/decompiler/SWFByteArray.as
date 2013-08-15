@@ -341,6 +341,16 @@ package com.swfwire.decompiler
 			
 			return result;
 		}
+		public function writeFixed16_16(value:Number):void
+		{
+			alignBytes();
+			
+			var integer:uint = int(value);
+			var decimal:uint = uint((value - integer) * 0xFFFF);
+			
+			bytes.writeShort(int(decimal));
+			bytes.writeShort(int(integer));
+		}
 		
 		/*
 		 * Floating point numbers
@@ -627,6 +637,16 @@ package com.swfwire.decompiler
 			alignBytes();
 			value = value.substr(0, length);
 			bytes.writeUTFBytes(value);
+		}
+		public function unreadBytes(length:uint):void
+		{
+			alignBytes();
+			if (length >= bytes.position)
+			{
+				bytes.position = 0;
+				return;
+			}
+			bytes.position -= length;
 		}
 	}
 }

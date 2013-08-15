@@ -7,6 +7,7 @@ package com.swfwire.decompiler
 	import com.swfwire.decompiler.data.swf.tags.EndTag;
 	import com.swfwire.decompiler.data.swf.tags.SWFTag;
 	import com.swfwire.decompiler.data.swf2.records.FillStyleArrayRecord2;
+	import com.swfwire.decompiler.data.swf3.actions.ButtonCondAction;
 	import com.swfwire.decompiler.data.swf3.records.*;
 	import com.swfwire.decompiler.data.swf3.tags.*;
 	
@@ -38,9 +39,6 @@ package com.swfwire.decompiler
 					case 45: tag = readSoundStreamHead2Tag(context, header);
 					case 46: tag = readDefineMorphShapeTag(context, header);
 					case 48: tag = readDefineFont2Tag(context, header);
-					case 34:
-						tag = readDefineButton2Tag(context, header);
-						break;
 					*/
 					case 12: 
 						tag = readDoActionTag(context, header);
@@ -50,6 +48,9 @@ package com.swfwire.decompiler
 						break;
 					case 32:
 						tag = readDefineShape3Tag(context, header);
+						break;
+					case 34:
+						tag = readDefineButton2Tag(context, header);
 						break;
 					case 35:
 						tag = readDefineBitsJPEG3Tag(context, header);
@@ -339,60 +340,49 @@ package com.swfwire.decompiler
 			tag.buttonId = context.bytes.readUI16();
 			tag.reserved = context.bytes.readUB(7);
 			tag.trackAsMenu = context.bytes.readFlag();
+			var actionOffsetPosition:uint = context.bytes.getBytePosition();
 			tag.actionOffset = context.bytes.readUI16();
 			tag.characters = new Vector.<ButtonRecord2>();
-			while(true)
+			do
 			{
-				var reserved:uint = context.bytes.readUB(2);
-				var hasBlendMode:Boolean = context.bytes.readFlag();
-				var hasFilterList:Boolean = context.bytes.readFlag();
-				var stateHitTest:Boolean = context.bytes.readFlag();
-				var stateDown:Boolean = context.bytes.readFlag();
-				var stateOver:Boolean = context.bytes.readFlag();
-				var stateUp:Boolean = context.bytes.readFlag();
-				if(reserved == 0 &&
-				   !hasBlendMode &&
-				   !hasFilterList &&
-				   !stateHitTest &&
-				   !stateDown &&
-				   !stateOver &&
-				   !stateUp)
+				tag.characters.push(readButtonRecord2(context));
+				// Test if next byte is CharacterEndFlag
+				if (!context.bytes.readUI8())
 				{
 					break;
 				}
-				else
+				context.bytes.unreadBytes(1);
+			}
+			while(true);
+			tag.actions = new Vector.<ButtonCondAction>();
+			if (tag.actionOffset == 0)
+			{
+				return tag;
+			}
+			if ((actionOffsetPosition + tag.actionOffset) != context.bytes.getBytePosition())
+			{
+				throw new Error("Wrong ActionOffset value: " + tag.actionOffset + " instead of " + (context.bytes.getBytePosition() - actionOffsetPosition));
+			}
+			do
+			{
+				var actionPosition:uint = context.bytes.getBytePosition();
+				var action:ButtonCondAction = readButtonCondAction(context);
+				tag.actions.push(action);
+				if (action.condActionSize && ((actionPosition + action.condActionSize) != context.bytes.getBytePosition()))
 				{
-					tag.characters.push(readButtonRecord2(context, reserved, hasBlendMode, hasFilterList,
-														  stateHitTest, stateDown, stateOver, stateUp));
+					throw new Error("Wrong CondActionSize value: " + action.condActionSize + " instead of " + (context.bytes.getBytePosition() - actionPosition));
 				}
 			}
-			//tag.actions = readButtonCondAction();
+			while(action.condActionSize)
 			return tag;
 		}
 		
-		protected function readButtonRecord2(context:SWFReaderContext, reserved:uint, hasBlendMode:Boolean, hasFilterList:Boolean, 
-			stateHitTest:Boolean, stateDown:Boolean, stateOver:Boolean, stateUp:Boolean):ButtonRecord2
+		protected function readButtonRecord2(context:SWFReaderContext):ButtonRecord2
 		{
-			var record:ButtonRecord2 = new ButtonRecord2();
-			record.reserved = reserved;
-			record.hasBlendMode = hasBlendMode;
-			record.hasFilterList = hasFilterList;
-			record.stateHitTest = stateHitTest;
-			record.stateDown = stateDown;
-			record.stateOver = stateOver;
-			record.stateUp = stateUp;
-			record.characterId = context.bytes.readUI16();
-			record.placeDepth = context.bytes.readUI16();
-			record.placeMatrix = readMatrixRecord(context);
+			var record:ButtonRecord2 = new ButtonRecord2(readButtonRecord(context));
 			record.colorTransform = readCXFormWithAlphaRecord(context);
-			if(hasFilterList)
-			{
-				record.filterList = readFilterListRecord(context);
-			}
-			if(hasBlendMode)
-			{
-				record.blendMode = readBlendModeRecord(context);
-			}
+			record.filterList = readFilterListRecord(context);
+			record.blendMode = context.bytes.readUI8();
 			return record;
 		}
 		
@@ -417,6 +407,7 @@ package com.swfwire.decompiler
 				case 0:
 					record.dropShadowFilter = readDropShadowFilterRecord(context);
 					break;
+				// TODO : Add others filters
 			}
 			return record;
 		}
@@ -447,9 +438,42 @@ package com.swfwire.decompiler
 			return record;
 		}
 		
-		protected function readBlendModeRecord(context:SWFReaderContext):*
+		protected function readButtonCondAction(context:SWFReaderContext):ButtonCondAction
 		{
-			throw new Error('readBlendModeRecord not implemented');
+			var action:ButtonCondAction = new ButtonCondAction();
+			action.condActionSize =  context.bytes.readUI16();
+			var size:uint = action.condActionSize - 2;
+			if (size > 0)
+			{
+				action.condIdleToOverDown = context.bytes.readFlag();
+				action.condOutDownToldle = context.bytes.readFlag();
+				action.condOutDownToOverDown = context.bytes.readFlag();
+				action.condOverDownToOutDown = context.bytes.readFlag();
+				action.condOverDownToOverUp = context.bytes.readFlag();
+				action.condOverUpToOverDown = context.bytes.readFlag();
+				action.condOverUpToIdle = context.bytes.readFlag();
+				action.condIdleToOverUp = context.bytes.readFlag();
+				size--;
+			}
+			if (size > 0)
+			{
+				action.condKeyPress = context.bytes.readUB(7);
+				action.condOverDownToIdle = context.bytes.readFlag();
+				size--;
+			}
+			while(size > 0)
+			{
+				var startPosition:uint = context.bytes.getBytePosition();
+				if (!context.bytes.readUI8())
+				{
+					size--;
+					break;
+				}
+				context.bytes.unreadBytes(1);
+				action.actions.push(readActionRecord(context));
+				size -= (context.bytes.getBytePosition() - startPosition);
+			}
+			return action;
 		}
 		
 		protected function readDefineSpriteTag(context:SWFReaderContext, header:TagHeaderRecord):DefineSpriteTag
