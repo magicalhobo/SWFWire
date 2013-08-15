@@ -439,7 +439,40 @@ package com.swfwire.decompiler
 		
 		protected function readButtonCondAction(context:SWFReaderContext):ButtonCondAction
 		{
-			throw new Error("Read ButtonCondAction not implemented.");
+			var action:ButtonCondAction = new ButtonCondAction();
+			action.condActionSize =  context.bytes.readUI16();
+			var size:uint = action.condActionSize - 2;
+			if (size > 0)
+			{
+				action.condIdleToOverDown = context.bytes.readFlag();
+				action.condOutDownToldle = context.bytes.readFlag();
+				action.condOutDownToOverDown = context.bytes.readFlag();
+				action.condOverDownToOutDown = context.bytes.readFlag();
+				action.condOverDownToOverUp = context.bytes.readFlag();
+				action.condOverUpToOverDown = context.bytes.readFlag();
+				action.condOverUpToIdle = context.bytes.readFlag();
+				action.condIdleToOverUp = context.bytes.readFlag();
+				size--;
+			}
+			if (size > 0)
+			{
+				action.condKeyPress = context.bytes.readUB(7);
+				action.condOverDownToIdle = context.bytes.readFlag();
+				size--;
+			}
+			while(size > 0)
+			{
+				var startPosition:uint = context.bytes.getBytePosition();
+				if (!context.bytes.readUI8())
+				{
+					size--;
+					break;
+				}
+				context.bytes.unreadBytes(1);
+				action.actions.push(readActionRecord(context));
+				size -= (context.bytes.getBytePosition() - startPosition);
+			}
+			return action;
 		}
 		
 		protected function readDefineSpriteTag(context:SWFReaderContext, header:TagHeaderRecord):DefineSpriteTag
