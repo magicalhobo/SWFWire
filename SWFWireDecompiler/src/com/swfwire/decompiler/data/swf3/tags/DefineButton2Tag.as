@@ -15,6 +15,6 @@ package com.swfwire.decompiler.data.swf3.tags
 		public var trackAsMenu:Boolean;
 		public var actionOffset:uint;
 		public var characters:Vector.<ButtonRecord2>;
-		public var actions:ButtonCondAction;
+		public var actions:Vector.<ButtonCondAction>;
 	}
 }
