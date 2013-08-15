@@ -391,7 +391,7 @@ package com.swfwire.decompiler
 			}
 			if(hasBlendMode)
 			{
-				record.blendMode = readBlendModeRecord(context);
+				record.blendMode = context.bytes.readUI8();
 			}
 			return record;
 		}
@@ -445,11 +445,6 @@ package com.swfwire.decompiler
 			record.blue = context.bytes.readUI8();
 			record.alpha = context.bytes.readUI8();
 			return record;
-		}
-		
-		protected function readBlendModeRecord(context:SWFReaderContext):*
-		{
-			throw new Error('readBlendModeRecord not implemented');
 		}
 		
 		protected function readDefineSpriteTag(context:SWFReaderContext, header:TagHeaderRecord):DefineSpriteTag

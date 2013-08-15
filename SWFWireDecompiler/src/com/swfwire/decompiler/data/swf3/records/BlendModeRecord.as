@@ -17,7 +17,5 @@ package com.swfwire.decompiler.data.swf3.records
 		public static const ERASE:int = 12;
 		public static const OVERLAY:int = 13;
 		public static const HARDLIGHT:int = 14;
-		
-		public var blendMode:uint;
 	}
 }
