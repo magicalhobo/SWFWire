@@ -407,6 +407,7 @@ package com.swfwire.decompiler
 				case 0:
 					record.dropShadowFilter = readDropShadowFilterRecord(context);
 					break;
+				// TODO : Add others filters
 			}
 			return record;
 		}
