@@ -341,6 +341,16 @@ package com.swfwire.decompiler
 			
 			return result;
 		}
+		public function writeFixed16_16(value:Number):void
+		{
+			alignBytes();
+			
+			var integer:uint = int(value);
+			var decimal:uint = uint((value - integer) * 0xFFFF);
+			
+			bytes.writeShort(int(decimal));
+			bytes.writeShort(int(integer));
+		}
 		
 		/*
 		 * Floating point numbers
