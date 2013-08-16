@@ -6,6 +6,7 @@ package com.swfwire.decompiler
 	import com.swfwire.decompiler.data.swf.tags.SWFTag;
 	import com.swfwire.decompiler.data.swf2.records.StyleChangeRecord2;
 	import com.swfwire.decompiler.data.swf2.tags.DefineBitsJPEG2Tag;
+	import com.swfwire.decompiler.data.swf3.records.ButtonRecord2;
 	import com.swfwire.decompiler.data.swf3.records.FillStyleArrayRecord3;
 	import com.swfwire.decompiler.data.swf3.records.FillStyleRecord2;
 	import com.swfwire.decompiler.data.swf3.records.GradientControlPointRecord2;
@@ -517,6 +518,23 @@ package com.swfwire.decompiler
 			else
 			{
 				record.color = readRGBARecord(context);
+			}
+			return record;
+		}
+		
+		protected override function readButtonRecord2(context:SWFReaderContext):ButtonRecord2
+		{
+			var record:ButtonRecord2 = new ButtonRecord2(readButtonRecord(context));
+			record.buttonHasBlendMode = Boolean(record.reserved & 0x2);
+			record.buttonHasFilterList = Boolean(record.reserved & 0x1);
+			record.colorTransform = readCXFormWithAlphaRecord(context);
+			if (record.buttonHasFilterList)
+			{
+				record.filterList = readFilterListRecord(context);
+			}
+			if (record.buttonHasBlendMode)
+			{
+				record.blendMode = context.bytes.readUI8();
 			}
 			return record;
 		}

@@ -457,5 +457,19 @@ package com.swfwire.decompiler
 				context.bytes.writeUB(4, record.numLineBits);
 			}
 		}
+		
+		protected override function writeButtonRecord2(context:SWFWriterContext, record:ButtonRecord2):void
+		{
+			writeButtonRecord(context, record);
+			writeCXFormWithAlphaRecord(context, record.colorTransform);
+			if (record.buttonHasFilterList)
+			{
+				writeFilterListRecord(context, record.filterList);
+			}
+			if (record.buttonHasBlendMode)
+			{
+				context.bytes.writeUI8(record.blendMode);
+			}
+		}
 	}
 }
