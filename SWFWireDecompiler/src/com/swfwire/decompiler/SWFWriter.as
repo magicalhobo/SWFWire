@@ -623,6 +623,10 @@ package com.swfwire.decompiler
 		protected function writeDefineButtonTag(context:SWFWriterContext, tag:DefineButtonTag):void
 		{
 			context.bytes.writeUI16(tag.buttonId);
+			if (tag.characters.length == 0)
+			{
+				throw new Error("The Characters field must not be empty.");
+			}
 			for each (var character:ButtonRecord in tag.characters)
 			{
 				writeButtonRecord(context, character);
