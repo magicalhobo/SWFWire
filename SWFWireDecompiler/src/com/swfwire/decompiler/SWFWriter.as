@@ -64,6 +64,12 @@ package com.swfwire.decompiler
 				result.warnings.push('Invalid file version ('+swf.header.fileVersion+') in header.');
 			}
 			
+			if (!swf.tags.length || !(swf.tags[swf.tags.length-1] is EndTag))
+			{
+				result.errors.push('The type of the last tag must be EndTag');
+				return result;
+			}
+			
 			var tagCount:uint = swf.tags.length;
 			var tagBytes:Vector.<ByteArray> = new Vector.<ByteArray>(tagCount);
 			

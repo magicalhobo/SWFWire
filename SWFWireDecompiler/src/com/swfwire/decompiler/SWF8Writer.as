@@ -1,5 +1,6 @@
 package com.swfwire.decompiler
 {
+	import com.swfwire.decompiler.data.swf.SWF;
 	import com.swfwire.decompiler.data.swf.records.*;
 	import com.swfwire.decompiler.data.swf.tags.SWFTag;
 	import com.swfwire.decompiler.data.swf3.records.*;
@@ -28,6 +29,17 @@ package com.swfwire.decompiler
 		{
 			version = FILE_VERSION;
 			registerTags(TAG_IDS);
+		}
+		
+		public override function write(swf:SWF):SWFWriteResult
+		{
+			if (!swf.tags.length || !(swf.tags[0] is FileAttributesTag))
+			{
+				var result:SWFWriteResult = new SWFWriteResult();
+				result.errors.push('The type of the first tag must be FileAttributes.');
+				return result;
+			}
+			return super.write(swf);
 		}
 		
 		override protected function writeTag(context:SWFWriterContext, tag:SWFTag):void
