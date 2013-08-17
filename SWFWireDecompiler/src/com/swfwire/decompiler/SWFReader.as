@@ -343,9 +343,9 @@ package com.swfwire.decompiler
 		protected function readButtonRecord(context:SWFReaderContext):ButtonRecord
 		{
 			var record:ButtonRecord = new ButtonRecord();
-			record.reserved = context.bytes.readUB(2);
-			record.buttonHasBlendMode = context.bytes.readFlag();
-			record.buttonHasFilterList = context.bytes.readFlag();
+			record.reserved = context.bytes.readUB(4);
+			record.buttonHasBlendMode = true;
+			record.buttonHasFilterList = true;
 			record.stateHitTest = context.bytes.readFlag();
 			record.stateDown = context.bytes.readFlag();
 			record.stateOver = context.bytes.readFlag();

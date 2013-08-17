@@ -64,6 +64,12 @@ package com.swfwire.decompiler
 				result.warnings.push('Invalid file version ('+swf.header.fileVersion+') in header.');
 			}
 			
+			if (!swf.tags.length || !(swf.tags[swf.tags.length-1] is EndTag))
+			{
+				result.errors.push('The type of the last tag must be EndTag');
+				return result;
+			}
+			
 			var tagCount:uint = swf.tags.length;
 			var tagBytes:Vector.<ByteArray> = new Vector.<ByteArray>(tagCount);
 			
@@ -73,18 +79,20 @@ package com.swfwire.decompiler
 			{
 				var tag:SWFTag = swf.tags[iter];
 				var currentTagBytes:ByteArray = new ByteArray();
+				context.tagId = iter;
+				context.bytes = new SWFByteArray(currentTagBytes);
 				try
 				{
-					context.tagId = iter;
-					context.bytes = new SWFByteArray(currentTagBytes);
 					writeTag(context, tag);
-					tag.header.length = currentTagBytes.length;
-					tagBytes[iter] = currentTagBytes;
 				}
 				catch(e:Error)
 				{
 					result.errors.push('Could not write Tag #'+iter+': '+e);
+					continue;
 				}
+				tag.header.length = currentTagBytes.length;
+				tagBytes[iter] = currentTagBytes;
+				context.tagStack.push(tag);
 			}
 			
 			var rawBytes:ByteArray = new ByteArray();
@@ -623,6 +631,10 @@ package com.swfwire.decompiler
 		protected function writeDefineButtonTag(context:SWFWriterContext, tag:DefineButtonTag):void
 		{
 			context.bytes.writeUI16(tag.buttonId);
+			if (tag.characters.length == 0)
+			{
+				throw new Error("The Characters field must not be empty.");
+			}
 			for each (var character:ButtonRecord in tag.characters)
 			{
 				writeButtonRecord(context, character);

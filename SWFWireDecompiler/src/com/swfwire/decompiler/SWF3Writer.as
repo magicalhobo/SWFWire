@@ -8,6 +8,7 @@ package com.swfwire.decompiler
 	import com.swfwire.decompiler.data.swf.records.IShapeRecord;
 	import com.swfwire.decompiler.data.swf.records.StraightEdgeRecord;
 	import com.swfwire.decompiler.data.swf.records.TagHeaderRecord;
+	import com.swfwire.decompiler.data.swf.tags.DefineButtonTag;
 	import com.swfwire.decompiler.data.swf.tags.EndTag;
 	import com.swfwire.decompiler.data.swf.tags.SWFTag;
 	import com.swfwire.decompiler.data.swf3.actions.ButtonCondAction;
@@ -476,6 +477,16 @@ package com.swfwire.decompiler
 			{
 				writeGradientControlPointRecord2(context, record.gradientRecords[iter]);
 			}
+		}
+		
+		protected override function writeDefineButtonTag(context:SWFWriterContext, tag:DefineButtonTag):void
+		{
+			super.writeDefineButtonTag(context, tag);
+			for each (var action:ActionRecord in tag.actions)
+			{
+				writeActionRecord(context, action);
+			}
+			context.bytes.writeUI8(0);
 		}
 		
 		protected function writeDefineButton2Tag(context:SWFWriterContext, tag:DefineButton2Tag):void

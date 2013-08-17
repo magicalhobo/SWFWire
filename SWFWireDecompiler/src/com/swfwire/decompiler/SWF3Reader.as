@@ -1,12 +1,9 @@
 package com.swfwire.decompiler
 {
-	import com.swfwire.decompiler.SWF2Reader;
-	import com.swfwire.decompiler.abc.ABCByteArray;
-	import com.swfwire.decompiler.data.swf.*;
 	import com.swfwire.decompiler.data.swf.records.*;
+	import com.swfwire.decompiler.data.swf.tags.DefineButtonTag;
 	import com.swfwire.decompiler.data.swf.tags.EndTag;
 	import com.swfwire.decompiler.data.swf.tags.SWFTag;
-	import com.swfwire.decompiler.data.swf2.records.FillStyleArrayRecord2;
 	import com.swfwire.decompiler.data.swf3.actions.ButtonCondAction;
 	import com.swfwire.decompiler.data.swf3.records.*;
 	import com.swfwire.decompiler.data.swf3.tags.*;
@@ -332,6 +329,22 @@ package com.swfwire.decompiler
 				}
 			}
 			return record;
+		}
+		
+		protected override function readDefineButtonTag(context:SWFReaderContext, header:TagHeaderRecord):DefineButtonTag
+		{
+			var tag:DefineButtonTag = super.readDefineButtonTag(context, header);
+			tag.actions = new Vector.<ActionRecord>();
+			while(true)
+			{
+				if (context.bytes.readUI8() == 0)
+				{
+					break;
+				}
+				context.bytes.unreadBytes(1);
+				tag.actions.push(readActionRecord(context));
+			}
+			return tag;
 		}
 		
 		protected function readDefineButton2Tag(context:SWFReaderContext, header:TagHeaderRecord):DefineButton2Tag
