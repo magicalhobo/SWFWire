@@ -73,18 +73,20 @@ package com.swfwire.decompiler
 			{
 				var tag:SWFTag = swf.tags[iter];
 				var currentTagBytes:ByteArray = new ByteArray();
+				context.tagId = iter;
+				context.bytes = new SWFByteArray(currentTagBytes);
 				try
 				{
-					context.tagId = iter;
-					context.bytes = new SWFByteArray(currentTagBytes);
 					writeTag(context, tag);
-					tag.header.length = currentTagBytes.length;
-					tagBytes[iter] = currentTagBytes;
 				}
 				catch(e:Error)
 				{
 					result.errors.push('Could not write Tag #'+iter+': '+e);
+					continue;
 				}
+				tag.header.length = currentTagBytes.length;
+				tagBytes[iter] = currentTagBytes;
+				context.tagStack.push(tag);
 			}
 			
 			var rawBytes:ByteArray = new ByteArray();
