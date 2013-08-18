@@ -4,6 +4,8 @@ package com.swfwire.decompiler
 	import com.swfwire.decompiler.abc.ABCWriter;
 	import com.swfwire.decompiler.data.swf.records.SymbolClassRecord;
 	import com.swfwire.decompiler.data.swf.tags.SWFTag;
+	import com.swfwire.decompiler.data.swf3.tags.DefineButton2Tag;
+	import com.swfwire.decompiler.data.swf8.tags.FileAttributesTag;
 	import com.swfwire.decompiler.data.swf9.tags.DefineBinaryDataTag;
 	import com.swfwire.decompiler.data.swf9.tags.DefineFontNameTag;
 	import com.swfwire.decompiler.data.swf9.tags.DoABCTag;
@@ -97,6 +99,15 @@ package com.swfwire.decompiler
 			context.bytes.writeUI16(tag.characterId);
 			context.bytes.writeUI32(tag.reserved);
 			context.bytes.writeBytes(tag.data);
+		}
+		
+		protected override function writeDefineButton2Tag(context:SWFWriterContext, tag:DefineButton2Tag):void
+		{
+			if ((context.tagStack[0] as FileAttributesTag).actionScript3 && (tag.actionOffset || tag.actions.length))
+			{
+				throw new Error("The Actions field must be empty with AS3.");
+			}
+			super.writeDefineButton2Tag(context, tag);
 		}
 	}
 }
