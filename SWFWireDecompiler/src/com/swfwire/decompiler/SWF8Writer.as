@@ -1,11 +1,37 @@
 package com.swfwire.decompiler
 {
 	import com.swfwire.decompiler.data.swf.SWF;
-	import com.swfwire.decompiler.data.swf.records.*;
+	import com.swfwire.decompiler.data.swf.records.CurvedEdgeRecord;
+	import com.swfwire.decompiler.data.swf.records.EndShapeRecord;
+	import com.swfwire.decompiler.data.swf.records.FilterListRecord;
+	import com.swfwire.decompiler.data.swf.records.FilterRecord;
+	import com.swfwire.decompiler.data.swf.records.IShapeRecord;
+	import com.swfwire.decompiler.data.swf.records.StraightEdgeRecord;
 	import com.swfwire.decompiler.data.swf.tags.SWFTag;
-	import com.swfwire.decompiler.data.swf3.records.*;
-	import com.swfwire.decompiler.data.swf8.records.*;
-	import com.swfwire.decompiler.data.swf8.tags.*;
+	import com.swfwire.decompiler.data.swf3.records.ButtonRecord2;
+	import com.swfwire.decompiler.data.swf3.records.FillStyleArrayRecord3;
+	import com.swfwire.decompiler.data.swf3.records.FillStyleRecord2;
+	import com.swfwire.decompiler.data.swf3.records.GradientRecord2;
+	import com.swfwire.decompiler.data.swf8.records.FocalGradientRecord;
+	import com.swfwire.decompiler.data.swf8.records.FontShapeRecord;
+	import com.swfwire.decompiler.data.swf8.records.KerningRecord;
+	import com.swfwire.decompiler.data.swf8.records.LineStyle2ArrayRecord;
+	import com.swfwire.decompiler.data.swf8.records.LineStyle2Record;
+	import com.swfwire.decompiler.data.swf8.records.ShapeWithStyleRecord4;
+	import com.swfwire.decompiler.data.swf8.records.StyleChangeRecord4;
+	import com.swfwire.decompiler.data.swf8.records.ZoneDataRecord;
+	import com.swfwire.decompiler.data.swf8.records.ZoneRecord;
+	import com.swfwire.decompiler.data.swf8.tags.CSMTextSettingsTag;
+	import com.swfwire.decompiler.data.swf8.tags.DefineBitsJPEG2Tag2;
+	import com.swfwire.decompiler.data.swf8.tags.DefineFont3Tag;
+	import com.swfwire.decompiler.data.swf8.tags.DefineFontAlignZonesTag;
+	import com.swfwire.decompiler.data.swf8.tags.DefineMorphShape2Tag;
+	import com.swfwire.decompiler.data.swf8.tags.DefineScalingGridTag;
+	import com.swfwire.decompiler.data.swf8.tags.DefineShape4Tag;
+	import com.swfwire.decompiler.data.swf8.tags.DefineVideoStreamTag;
+	import com.swfwire.decompiler.data.swf8.tags.FileAttributesTag;
+	import com.swfwire.decompiler.data.swf8.tags.ImportAssets2Tag;
+	import com.swfwire.decompiler.data.swf8.tags.PlaceObject3Tag;
 
 	public class SWF8Writer extends SWF7Writer
 	{
@@ -29,17 +55,6 @@ package com.swfwire.decompiler
 		{
 			version = FILE_VERSION;
 			registerTags(TAG_IDS);
-		}
-		
-		public override function write(swf:SWF):SWFWriteResult
-		{
-			if (!swf.tags.length || !(swf.tags[0] is FileAttributesTag))
-			{
-				var result:SWFWriteResult = new SWFWriteResult();
-				result.errors.push('The type of the first tag must be FileAttributes.');
-				return result;
-			}
-			return super.write(swf);
 		}
 		
 		override protected function writeTag(context:SWFWriterContext, tag:SWFTag):void
@@ -470,15 +485,48 @@ package com.swfwire.decompiler
 			}
 		}
 		
-		protected override function writeButtonRecord2(context:SWFWriterContext, record:ButtonRecord2):void
+		protected function writeFilterListRecord(context:SWFWriterContext, record:FilterListRecord):void
 		{
-			writeButtonRecord(context, record);
+			var filterCount:uint = record.filters.length;
+			context.bytes.writeUI8(filterCount);
+			for(var iter:uint = 0; iter < filterCount; iter++)
+			{
+				writeFilterRecord(context, record.filters[iter]);
+			}
+		}
+		
+		protected function writeFilterRecord(context:SWFWriterContext, record:FilterRecord):void
+		{
+			context.bytes.writeUI8(record.filterId);
+			switch(record.filterId)
+			{
+				case 0:
+					writeDropShadowFilterRecord(context, record.dropShadowFilter);
+					break;
+				// TODO : Add others filters
+			}
+		}
+		
+		override protected function writeButtonRecord2(context:SWFWriterContext, record:ButtonRecord2):void
+		{
+			var hasBlendMode:Boolean = record.blendMode != 0;
+			var hasFilterList:Boolean = record.filterList != null;
+			context.bytes.writeUB(2, record.reserved);
+			context.bytes.writeFlag(hasBlendMode);
+			context.bytes.writeFlag(hasFilterList);
+			context.bytes.writeFlag(record.stateHitTest);
+			context.bytes.writeFlag(record.stateDown);
+			context.bytes.writeFlag(record.stateOver);
+			context.bytes.writeFlag(record.stateUp);
+			context.bytes.writeUI16(record.characterId);
+			context.bytes.writeUI16(record.placeDepth);
+			writeMatrixRecord(context, record.placeMatrix);
 			writeCXFormWithAlphaRecord(context, record.colorTransform);
-			if (record.buttonHasFilterList)
+			if(hasFilterList)
 			{
 				writeFilterListRecord(context, record.filterList);
 			}
-			if (record.buttonHasBlendMode)
+			if(hasBlendMode)
 			{
 				context.bytes.writeUI8(record.blendMode);
 			}

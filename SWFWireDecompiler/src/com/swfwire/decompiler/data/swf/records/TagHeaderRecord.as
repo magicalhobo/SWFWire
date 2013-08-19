@@ -1,9 +1,6 @@
 package com.swfwire.decompiler.data.swf.records
 {
-	import com.swfwire.decompiler.SWFReader;
-	import com.swfwire.decompiler.SWFByteArray;
-
-	public class TagHeaderRecord implements IRecord
+	public class TagHeaderRecord
 	{
 		public static var SHORT_HEADER_MAX_LENGTH:uint = 0x3F;
 		

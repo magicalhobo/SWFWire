@@ -84,7 +84,6 @@ package com.swfwire.decompiler
 	import com.swfwire.decompiler.data.swf.records.GradientRecord;
 	import com.swfwire.decompiler.data.swf.records.IGradientRecord;
 	import com.swfwire.decompiler.data.swf.records.IRGBRecord;
-	import com.swfwire.decompiler.data.swf.records.IRecord;
 	import com.swfwire.decompiler.data.swf.records.IShapeRecord;
 	import com.swfwire.decompiler.data.swf.records.ImportAssets2Record;
 	import com.swfwire.decompiler.data.swf.records.LanguageCodeRecord;
@@ -340,11 +339,9 @@ package com.swfwire.decompiler
 			IMultiname,
 			IPixRecord,
 			IRGBRecord,
-			IRecord,
 			IShapeRecord,
 			IToken,
 			ITrait,
-			ImageEncoding,
 			ImportAssets2Record,
 			ImportAssets2Tag,
 			ImportAssetsTag,

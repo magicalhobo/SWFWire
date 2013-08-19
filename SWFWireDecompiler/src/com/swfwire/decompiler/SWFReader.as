@@ -330,11 +330,12 @@ package com.swfwire.decompiler
 			tag.characters = new Vector.<ButtonRecord>();
 			while(true)
 			{
-				if (context.bytes.readUI8() == 0)
+				var originalPosition:uint = context.bytes.getBytePosition();
+				if(context.bytes.readUI8() == 0)
 				{
 					break;
 				}
-				context.bytes.unreadBytes(1);
+				context.bytes.setBytePosition(originalPosition);
 				tag.characters.push(readButtonRecord(context));
 			}
 			return tag;
@@ -344,8 +345,6 @@ package com.swfwire.decompiler
 		{
 			var record:ButtonRecord = new ButtonRecord();
 			record.reserved = context.bytes.readUB(4);
-			record.buttonHasBlendMode = true;
-			record.buttonHasFilterList = true;
 			record.stateHitTest = context.bytes.readFlag();
 			record.stateDown = context.bytes.readFlag();
 			record.stateOver = context.bytes.readFlag();

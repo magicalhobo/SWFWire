@@ -1,9 +1,6 @@
 package com.swfwire.decompiler.data.swf.records
 {
-	import com.swfwire.decompiler.SWFReader;
-	import com.swfwire.decompiler.SWFByteArray;
-	
-	public class LanguageCodeRecord implements IRecord
+	public class LanguageCodeRecord
 	{
 		public static const LANGUAGE_CODE_LATIN:uint = 1;
 		public static const LANGUAGE_CODE_JAPANESE:uint = 2;

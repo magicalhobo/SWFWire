@@ -1,10 +1,8 @@
 package com.swfwire.decompiler.data.swf.records
 {
-	import com.swfwire.decompiler.SWFReader;
-	import com.swfwire.decompiler.SWFByteArray;
 	import com.swfwire.decompiler.data.swf3.records.ActionRecord;
 	
-	public class ClipActionRecord implements IRecord
+	public class ClipActionRecord
 	{
 		public var eventFlags:ClipEventFlagsRecord;
 		public var actionRecordSize:uint;

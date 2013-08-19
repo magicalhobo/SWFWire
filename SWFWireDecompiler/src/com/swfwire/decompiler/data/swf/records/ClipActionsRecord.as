@@ -1,9 +1,6 @@
 package com.swfwire.decompiler.data.swf.records
 {
-	import com.swfwire.decompiler.SWFByteArray;
-	import com.swfwire.decompiler.SWFReader;
-
-	public class ClipActionsRecord implements IRecord
+	public class ClipActionsRecord
 	{
 		public var reserved:uint;
 		public var allEventFlags:ClipEventFlagsRecord;

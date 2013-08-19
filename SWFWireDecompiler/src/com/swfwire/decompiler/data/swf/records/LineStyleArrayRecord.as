@@ -1,6 +1,6 @@
 package com.swfwire.decompiler.data.swf.records
 {
-	public class LineStyleArrayRecord implements IRecord
+	public class LineStyleArrayRecord
 	{
 		public var count:uint;
 		public var countExtended:uint;

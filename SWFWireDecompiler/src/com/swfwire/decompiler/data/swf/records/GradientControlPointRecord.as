@@ -1,6 +1,6 @@
 package com.swfwire.decompiler.data.swf.records
 {
-	public class GradientControlPointRecord implements IRecord
+	public class GradientControlPointRecord
 	{
 		public var ratio:uint;
 		public var color:RGBRecord;

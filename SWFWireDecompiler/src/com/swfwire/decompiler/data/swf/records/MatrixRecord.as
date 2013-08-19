@@ -1,12 +1,10 @@
 package com.swfwire.decompiler.data.swf.records
 {
-	import com.swfwire.decompiler.SWFByteArray;
-	import com.swfwire.decompiler.SWFReader;
 	import com.swfwire.decompiler.data.swf.structures.MatrixRotateStructure;
 	import com.swfwire.decompiler.data.swf.structures.MatrixScaleStructure;
 	import com.swfwire.decompiler.data.swf.structures.MatrixTranslateStructure;
 	
-	public class MatrixRecord implements IRecord
+	public class MatrixRecord
 	{
 		public var scale:MatrixScaleStructure;
 		public var rotate:MatrixRotateStructure;

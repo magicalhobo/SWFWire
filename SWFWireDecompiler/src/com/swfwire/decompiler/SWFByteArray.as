@@ -1,6 +1,5 @@
 package com.swfwire.decompiler
 {
-	import com.swfwire.decompiler.data.swf.tags.*;
 	import com.swfwire.utils.ByteArrayUtil;
 	
 	import flash.utils.ByteArray;
@@ -11,7 +10,7 @@ package com.swfwire.decompiler
 	 * Abbreviations from the SWF spec:
 	 * 	SI = Signed Integer
 	 * 	UI = Unsigned Integer
-	 * 	SB = Snsigned Bits
+	 * 	SB = Signed Bits
 	 * 	UB = Unsigned Bits
 	 */
 	public class SWFByteArray
@@ -98,7 +97,12 @@ package com.swfwire.decompiler
 		
 		public function getBytePosition():uint
 		{
-			return bytes.position;
+			var result:uint = bytes.position;
+			if(bitPosition > 0)
+			{
+				result++;
+			}
+			return result;
 		}
 		
 		public function setBytePosition(newPosition:uint):void
@@ -637,16 +641,6 @@ package com.swfwire.decompiler
 			alignBytes();
 			value = value.substr(0, length);
 			bytes.writeUTFBytes(value);
-		}
-		public function unreadBytes(length:uint):void
-		{
-			alignBytes();
-			if (length >= bytes.position)
-			{
-				bytes.position = 0;
-				return;
-			}
-			bytes.position -= length;
 		}
 	}
 }

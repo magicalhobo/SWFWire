@@ -1,6 +1,6 @@
 package com.swfwire.decompiler.data.swf.records
 {
-	public class RectangleRecord implements IRecord
+	public class RectangleRecord
 	{
 		public var xMin:int;
 		public var xMax:int;

@@ -1,9 +1,6 @@
 package com.swfwire.decompiler.data.swf.records
 {
-	import com.swfwire.decompiler.SWFReader;
-	import com.swfwire.decompiler.SWFByteArray;
-
-	public class SceneRecord implements IRecord
+	public class SceneRecord
 	{
 		public var offset:uint;
 		public var name:String;

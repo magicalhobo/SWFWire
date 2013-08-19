@@ -1,9 +1,6 @@
 package com.swfwire.decompiler.data.swf.records
 {
-	import com.swfwire.decompiler.SWFReader;
-	import com.swfwire.decompiler.SWFByteArray;
-	
-	public class CXFormRecord implements IRecord
+	public class CXFormRecord
 	{
 		public var hasAddTerms:Boolean;
 		public var hasMultTerms:Boolean;

@@ -1,9 +1,6 @@
 package com.swfwire.decompiler.data.swf.records
 {
-	import com.swfwire.decompiler.SWFReader;
-	import com.swfwire.decompiler.SWFByteArray;
-	
-	public class GradRecordRGB implements IRecord
+	public class GradRecordRGB
 	{
 		public var ratio:uint;
 		public var color:RGBRecord;

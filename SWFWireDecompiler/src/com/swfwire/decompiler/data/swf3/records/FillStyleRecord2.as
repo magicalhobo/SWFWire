@@ -1,10 +1,10 @@
 package com.swfwire.decompiler.data.swf3.records
 {
-	import com.swfwire.decompiler.SWFByteArray;
-	import com.swfwire.decompiler.SWFReader;
-	import com.swfwire.decompiler.data.swf.records.*;
+	import com.swfwire.decompiler.data.swf.records.IGradientRecord;
+	import com.swfwire.decompiler.data.swf.records.MatrixRecord;
+	import com.swfwire.decompiler.data.swf.records.RGBARecord;
 
-	public class FillStyleRecord2 implements IRecord
+	public class FillStyleRecord2
 	{
 		public var type:uint;
 		public var color:RGBARecord;

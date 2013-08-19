@@ -34,7 +34,7 @@ package com.swfwire.utils
 			if(size == array2.length)
 			{
 				equal = true;
-				for(var iter:int = 0; iter < size; iter++)
+				for(var iter:uint = 0; iter < size; iter++)
 				{
 					if(array1[iter] !== array2[iter])
 					{

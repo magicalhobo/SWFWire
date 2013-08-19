@@ -1,9 +1,6 @@
 package com.swfwire.decompiler.data.swf.records
 {
-	import com.swfwire.decompiler.SWFReader;
-	import com.swfwire.decompiler.SWFByteArray;
-
-	public class FillStyleArrayRecord implements IRecord
+	public class FillStyleArrayRecord
 	{
 		public var count:uint;
 		public var fillStyles:Vector.<FillStyleRecord>;

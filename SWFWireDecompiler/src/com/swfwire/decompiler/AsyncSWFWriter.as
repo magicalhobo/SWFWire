@@ -140,7 +140,7 @@ package com.swfwire.decompiler
 			
 			writeSWFHeader(_currentContext, _currentSWF.header);
 			
-			var iter:int;
+			var iter:uint;
 			var tagCount:uint = _currentContext.tagBytes.length;
 			
 			for(iter = 0; iter < tagCount; iter++)

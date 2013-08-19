@@ -1,8 +1,6 @@
 package com.swfwire.decompiler
 {
 	import com.swfwire.decompiler.data.swf.SWFHeader;
-	import com.swfwire.decompiler.data.swf.records.TagHeaderRecord;
-	import com.swfwire.utils.ByteArrayUtil;
 	
 	import flash.utils.ByteArray;
 	import flash.utils.CompressionAlgorithm;

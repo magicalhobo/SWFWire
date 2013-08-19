@@ -1,18 +1,31 @@
 package com.swfwire.decompiler
 {
-	import com.swfwire.decompiler.SWF7Reader;
-	import com.swfwire.decompiler.data.swf.*;
-	import com.swfwire.decompiler.data.swf.records.*;
+	import com.swfwire.decompiler.data.swf.records.EndShapeRecord;
+	import com.swfwire.decompiler.data.swf.records.FilterListRecord;
+	import com.swfwire.decompiler.data.swf.records.FilterRecord;
+	import com.swfwire.decompiler.data.swf.records.IShapeRecord;
+	import com.swfwire.decompiler.data.swf.records.RectangleRecord;
+	import com.swfwire.decompiler.data.swf.records.TagHeaderRecord;
 	import com.swfwire.decompiler.data.swf.tags.SWFTag;
-	import com.swfwire.decompiler.data.swf2.records.StyleChangeRecord2;
-	import com.swfwire.decompiler.data.swf2.tags.DefineBitsJPEG2Tag;
 	import com.swfwire.decompiler.data.swf3.records.ButtonRecord2;
 	import com.swfwire.decompiler.data.swf3.records.FillStyleArrayRecord3;
 	import com.swfwire.decompiler.data.swf3.records.FillStyleRecord2;
 	import com.swfwire.decompiler.data.swf3.records.GradientControlPointRecord2;
-	import com.swfwire.decompiler.data.swf3.records.ShapeWithStyleRecord3;
-	import com.swfwire.decompiler.data.swf8.records.*;
-	import com.swfwire.decompiler.data.swf8.tags.*;
+	import com.swfwire.decompiler.data.swf8.records.FocalGradientRecord;
+	import com.swfwire.decompiler.data.swf8.records.FontShapeRecord;
+	import com.swfwire.decompiler.data.swf8.records.KerningRecord;
+	import com.swfwire.decompiler.data.swf8.records.LineStyle2ArrayRecord;
+	import com.swfwire.decompiler.data.swf8.records.LineStyle2Record;
+	import com.swfwire.decompiler.data.swf8.records.ShapeWithStyleRecord4;
+	import com.swfwire.decompiler.data.swf8.records.StyleChangeRecord4;
+	import com.swfwire.decompiler.data.swf8.records.ZoneDataRecord;
+	import com.swfwire.decompiler.data.swf8.records.ZoneRecord;
+	import com.swfwire.decompiler.data.swf8.tags.CSMTextSettingsTag;
+	import com.swfwire.decompiler.data.swf8.tags.DefineFont3Tag;
+	import com.swfwire.decompiler.data.swf8.tags.DefineFontAlignZonesTag;
+	import com.swfwire.decompiler.data.swf8.tags.DefineScalingGridTag;
+	import com.swfwire.decompiler.data.swf8.tags.DefineShape4Tag;
+	import com.swfwire.decompiler.data.swf8.tags.FileAttributesTag;
 
 	public class SWF8Reader extends SWF7Reader
 	{
@@ -522,17 +535,51 @@ package com.swfwire.decompiler
 			return record;
 		}
 		
-		protected override function readButtonRecord2(context:SWFReaderContext):ButtonRecord2
+		protected function readFilterListRecord(context:SWFReaderContext):FilterListRecord
 		{
-			var record:ButtonRecord2 = new ButtonRecord2(readButtonRecord(context));
-			record.buttonHasBlendMode = Boolean(record.reserved & 0x2);
-			record.buttonHasFilterList = Boolean(record.reserved & 0x1);
+			var record:FilterListRecord = new FilterListRecord();
+			var filterCount:uint = context.bytes.readUI8();
+			record.filters = new Vector.<FilterRecord>(filterCount);
+			for(var iter:uint = 0; iter < filterCount; iter++)
+			{
+				record.filters[iter] = readFilterRecord(context);
+			}
+			return record;
+		}
+		
+		protected function readFilterRecord(context:SWFReaderContext):FilterRecord
+		{
+			var record:FilterRecord = new FilterRecord();
+			record.filterId = context.bytes.readUI8();
+			switch(record.filterId)
+			{
+				case 0:
+					record.dropShadowFilter = readDropShadowFilterRecord(context);
+					break;
+				// TODO : Add others filters
+			}
+			return record;
+		}
+		
+		override protected function readButtonRecord2(context:SWFReaderContext):ButtonRecord2
+		{
+			var record:ButtonRecord2 = new ButtonRecord2();
+			record.reserved = context.bytes.readUB(2);
+			var hasBlendMode:Boolean = context.bytes.readFlag();
+			var hasFilterList:Boolean = context.bytes.readFlag();
+			record.stateHitTest = context.bytes.readFlag();
+			record.stateDown = context.bytes.readFlag();
+			record.stateOver = context.bytes.readFlag();
+			record.stateUp = context.bytes.readFlag();
+			record.characterId = context.bytes.readUI16();
+			record.placeDepth = context.bytes.readUI16();
+			record.placeMatrix = readMatrixRecord(context);
 			record.colorTransform = readCXFormWithAlphaRecord(context);
-			if (record.buttonHasFilterList)
+			if(hasFilterList)
 			{
 				record.filterList = readFilterListRecord(context);
 			}
-			if (record.buttonHasBlendMode)
+			if(hasBlendMode)
 			{
 				record.blendMode = context.bytes.readUI8();
 			}

@@ -6,8 +6,6 @@ package com.swfwire.decompiler.data.swf3.tags
 	import com.swfwire.decompiler.data.swf3.actions.ButtonCondAction;
 	import com.swfwire.decompiler.data.swf3.records.ButtonRecord2;
 	
-	import mx.controls.Button;
-	
 	public class DefineButton2Tag extends SWFTag
 	{
 		public var buttonId:uint;

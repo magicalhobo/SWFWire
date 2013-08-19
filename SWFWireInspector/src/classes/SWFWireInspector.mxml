@@ -315,6 +315,8 @@
 				
 				if(!workersAvailable)
 				{
+					lastSource = bytes;
+					
 					var swfBytes:SWFByteArray = new SWFByteArray(bytes);
 					var swf:AsyncSWFReader = new AsyncSWFReader();
 					

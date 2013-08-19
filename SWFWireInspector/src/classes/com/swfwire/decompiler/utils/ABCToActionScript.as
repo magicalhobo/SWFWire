@@ -2338,7 +2338,7 @@ package com.swfwire.decompiler.utils
 					'function ',
 				];
 				
-				for(var iter:int = 0; iter < typeOrder.length; iter++)
+				for(var iter:uint = 0; iter < typeOrder.length; iter++)
 				{
 					if(startsWith(str, typeOrder[iter]))
 					{

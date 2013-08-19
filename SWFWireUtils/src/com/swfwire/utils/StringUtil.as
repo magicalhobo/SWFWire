@@ -15,7 +15,7 @@ package com.swfwire.utils
 		public static function repeat(string:String, repetitions:int):String
 		{
 			var newString:String = '';
-			for(var iter:int = 0; iter < repetitions; iter++)
+			for(var iter:uint = 0; iter < repetitions; iter++)
 			{
 				newString += string;
 			}
@@ -58,7 +58,7 @@ package com.swfwire.utils
 		{ 
 			var decodedString:String = ''; 
 			var hexCodes:Array = string.split(new RegExp('[%:]', 'g')); 
-			for(var iter:int = 0; iter < hexCodes.length; iter++)
+			for(var iter:uint = 0; iter < hexCodes.length; iter++)
 			{ 
 				var hexCode:String = hexCodes[iter].substring(0,2); 
 				var char:String = String.fromCharCode(parseInt(hexCodes[iter].substring(0, 2), 16)) + hexCodes[iter].substring(2); 

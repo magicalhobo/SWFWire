@@ -2,8 +2,48 @@ package com.swfwire.decompiler
 {
 	import com.swfwire.decompiler.data.swf.SWF;
 	import com.swfwire.decompiler.data.swf.SWFHeader;
-	import com.swfwire.decompiler.data.swf.records.*;
-	import com.swfwire.decompiler.data.swf.tags.*;
+	import com.swfwire.decompiler.data.swf.records.ButtonRecord;
+	import com.swfwire.decompiler.data.swf.records.CurvedEdgeRecord;
+	import com.swfwire.decompiler.data.swf.records.EndShapeRecord;
+	import com.swfwire.decompiler.data.swf.records.FillStyleArrayRecord;
+	import com.swfwire.decompiler.data.swf.records.FillStyleRecord;
+	import com.swfwire.decompiler.data.swf.records.FrameLabelRecord;
+	import com.swfwire.decompiler.data.swf.records.GlyphEntryRecord;
+	import com.swfwire.decompiler.data.swf.records.GradientControlPointRecord;
+	import com.swfwire.decompiler.data.swf.records.GradientRecord;
+	import com.swfwire.decompiler.data.swf.records.IShapeRecord;
+	import com.swfwire.decompiler.data.swf.records.LanguageCodeRecord;
+	import com.swfwire.decompiler.data.swf.records.LineStyleArrayRecord;
+	import com.swfwire.decompiler.data.swf.records.LineStyleRecord;
+	import com.swfwire.decompiler.data.swf.records.MatrixRecord;
+	import com.swfwire.decompiler.data.swf.records.RGBARecord;
+	import com.swfwire.decompiler.data.swf.records.RGBRecord;
+	import com.swfwire.decompiler.data.swf.records.RectangleRecord;
+	import com.swfwire.decompiler.data.swf.records.SceneRecord;
+	import com.swfwire.decompiler.data.swf.records.ShapeWithStyleRecord;
+	import com.swfwire.decompiler.data.swf.records.StraightEdgeRecord;
+	import com.swfwire.decompiler.data.swf.records.StyleChangeRecord;
+	import com.swfwire.decompiler.data.swf.records.TagHeaderRecord;
+	import com.swfwire.decompiler.data.swf.records.TextRecord;
+	import com.swfwire.decompiler.data.swf.tags.DefineBitsTag;
+	import com.swfwire.decompiler.data.swf.tags.DefineButtonTag;
+	import com.swfwire.decompiler.data.swf.tags.DefineFontInfoTag;
+	import com.swfwire.decompiler.data.swf.tags.DefineSceneAndFrameLabelDataTag;
+	import com.swfwire.decompiler.data.swf.tags.DefineShapeTag;
+	import com.swfwire.decompiler.data.swf.tags.DefineSoundTag;
+	import com.swfwire.decompiler.data.swf.tags.DefineTextTag;
+	import com.swfwire.decompiler.data.swf.tags.EndTag;
+	import com.swfwire.decompiler.data.swf.tags.JPEGTablesTag;
+	import com.swfwire.decompiler.data.swf.tags.MetadataTag;
+	import com.swfwire.decompiler.data.swf.tags.PlaceObjectTag;
+	import com.swfwire.decompiler.data.swf.tags.RemoveObjectTag;
+	import com.swfwire.decompiler.data.swf.tags.SWFTag;
+	import com.swfwire.decompiler.data.swf.tags.SetBackgroundColorTag;
+	import com.swfwire.decompiler.data.swf.tags.ShowFrameTag;
+	import com.swfwire.decompiler.data.swf.tags.SoundStreamBlockTag;
+	import com.swfwire.decompiler.data.swf.tags.SoundStreamHeadTag;
+	import com.swfwire.decompiler.data.swf.tags.StartSoundTag;
+	import com.swfwire.decompiler.data.swf.tags.UnknownTag;
 	
 	import flash.events.EventDispatcher;
 	import flash.utils.ByteArray;
@@ -64,20 +104,21 @@ package com.swfwire.decompiler
 				result.warnings.push('Invalid file version ('+swf.header.fileVersion+') in header.');
 			}
 			
-			if (!swf.tags.length || !(swf.tags[swf.tags.length-1] is EndTag))
-			{
-				result.errors.push('The type of the last tag must be EndTag');
-				return result;
-			}
-			
 			var tagCount:uint = swf.tags.length;
 			var tagBytes:Vector.<ByteArray> = new Vector.<ByteArray>(tagCount);
 			
+			if(!tagCount)
+			{
+				result.warnings.push('No tags were found.');
+			}
+			
 			var iter:uint;
+			
+			var tag:SWFTag;
 			
 			for(iter = 0; iter < tagCount; iter++)
 			{
-				var tag:SWFTag = swf.tags[iter];
+				tag = swf.tags[iter];
 				var currentTagBytes:ByteArray = new ByteArray();
 				context.tagId = iter;
 				context.bytes = new SWFByteArray(currentTagBytes);
@@ -93,6 +134,11 @@ package com.swfwire.decompiler
 				tag.header.length = currentTagBytes.length;
 				tagBytes[iter] = currentTagBytes;
 				context.tagStack.push(tag);
+			}
+			
+			if(!(tag is EndTag))
+			{
+				result.warnings.push('The last tag was not an EndTag.');
 			}
 			
 			var rawBytes:ByteArray = new ByteArray();
@@ -631,22 +677,21 @@ package com.swfwire.decompiler
 		protected function writeDefineButtonTag(context:SWFWriterContext, tag:DefineButtonTag):void
 		{
 			context.bytes.writeUI16(tag.buttonId);
-			if (tag.characters.length == 0)
+			var characterCount:uint = tag.characters.length;
+			if(characterCount == 0)
 			{
-				throw new Error("The Characters field must not be empty.");
+				context.result.warnings.push('DefineButton character count was 0.');
 			}
-			for each (var character:ButtonRecord in tag.characters)
+			for(var iter:uint = 0; iter < characterCount; iter++)
 			{
-				writeButtonRecord(context, character);
+				writeButtonRecord(context, tag.characters[iter]);
 			}
 			context.bytes.writeUI8(0);
 		}
 		
 		protected function writeButtonRecord(context:SWFWriterContext, record:ButtonRecord):void
 		{
-			context.bytes.writeUB(2, record.reserved);
-			context.bytes.writeFlag(record.buttonHasBlendMode);
-			context.bytes.writeFlag(record.buttonHasFilterList);
+			context.bytes.writeUB(4, record.reserved);
 			context.bytes.writeFlag(record.stateHitTest);
 			context.bytes.writeFlag(record.stateDown);
 			context.bytes.writeFlag(record.stateOver);

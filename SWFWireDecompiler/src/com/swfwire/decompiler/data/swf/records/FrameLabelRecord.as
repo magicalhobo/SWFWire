@@ -1,9 +1,6 @@
 package com.swfwire.decompiler.data.swf.records
 {
-	import com.swfwire.decompiler.SWFReader;
-	import com.swfwire.decompiler.SWFByteArray;
-
-	public class FrameLabelRecord implements IRecord
+	public class FrameLabelRecord
 	{
 		public var frameNum:uint;
 		public var frameLabel:String;

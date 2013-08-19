@@ -12,8 +12,33 @@ package com.swfwire.decompiler
 	import com.swfwire.decompiler.data.swf.tags.EndTag;
 	import com.swfwire.decompiler.data.swf.tags.SWFTag;
 	import com.swfwire.decompiler.data.swf3.actions.ButtonCondAction;
-	import com.swfwire.decompiler.data.swf3.records.*;
-	import com.swfwire.decompiler.data.swf3.tags.*;
+	import com.swfwire.decompiler.data.swf3.records.ARGBRecord;
+	import com.swfwire.decompiler.data.swf3.records.ActionRecord;
+	import com.swfwire.decompiler.data.swf3.records.AlphaBitmapDataRecord;
+	import com.swfwire.decompiler.data.swf3.records.AlphaColorMapDataRecord;
+	import com.swfwire.decompiler.data.swf3.records.ButtonRecord2;
+	import com.swfwire.decompiler.data.swf3.records.CXFormWithAlphaRecord;
+	import com.swfwire.decompiler.data.swf3.records.FillStyleArrayRecord3;
+	import com.swfwire.decompiler.data.swf3.records.FillStyleRecord2;
+	import com.swfwire.decompiler.data.swf3.records.GradientControlPointRecord2;
+	import com.swfwire.decompiler.data.swf3.records.GradientRecord2;
+	import com.swfwire.decompiler.data.swf3.records.LineStyleArrayRecord2;
+	import com.swfwire.decompiler.data.swf3.records.LineStyleRecord2;
+	import com.swfwire.decompiler.data.swf3.records.ShapeWithStyleRecord3;
+	import com.swfwire.decompiler.data.swf3.records.StyleChangeRecord3;
+	import com.swfwire.decompiler.data.swf3.tags.DefineBitsJPEG3Tag;
+	import com.swfwire.decompiler.data.swf3.tags.DefineBitsLossless2Tag;
+	import com.swfwire.decompiler.data.swf3.tags.DefineButton2Tag;
+	import com.swfwire.decompiler.data.swf3.tags.DefineFont2Tag;
+	import com.swfwire.decompiler.data.swf3.tags.DefineMorphShapeTag;
+	import com.swfwire.decompiler.data.swf3.tags.DefineShape3Tag;
+	import com.swfwire.decompiler.data.swf3.tags.DefineSpriteTag;
+	import com.swfwire.decompiler.data.swf3.tags.DefineText2Tag;
+	import com.swfwire.decompiler.data.swf3.tags.DoActionTag;
+	import com.swfwire.decompiler.data.swf3.tags.FrameLabelTag;
+	import com.swfwire.decompiler.data.swf3.tags.PlaceObject2Tag;
+	import com.swfwire.decompiler.data.swf3.tags.RemoveObject2Tag;
+	import com.swfwire.decompiler.data.swf3.tags.SoundStreamHead2Tag;
 	
 	import flash.utils.ByteArray;
 	
@@ -482,9 +507,10 @@ package com.swfwire.decompiler
 		protected override function writeDefineButtonTag(context:SWFWriterContext, tag:DefineButtonTag):void
 		{
 			super.writeDefineButtonTag(context, tag);
-			for each (var action:ActionRecord in tag.actions)
+			var actionCount:uint = tag.actions.length;
+			for(var iter:uint = 0; iter < actionCount; iter++)
 			{
-				writeActionRecord(context, action);
+				writeActionRecord(context, tag.actions[iter]);
 			}
 			context.bytes.writeUI8(0);
 		}
@@ -495,13 +521,18 @@ package com.swfwire.decompiler
 			context.bytes.writeUB(7, 0);
 			context.bytes.writeFlag(tag.trackAsMenu);
 			context.bytes.writeUI16(tag.actionOffset); // todo : set the right value
-			for each (var character:ButtonRecord2 in tag.characters)
+			var characterCount:uint = tag.characters.length;
+			if(characterCount == 0)
 			{
-				writeButtonRecord2(context, character);
+				context.result.warnings.push('DefineButton2 character count was 0.');
+			}
+			for(var iter:uint = 0; iter < characterCount; iter++)
+			{
+				writeButtonRecord2(context, tag.characters[iter]);
 			}
 			context.bytes.writeUI8(0);
 			var actionsLength:uint = tag.actions.length;
-			for (var actionIndex:uint = 0; actionIndex < actionsLength; actionIndex++)
+			for(var actionIndex:uint = 0; actionIndex < actionsLength; actionIndex++)
 			{
 				writeButtonCondAction(context, tag.actions[actionIndex], (actionIndex == (actionsLength - 1)));
 			}
@@ -509,31 +540,15 @@ package com.swfwire.decompiler
 		
 		protected function writeButtonRecord2(context:SWFWriterContext, record:ButtonRecord2):void
 		{
-			writeButtonRecord(context, record);
+			context.bytes.writeUB(4, record.reserved);
+			context.bytes.writeFlag(record.stateHitTest);
+			context.bytes.writeFlag(record.stateDown);
+			context.bytes.writeFlag(record.stateOver);
+			context.bytes.writeFlag(record.stateUp);
+			context.bytes.writeUI16(record.characterId);
+			context.bytes.writeUI16(record.placeDepth);
+			writeMatrixRecord(context, record.placeMatrix);
 			writeCXFormWithAlphaRecord(context, record.colorTransform);
-			writeFilterListRecord(context, record.filterList);
-			context.bytes.writeUI8(record.blendMode);
-		}
-		
-		protected function writeFilterListRecord(context:SWFWriterContext, record:FilterListRecord):void
-		{
-			context.bytes.writeUI8(record.filters.length);
-			for each (var filter:FilterRecord in record.filters)
-			{
-				writeFilterRecord(context, filter);
-			}
-		}
-		
-		protected function writeFilterRecord(context:SWFWriterContext, record:FilterRecord):void
-		{
-			context.bytes.writeUI8(record.filterId);
-			switch(record.filterId)
-			{
-				case 0:
-					writeDropShadowFilterRecord(context, record.dropShadowFilter);
-					break;
-				// TODO : Add others filters
-			}
 		}
 		
 		protected function writeDropShadowFilterRecord(context:SWFWriterContext, record:DropShadowFilterRecord):void
@@ -554,7 +569,7 @@ package com.swfwire.decompiler
 		{
 			context.bytes.writeUI16(isLastRecord ? 0 : action.condActionSize);
 			var size:uint = action.condActionSize - 2;
-			if (size > 0)
+			if(size > 0)
 			{
 				context.bytes.writeFlag(action.condIdleToOverDown);
 				context.bytes.writeFlag(action.condOutDownToldle);
@@ -566,24 +581,24 @@ package com.swfwire.decompiler
 				context.bytes.writeFlag(action.condIdleToOverUp);
 				size--;
 			}
-			if (size > 0)
+			if(size > 0)
 			{
 				context.bytes.writeUB(7, action.condKeyPress);
 				context.bytes.writeFlag(action.condOverDownToIdle);
 				size--;
 			}
-			if (size > 0)
+			if(size > 0)
 			{
-				for each (var record:ActionRecord in action.actions)
+				for(var iter:uint = 0; iter < action.actions.length; iter++)
 				{
 					var startPosition:uint = context.bytes.getBytePosition();
-					action.actions.push(writeActionRecord(context, record));
+					action.actions.push(writeActionRecord(context, action.actions[iter]));
 					size -= (context.bytes.getBytePosition() - startPosition);
-					if (size == 0)
+					if(size == 0)
 					{
 						break;
 					}
-					if (size < 0)
+					if(size < 0)
 					{
 						throw new Error("Wrong CondActionSize value");
 					}
@@ -594,7 +609,7 @@ package com.swfwire.decompiler
 		
 		protected function writeActionRecord(context:SWFWriterContext, record:ActionRecord):void
 		{
-			throw("Writing ActionRecord not implemented");
+			throw new Error("Writing ActionRecord not implemented");
 		}
 	}
 }

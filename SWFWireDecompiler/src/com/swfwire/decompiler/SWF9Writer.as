@@ -103,9 +103,9 @@ package com.swfwire.decompiler
 		
 		protected override function writeDefineButton2Tag(context:SWFWriterContext, tag:DefineButton2Tag):void
 		{
-			if ((context.tagStack[0] as FileAttributesTag).actionScript3 && (tag.actionOffset || tag.actions.length))
+			if((context.tagStack[0] as FileAttributesTag).actionScript3 && (tag.actionOffset || tag.actions.length))
 			{
-				throw new Error("The Actions field must be empty with AS3.");
+				context.result.warnings.push('If the ActionScript3 field of the FileAttributes tag is 1, there must be no Actions in the DefineButton2 tag.');
 			}
 			super.writeDefineButton2Tag(context, tag);
 		}
