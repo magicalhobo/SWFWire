@@ -3,11 +3,8 @@ package com.swfwire.decompiler
 	import com.swfwire.decompiler.data.swf.records.CurvedEdgeRecord;
 	import com.swfwire.decompiler.data.swf.records.DropShadowFilterRecord;
 	import com.swfwire.decompiler.data.swf.records.EndShapeRecord;
-	import com.swfwire.decompiler.data.swf.records.FilterListRecord;
-	import com.swfwire.decompiler.data.swf.records.FilterRecord;
 	import com.swfwire.decompiler.data.swf.records.IShapeRecord;
 	import com.swfwire.decompiler.data.swf.records.StraightEdgeRecord;
-	import com.swfwire.decompiler.data.swf.records.TagHeaderRecord;
 	import com.swfwire.decompiler.data.swf.tags.DefineButtonTag;
 	import com.swfwire.decompiler.data.swf.tags.EndTag;
 	import com.swfwire.decompiler.data.swf.tags.SWFTag;
@@ -549,20 +546,6 @@ package com.swfwire.decompiler
 			context.bytes.writeUI16(record.placeDepth);
 			writeMatrixRecord(context, record.placeMatrix);
 			writeCXFormWithAlphaRecord(context, record.colorTransform);
-		}
-		
-		protected function writeDropShadowFilterRecord(context:SWFWriterContext, record:DropShadowFilterRecord):void
-		{
-			writeRGBARecord(context, record.color);
-			context.bytes.writeFixed16_16(record.blurX);
-			context.bytes.writeFixed16_16(record.blurY);
-			context.bytes.writeFixed16_16(record.angle);
-			context.bytes.writeFixed16_16(record.distance);
-			context.bytes.writeFixed8_8(record.strength);
-			context.bytes.writeFlag(record.innerShadow);
-			context.bytes.writeFlag(record.knockout);
-			context.bytes.writeFlag(record.compositeSource);
-			context.bytes.writeUB(5, record.passes);
 		}
 		
 		protected function writeButtonCondAction(context:SWFWriterContext, action:ButtonCondAction, isLastRecord:Boolean):void

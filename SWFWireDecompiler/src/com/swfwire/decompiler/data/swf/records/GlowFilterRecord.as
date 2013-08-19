@@ -1,6 +1,6 @@
 package com.swfwire.decompiler.data.swf.records
 {
-	public class GlowFilterRecord
+	public class GlowFilterRecord implements IFilterRecord
 	{
 		public var color:RGBARecord;
 		public var blurX:Number;
@@ -10,6 +10,11 @@ package com.swfwire.decompiler.data.swf.records
 		public var knockout:Boolean;
 		public var compositeSource:Boolean;
 		public var passes:uint;
+		
+		public function get filterId():uint
+		{
+			return 2;
+		}
 
 		public function GlowFilterRecord(color:RGBARecord = null, blurX:Number = NaN, blurY:Number = NaN, strength:Number = NaN, innerGlow:Boolean = false, knockout:Boolean = false, compositeSource:Boolean = false, passes:uint = 0)
 		{

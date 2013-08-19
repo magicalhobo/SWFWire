@@ -2,13 +2,13 @@ package com.swfwire.decompiler.data.swf.records
 {
 	public class FilterListRecord
 	{
-		public var filters:Vector.<FilterRecord>;
+		public var filters:Vector.<IFilterRecord>;
 
-		public function FilterListRecord(filters:Vector.<FilterRecord> = null)
+		public function FilterListRecord(filters:Vector.<IFilterRecord> = null)
 		{
 			if(filters == null)
 			{
-				filters = new Vector.<FilterRecord>();
+				filters = new Vector.<IFilterRecord>();
 			}
 
 			this.filters = filters;

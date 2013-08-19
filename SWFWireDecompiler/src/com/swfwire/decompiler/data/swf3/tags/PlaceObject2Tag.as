@@ -1,11 +1,9 @@
 package com.swfwire.decompiler.data.swf3.tags
 {
-	import com.swfwire.decompiler.data.swf.SWF;
-	import com.swfwire.decompiler.SWFByteArray;
-	import com.swfwire.decompiler.data.swf3.records.CXFormWithAlphaRecord;
 	import com.swfwire.decompiler.data.swf.records.ClipActionsRecord;
 	import com.swfwire.decompiler.data.swf.records.MatrixRecord;
 	import com.swfwire.decompiler.data.swf.tags.SWFTag;
+	import com.swfwire.decompiler.data.swf3.records.CXFormWithAlphaRecord;
 
 	public class PlaceObject2Tag extends SWFTag
 	{
@@ -21,6 +19,15 @@ package com.swfwire.decompiler.data.swf3.tags
 
 		public function PlaceObject2Tag(move:Boolean = false, depth:uint = 0, characterId:Object = null, matrix:MatrixRecord = null, colorTransform:CXFormWithAlphaRecord = null, ratio:Object = null, name:String = null, clipDepth:Object = null, clipActions:ClipActionsRecord = null)
 		{
+			if(colorTransform == null)
+			{
+				colorTransform = new CXFormWithAlphaRecord();
+			}
+			if(clipActions == null)
+			{
+				clipActions = new ClipActionsRecord();
+			}
+			
 			this.move = move;
 			this.depth = depth;
 			this.characterId = characterId;

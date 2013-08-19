@@ -1,6 +1,6 @@
 package com.swfwire.decompiler.data.swf.records
 {
-	public class BevelFilterRecord
+	public class BevelFilterRecord implements IFilterRecord
 	{
 		public var shadowColor:RGBARecord;
 		public var highlightColor:RGBARecord;
@@ -14,7 +14,12 @@ package com.swfwire.decompiler.data.swf.records
 		public var compositeSource:Boolean;
 		public var onTop:Boolean;
 		public var passes:uint;
-
+		
+		public function get filterId():uint
+		{
+			return 3;
+		}
+		
 		public function BevelFilterRecord(shadowColor:RGBARecord = null, highlightColor:RGBARecord = null, blurX:Number = NaN, blurY:Number = NaN, angle:Number = NaN, distance:Number = NaN, strength:Number = NaN, innerShadow:Boolean = false, knockout:Boolean = false, compositeSource:Boolean = false, onTop:Boolean = false, passes:uint = 0)
 		{
 			if(shadowColor == null)

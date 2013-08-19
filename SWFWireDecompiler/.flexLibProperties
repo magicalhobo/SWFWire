@@ -277,7 +277,6 @@
     <classEntry path="com.swfwire.decompiler.data.swf.records.FillStyleArrayRecord"/>
     <classEntry path="com.swfwire.decompiler.data.swf.records.FillStyleRecord"/>
     <classEntry path="com.swfwire.decompiler.data.swf.records.FilterListRecord"/>
-    <classEntry path="com.swfwire.decompiler.data.swf.records.FilterRecord"/>
     <classEntry path="com.swfwire.decompiler.data.swf.records.FrameLabelRecord"/>
     <classEntry path="com.swfwire.decompiler.data.swf.records.GlowFilterRecord"/>
     <classEntry path="com.swfwire.decompiler.data.swf.records.GlyphEntryRecord"/>
@@ -287,6 +286,7 @@
     <classEntry path="com.swfwire.decompiler.data.swf.records.GradientControlPointRecord"/>
     <classEntry path="com.swfwire.decompiler.data.swf.records.GradientGlowFilterRecord"/>
     <classEntry path="com.swfwire.decompiler.data.swf.records.GradientRecord"/>
+    <classEntry path="com.swfwire.decompiler.data.swf.records.IFilterRecord"/>
     <classEntry path="com.swfwire.decompiler.data.swf.records.IGradientRecord"/>
     <classEntry path="com.swfwire.decompiler.data.swf.records.IRGBRecord"/>
     <classEntry path="com.swfwire.decompiler.data.swf.records.IShapeRecord"/>

@@ -1,12 +1,17 @@
 package com.swfwire.decompiler
 {
+	import com.swfwire.decompiler.data.swf.records.BevelFilterRecord;
+	import com.swfwire.decompiler.data.swf.records.BlurFilterRecord;
 	import com.swfwire.decompiler.data.swf.records.ClipActionRecord;
 	import com.swfwire.decompiler.data.swf.records.ClipActionsRecord;
 	import com.swfwire.decompiler.data.swf.records.ClipEventFlagsRecord;
+	import com.swfwire.decompiler.data.swf.records.ColorMatrixFilterRecord;
+	import com.swfwire.decompiler.data.swf.records.ConvolutionFilterRecord;
 	import com.swfwire.decompiler.data.swf.records.DropShadowFilterRecord;
 	import com.swfwire.decompiler.data.swf.records.EndShapeRecord;
-	import com.swfwire.decompiler.data.swf.records.FilterListRecord;
-	import com.swfwire.decompiler.data.swf.records.FilterRecord;
+	import com.swfwire.decompiler.data.swf.records.GlowFilterRecord;
+	import com.swfwire.decompiler.data.swf.records.GradientBevelFilterRecord;
+	import com.swfwire.decompiler.data.swf.records.GradientGlowFilterRecord;
 	import com.swfwire.decompiler.data.swf.records.IShapeRecord;
 	import com.swfwire.decompiler.data.swf.records.RGBARecord;
 	import com.swfwire.decompiler.data.swf.records.TagHeaderRecord;
@@ -437,23 +442,7 @@ package com.swfwire.decompiler
 			record.colorTransform = readCXFormWithAlphaRecord(context);
 			return record;
 		}
-		
-		protected function readDropShadowFilterRecord(context:SWFReaderContext):DropShadowFilterRecord
-		{
-			var record:DropShadowFilterRecord = new DropShadowFilterRecord();
-			record.color = readRGBARecord(context);
-			record.blurX = context.bytes.readFixed16_16();
-			record.blurY = context.bytes.readFixed16_16();
-			record.angle = context.bytes.readFixed16_16();
-			record.distance = context.bytes.readFixed16_16();
-			record.strength = context.bytes.readFixed8_8();
-			record.innerShadow = context.bytes.readFlag();
-			record.knockout = context.bytes.readFlag();
-			record.compositeSource = context.bytes.readFlag();
-			record.passes = context.bytes.readUB(5);
-			return record;
-		}
-		
+
 		protected function readRGBARecord(context:SWFReaderContext):RGBARecord
 		{
 			var record:RGBARecord = new RGBARecord();

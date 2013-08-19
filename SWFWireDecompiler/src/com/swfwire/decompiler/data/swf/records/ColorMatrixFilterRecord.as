@@ -1,8 +1,13 @@
 package com.swfwire.decompiler.data.swf.records
 {
-	public class ColorMatrixFilterRecord
+	public class ColorMatrixFilterRecord implements IFilterRecord
 	{
 		public var matrix:Vector.<Number>;
+		
+		public function get filterId():uint
+		{
+			return 6;
+		}
 
 		public function ColorMatrixFilterRecord(matrix:Vector.<Number> = null)
 		{

@@ -72,7 +72,6 @@ package com.swfwire.decompiler
 	import com.swfwire.decompiler.data.swf.records.FillStyleArrayRecord;
 	import com.swfwire.decompiler.data.swf.records.FillStyleRecord;
 	import com.swfwire.decompiler.data.swf.records.FilterListRecord;
-	import com.swfwire.decompiler.data.swf.records.FilterRecord;
 	import com.swfwire.decompiler.data.swf.records.FrameLabelRecord;
 	import com.swfwire.decompiler.data.swf.records.GlowFilterRecord;
 	import com.swfwire.decompiler.data.swf.records.GlyphEntryRecord;
@@ -82,6 +81,7 @@ package com.swfwire.decompiler
 	import com.swfwire.decompiler.data.swf.records.GradientControlPointRecord;
 	import com.swfwire.decompiler.data.swf.records.GradientGlowFilterRecord;
 	import com.swfwire.decompiler.data.swf.records.GradientRecord;
+	import com.swfwire.decompiler.data.swf.records.IFilterRecord;
 	import com.swfwire.decompiler.data.swf.records.IGradientRecord;
 	import com.swfwire.decompiler.data.swf.records.IRGBRecord;
 	import com.swfwire.decompiler.data.swf.records.IShapeRecord;
@@ -319,7 +319,6 @@ package com.swfwire.decompiler
 			FillStyleRecord,
 			FillStyleRecord2,
 			FilterListRecord,
-			FilterRecord,
 			FocalGradientRecord,
 			FontShapeRecord,
 			FrameLabelRecord,
@@ -334,6 +333,7 @@ package com.swfwire.decompiler
 			GradientGlowFilterRecord,
 			GradientRecord,
 			GradientRecord2,
+			IFilterRecord,
 			IGradientRecord,
 			IInstruction,
 			IMultiname,

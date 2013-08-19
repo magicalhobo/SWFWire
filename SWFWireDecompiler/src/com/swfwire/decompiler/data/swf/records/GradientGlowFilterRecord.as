@@ -1,10 +1,9 @@
 package com.swfwire.decompiler.data.swf.records
 {
-	public class GradientGlowFilterRecord
+	public class GradientGlowFilterRecord implements IFilterRecord
 	{
-		public var numColors:uint;
 		public var gradientColors:Vector.<RGBARecord>;
-		public var gradientRatio:Vector.<uint>;
+		public var gradientRatios:Vector.<uint>;
 		public var blurX:Number;
 		public var blurY:Number;
 		public var angle:Number;
@@ -15,8 +14,13 @@ package com.swfwire.decompiler.data.swf.records
 		public var compositeSource:Boolean;
 		public var onTop:Boolean;
 		public var passes:uint;
+		
+		public function get filterId():uint
+		{
+			return 4;
+		}
 
-		public function GradientGlowFilterRecord(numColors:uint = 0, gradientColors:Vector.<RGBARecord> = null, gradientRatio:Vector.<uint> = null, blurX:Number = NaN, blurY:Number = NaN, angle:Number = NaN, distance:Number = NaN, strength:Number = NaN, innerShadow:Boolean = false, knockout:Boolean = false, compositeSource:Boolean = false, onTop:Boolean = false, passes:uint = 0)
+		public function GradientGlowFilterRecord(gradientColors:Vector.<RGBARecord> = null, gradientRatio:Vector.<uint> = null, blurX:Number = NaN, blurY:Number = NaN, angle:Number = NaN, distance:Number = NaN, strength:Number = NaN, innerShadow:Boolean = false, knockout:Boolean = false, compositeSource:Boolean = false, onTop:Boolean = false, passes:uint = 0)
 		{
 			if(gradientColors == null)
 			{
@@ -27,9 +31,8 @@ package com.swfwire.decompiler.data.swf.records
 				gradientRatio = new Vector.<uint>();
 			}
 
-			this.numColors = numColors;
 			this.gradientColors = gradientColors;
-			this.gradientRatio = gradientRatio;
+			this.gradientRatios = gradientRatio;
 			this.blurX = blurX;
 			this.blurY = blurY;
 			this.angle = angle;

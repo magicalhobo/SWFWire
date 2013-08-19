@@ -1,6 +1,6 @@
 package com.swfwire.decompiler.data.swf.records
 {
-	public class DropShadowFilterRecord
+	public class DropShadowFilterRecord implements IFilterRecord
 	{
 		public var color:RGBARecord;
 		public var blurX:Number;
@@ -12,6 +12,11 @@ package com.swfwire.decompiler.data.swf.records
 		public var knockout:Boolean;
 		public var compositeSource:Boolean;
 		public var passes:uint;
+		
+		public function get filterId():uint
+		{
+			return 0;
+		}
 
 		public function DropShadowFilterRecord(color:RGBARecord = null, blurX:Number = NaN, blurY:Number = NaN, angle:Number = NaN, distance:Number = NaN, strength:Number = NaN, innerShadow:Boolean = false, knockout:Boolean = false, compositeSource:Boolean = false, passes:uint = 0)
 		{
