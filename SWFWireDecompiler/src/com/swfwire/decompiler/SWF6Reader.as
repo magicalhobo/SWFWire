@@ -84,10 +84,10 @@ package com.swfwire.decompiler
 			context.bytes.alignBytes();
 			
 			record.clipActionRecords = new Vector.<ClipActionRecord>();
-			var originalPosition:uint;
+			
 			while(true)
 			{
-				originalPosition = context.bytes.getBytePosition();
+				var originalPosition:uint = context.bytes.getBytePosition();
 				if(context.bytes.readUI32() == 0)
 				{
 					break;
@@ -99,7 +99,6 @@ package com.swfwire.decompiler
 			
 			return record;
 		}
-		
 
 		/*
 		protected function getFillStyle(type:uint, parent:Class):Class

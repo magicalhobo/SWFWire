@@ -98,7 +98,7 @@ package com.swfwire.decompiler
 		
 		protected function writePlaceObject2Tag(context:SWFWriterContext, tag:PlaceObject2Tag):void
 		{
-			context.bytes.writeFlag(tag.clipActions != null);
+			context.bytes.writeUB(1, 0);
 			context.bytes.writeFlag(tag.clipDepth != null);
 			context.bytes.writeFlag(tag.name != null);
 			context.bytes.writeFlag(tag.ratio != null);
@@ -138,12 +138,6 @@ package com.swfwire.decompiler
 			if(tag.clipDepth)
 			{
 				context.bytes.writeUI16(uint(tag.clipDepth));
-			}
-			
-			if(tag.clipActions)
-			{
-				throw new Error('writeClipActionsRecord not implemented.');
-				//writeClipActionsRecord(context, tag.clipActions);
 			}
 		}
 

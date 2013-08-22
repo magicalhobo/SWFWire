@@ -12,18 +12,18 @@ package com.swfwire.decompiler.data.swf8.tags
 		public var reserved:uint;
 		public var depth:uint;
 		public var className:String;
-		public var characterId:Object;
+		public var characterId:uint;
 		public var matrix:MatrixRecord;
 		public var colorTransform:CXFormWithAlphaRecord;
-		public var ratio:Object;
+		public var ratio:uint;
 		public var name:String;
-		public var clipDepth:Object;
+		public var clipDepth:uint;
 		public var surfaceFilterList:FilterListRecord;
 		public var blendMode:uint;
 		public var bitmapCache:uint;
 		public var clipActions:ClipActionsRecord;
 		
-		public function PlaceObject3Tag(move:Boolean = false, reserved:uint = 0, depth:uint = 0, className:String = null, characterId:Object = null, matrix:MatrixRecord = null, colorTransform:CXFormWithAlphaRecord = null, ratio:Object = null, name:String = null, clipDepth:Object = null, surfaceFilterList:FilterListRecord = null, blendMode:uint = 0, bitmapCache:uint = 0, clipActions:ClipActionsRecord = null)
+		public function PlaceObject3Tag(move:Boolean = false, reserved:uint = 0, depth:uint = 0, className:String = null, characterId:uint = 0, matrix:MatrixRecord = null, colorTransform:CXFormWithAlphaRecord = null, ratio:uint = 0, name:String = null, clipDepth:uint = 0, surfaceFilterList:FilterListRecord = null, blendMode:uint = 0, bitmapCache:uint = 0, clipActions:ClipActionsRecord = null)
 		{
 			if(colorTransform == null)
 			{

@@ -1,10 +1,19 @@
 package com.swfwire.decompiler
 {
-	import com.swfwire.decompiler.data.swf.SWF;
+	import com.swfwire.decompiler.data.swf.records.BevelFilterRecord;
+	import com.swfwire.decompiler.data.swf.records.BlurFilterRecord;
+	import com.swfwire.decompiler.data.swf.records.ClipActionRecord;
+	import com.swfwire.decompiler.data.swf.records.ClipActionsRecord;
+	import com.swfwire.decompiler.data.swf.records.ColorMatrixFilterRecord;
+	import com.swfwire.decompiler.data.swf.records.ConvolutionFilterRecord;
 	import com.swfwire.decompiler.data.swf.records.CurvedEdgeRecord;
+	import com.swfwire.decompiler.data.swf.records.DropShadowFilterRecord;
 	import com.swfwire.decompiler.data.swf.records.EndShapeRecord;
 	import com.swfwire.decompiler.data.swf.records.FilterListRecord;
-	import com.swfwire.decompiler.data.swf.records.FilterRecord;
+	import com.swfwire.decompiler.data.swf.records.GlowFilterRecord;
+	import com.swfwire.decompiler.data.swf.records.GradientBevelFilterRecord;
+	import com.swfwire.decompiler.data.swf.records.GradientGlowFilterRecord;
+	import com.swfwire.decompiler.data.swf.records.IFilterRecord;
 	import com.swfwire.decompiler.data.swf.records.IShapeRecord;
 	import com.swfwire.decompiler.data.swf.records.StraightEdgeRecord;
 	import com.swfwire.decompiler.data.swf.tags.SWFTag;
@@ -64,6 +73,9 @@ package com.swfwire.decompiler
 				case FileAttributesTag:
 					writeFileAttributesTag(context, FileAttributesTag(tag));
 					break;
+				case PlaceObject3Tag:
+					writePlaceObject3Tag(context, PlaceObject3Tag(tag));
+					break;
 				case DefineFontAlignZonesTag:
 					writeDefineFontAlignZonesTag(context, DefineFontAlignZonesTag(tag));
 					break;
@@ -97,6 +109,97 @@ package com.swfwire.decompiler
 			context.bytes.writeUB(24, 0);
 		}
 		
+		protected function writePlaceObject3Tag(context:SWFWriterContext, tag:PlaceObject3Tag):void
+		{
+			var hasClipActions:Boolean = tag.clipActions != null;
+			var hasClipDepth:Boolean = tag.clipDepth > 0;
+			var hasName:Boolean = tag.name != null;
+			var hasRatio:Boolean = tag.ratio > 0;
+			var hasColorTransform:Boolean = tag.colorTransform != null;
+			var hasMatrix:Boolean = tag.matrix != null;
+			var hasCharacter:Boolean = tag.characterId > 0;
+			
+			context.bytes.writeFlag(hasClipActions);
+			context.bytes.writeFlag(hasClipDepth);
+			context.bytes.writeFlag(hasName);
+			context.bytes.writeFlag(hasRatio);
+			context.bytes.writeFlag(hasColorTransform);
+			context.bytes.writeFlag(hasMatrix);
+			context.bytes.writeFlag(hasCharacter);
+			
+			context.bytes.writeFlag(tag.move);
+			context.bytes.writeUB(3, tag.reserved);
+			
+			var hasImage:Boolean = hasCharacter || hasClassName;
+			var hasClassName:Boolean = tag.className != null;
+			var hasCacheAsBitmap:Boolean = tag.bitmapCache > 0;
+			var hasBlendMode:Boolean = tag.blendMode > 0;
+			var hasFilterList:Boolean = tag.surfaceFilterList != null;
+			
+			context.bytes.writeFlag(hasImage);
+			context.bytes.writeFlag(hasClassName);
+			context.bytes.writeFlag(hasCacheAsBitmap);
+			context.bytes.writeFlag(hasBlendMode);
+			context.bytes.writeFlag(hasFilterList);
+			
+			context.bytes.writeUI16(tag.depth);
+			
+			if(hasClassName)
+			{
+				context.bytes.writeString(tag.className);
+			}
+			
+			if(hasCharacter)
+			{
+				context.bytes.writeUI16(tag.characterId);
+			}
+			
+			if(hasMatrix)
+			{
+				writeMatrixRecord(context, tag.matrix);
+			}
+			
+			if(hasColorTransform)
+			{
+				writeCXFormWithAlphaRecord(context, tag.colorTransform);
+			}
+			
+			if(hasRatio)
+			{
+				context.bytes.writeUI16(tag.ratio);
+			}
+			
+			if(hasName)
+			{
+				context.bytes.writeString(tag.name);
+			}
+			
+			if(hasClipDepth)
+			{
+				context.bytes.writeUI16(tag.clipDepth);
+			}
+			
+			if(hasFilterList)
+			{
+				writeFilterListRecord(context, tag.surfaceFilterList);
+			}
+			
+			if(hasBlendMode)
+			{
+				context.bytes.writeUI8(tag.blendMode);
+			}
+			
+			if(hasCacheAsBitmap)
+			{
+				context.bytes.writeUI8(tag.bitmapCache);
+			}
+			
+			if(hasClipActions)
+			{
+				writeClipActionsRecord(context, tag.clipActions);
+			}
+		}
+
 		protected function writeDefineShape4Tag(context:SWFWriterContext, tag:DefineShape4Tag):void
 		{
 			context.bytes.writeUI16(tag.shapeId);
@@ -495,15 +598,160 @@ package com.swfwire.decompiler
 			}
 		}
 		
-		protected function writeFilterRecord(context:SWFWriterContext, record:FilterRecord):void
+		protected function writeDropShadowFilterRecord(context:SWFWriterContext, record:DropShadowFilterRecord):void
+		{
+			writeRGBARecord(context, record.color);
+			context.bytes.writeFixed16_16(record.blurX);
+			context.bytes.writeFixed16_16(record.blurY);
+			context.bytes.writeFixed16_16(record.angle);
+			context.bytes.writeFixed16_16(record.distance);
+			context.bytes.writeFixed8_8(record.strength);
+			context.bytes.writeFlag(record.innerShadow);
+			context.bytes.writeFlag(record.knockout);
+			context.bytes.writeFlag(record.compositeSource);
+			context.bytes.writeUB(5, record.passes);
+		}
+		
+		protected function writeBlurFilterRecord(context:SWFWriterContext, record:BlurFilterRecord):void
+		{
+			context.bytes.writeFixed16_16(record.blurX);
+			context.bytes.writeFixed16_16(record.blurY);
+			context.bytes.writeUB(5, record.passes);
+			context.bytes.writeUB(3, record.reserved);
+		}
+		
+		protected function writeGlowFilterRecord(context:SWFWriterContext, record:GlowFilterRecord):void
+		{
+			writeRGBARecord(context, record.color);
+			context.bytes.writeFixed16_16(record.blurX);
+			context.bytes.writeFixed16_16(record.blurY);
+			context.bytes.writeFixed8_8(record.strength);
+			context.bytes.writeFlag(record.innerGlow);
+			context.bytes.writeFlag(record.knockout);
+			context.bytes.writeFlag(record.compositeSource);
+			context.bytes.writeUB(5, record.passes);
+		}
+		
+		protected function writeBevelFilterRecord(context:SWFWriterContext, record:BevelFilterRecord):void
+		{
+			writeRGBARecord(context, record.shadowColor);
+			writeRGBARecord(context, record.highlightColor);
+			context.bytes.writeFixed16_16(record.blurX);
+			context.bytes.writeFixed16_16(record.blurY);
+			context.bytes.writeFixed16_16(record.angle);
+			context.bytes.writeFixed16_16(record.distance);
+			context.bytes.writeFixed8_8(record.strength);
+			context.bytes.writeFlag(record.innerShadow);
+			context.bytes.writeFlag(record.knockout);
+			context.bytes.writeFlag(record.compositeSource);
+			context.bytes.writeFlag(record.onTop);
+			context.bytes.writeUB(4, record.passes);
+		}
+		
+		protected function writeGradientGlowFilterRecord(context:SWFWriterContext, record:GradientGlowFilterRecord):void
+		{
+			var numColors:uint = record.gradientColors.length;
+			context.bytes.writeUI8(numColors);
+			for(var iter:uint = 0; iter < numColors; iter++)
+			{
+				writeRGBARecord(context, record.gradientColors[iter]);
+			}
+			for(iter = 0; iter < numColors; iter++)
+			{
+				context.bytes.writeUI8(record.gradientRatios[iter]);
+			}
+			context.bytes.writeFixed16_16(record.blurX);
+			context.bytes.writeFixed16_16(record.blurY);
+			context.bytes.writeFixed16_16(record.angle);
+			context.bytes.writeFixed16_16(record.distance);
+			context.bytes.writeFixed8_8(record.strength);
+			context.bytes.writeFlag(record.innerShadow);
+			context.bytes.writeFlag(record.knockout);
+			context.bytes.writeFlag(record.compositeSource);
+			context.bytes.writeFlag(record.onTop);
+			context.bytes.writeUB(4, record.passes);
+		}
+		
+		protected function writeConvolutionFilterRecord(context:SWFWriterContext, record:ConvolutionFilterRecord):void
+		{
+			context.bytes.writeUI8(record.matrixX);
+			context.bytes.writeUI8(record.matrixY);
+			context.bytes.writeFloat(record.divisor);
+			context.bytes.writeFloat(record.bias);
+			var matrixElements:uint = record.matrixX * record.matrixY;
+			for(var iter:uint = 0; iter < matrixElements; iter++)
+			{
+				context.bytes.writeFloat(record.matrix[iter]);
+			}
+			writeRGBARecord(context, record.defaultColor);
+			context.bytes.writeUB(6, record.reserved);
+			context.bytes.writeFlag(record.clamp);
+			context.bytes.writeFlag(record.preserveAlpha);
+		}
+		
+		protected function writeColorMatrixFilterRecord(context:SWFWriterContext, record:ColorMatrixFilterRecord):void
+		{
+			for(var iter:uint = 0; iter < 20; iter++)
+			{
+				context.bytes.writeFloat(record.matrix[iter]);
+			}
+		}
+		
+		protected function writeGradientBevelFilterRecord(context:SWFWriterContext, record:GradientBevelFilterRecord):void
+		{
+			var numColors:uint = record.gradientColors.length;
+			context.bytes.writeUI8(numColors);
+			for(var iter:uint = 0; iter < numColors; iter++)
+			{
+				writeRGBARecord(context, record.gradientColors[iter]);
+			}
+			for(iter = 0; iter < numColors; iter++)
+			{
+				context.bytes.writeUI8(record.gradientRatios[iter]);
+			}
+			context.bytes.writeFixed16_16(record.blurX);
+			context.bytes.writeFixed16_16(record.blurY);
+			context.bytes.writeFixed16_16(record.angle);
+			context.bytes.writeFixed16_16(record.distance);
+			context.bytes.writeFixed8_8(record.strength);
+			context.bytes.writeFlag(record.innerShadow);
+			context.bytes.writeFlag(record.knockout);
+			context.bytes.writeFlag(record.compositeSource);
+			context.bytes.writeFlag(record.onTop);
+			context.bytes.writeUB(4, record.passes);
+		}
+
+		protected function writeFilterRecord(context:SWFWriterContext, record:IFilterRecord):void
 		{
 			context.bytes.writeUI8(record.filterId);
 			switch(record.filterId)
 			{
 				case 0:
-					writeDropShadowFilterRecord(context, record.dropShadowFilter);
+					writeDropShadowFilterRecord(context, record as DropShadowFilterRecord);
 					break;
-				// TODO : Add others filters
+				case 1:
+					writeBlurFilterRecord(context, record as BlurFilterRecord);
+					break;
+				case 2:
+					writeGlowFilterRecord(context, record as GlowFilterRecord);
+					break;
+				case 3:
+					writeBevelFilterRecord(context, record as BevelFilterRecord);
+					break;
+				case 4:
+					writeGradientGlowFilterRecord(context, record as GradientGlowFilterRecord);
+					break;
+				case 5:
+					writeConvolutionFilterRecord(context, record as ConvolutionFilterRecord);
+					break;
+				case 6:
+					writeColorMatrixFilterRecord(context, record as ColorMatrixFilterRecord);
+					break;
+				case 7:
+					writeGradientBevelFilterRecord(context, record as GradientBevelFilterRecord);
+					break;
+				default:
+					throw new Error('Invalid filter id');
 			}
 		}
 		

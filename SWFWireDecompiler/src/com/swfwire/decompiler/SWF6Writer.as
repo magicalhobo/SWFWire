@@ -1,8 +1,8 @@
 package com.swfwire.decompiler
 {
-	import com.swfwire.decompiler.data.swf.records.ExportAssetRecord;
+	import com.swfwire.decompiler.data.swf.records.ClipActionsRecord;
 	import com.swfwire.decompiler.data.swf.tags.SWFTag;
-	import com.swfwire.decompiler.data.swf6.tags.*;
+	import com.swfwire.decompiler.data.swf6.tags.EnableDebugger2Tag;
 	
 	public class SWF6Writer extends SWF5Writer
 	{
@@ -35,6 +35,21 @@ package com.swfwire.decompiler
 		{
 			context.bytes.writeUI16(tag.reserved);
 			context.bytes.writeString(tag.password);
+		}
+		
+		override protected function writeClipActionsRecord(context:SWFWriterContext, record:ClipActionsRecord):void
+		{
+			context.bytes.writeUI16(record.reserved);
+			writeClipEventFlagsRecord(context, record.allEventFlags);
+			
+			context.bytes.alignBytes();
+			
+			for(var iter:uint = 0; iter < record.clipActionRecords.length; iter++)
+			{
+				writeClipActionRecord(context, record.clipActionRecords[iter]);
+			}
+			
+			context.bytes.writeUI32(0);
 		}
 	}
 }

@@ -123,7 +123,7 @@ package com.swfwire.decompiler
 		protected function readPlaceObject2Tag(context:SWFReaderContext, header:TagHeaderRecord):PlaceObject2Tag
 		{
 			var tag:PlaceObject2Tag = new PlaceObject2Tag();
-			var placeFlagHasClipActions:Boolean = context.bytes.readFlag();
+			var reserved:uint = context.bytes.readUB(1);
 			var placeFlagHasClipDepth:Boolean = context.bytes.readFlag();
 			var placeFlagHasName:Boolean = context.bytes.readFlag();
 			var placeFlagHasRatio:Boolean = context.bytes.readFlag();
@@ -165,10 +165,6 @@ package com.swfwire.decompiler
 				tag.clipDepth = context.bytes.readUI16();
 			}
 			
-			if(placeFlagHasClipActions)
-			{
-				tag.clipActions = readClipActionsRecord(context);
-			}
 			return tag;
 		}
 		
@@ -550,79 +546,6 @@ package com.swfwire.decompiler
 				record.alphaAddTerm = context.bytes.readSB(record.nBits);
 			}
 			
-			return record;
-		}
-		
-		protected function readClipActionsRecord(context:SWFReaderContext):ClipActionsRecord
-		{
-			var record:ClipActionsRecord = new ClipActionsRecord();
-			
-			record.reserved = context.bytes.readUI16();
-			record.allEventFlags = readClipEventFlagsRecord(context);
-			
-			context.bytes.alignBytes();
-			
-			record.clipActionRecords = new Vector.<ClipActionRecord>();
-			while(true)
-			{
-				var originalPosition:uint = context.bytes.getBytePosition();
-				if(context.bytes.readUI16() == 0)
-				{
-					break;
-				}
-				context.bytes.setBytePosition(originalPosition);
-				var clipActionRecord:ClipActionRecord = readClipActionRecord(context);
-				record.clipActionRecords.push(clipActionRecord);
-			}
-			
-			return record;
-		}
-		
-		protected function readClipEventFlagsRecord(context:SWFReaderContext):ClipEventFlagsRecord
-		{
-			var record:ClipEventFlagsRecord = new ClipEventFlagsRecord();
-			record.keyUp = context.bytes.readFlag();
-			record.keyDown = context.bytes.readFlag();
-			record.mouseUp = context.bytes.readFlag();
-			record.mouseDown = context.bytes.readFlag();
-			record.mouseMove = context.bytes.readFlag();
-			record.unload = context.bytes.readFlag();
-			record.enterFrame = context.bytes.readFlag();
-			record.load = context.bytes.readFlag();
-			record.dragOver = context.bytes.readFlag();
-			record.rollOut = context.bytes.readFlag();
-			record.rollOver = context.bytes.readFlag();
-			record.releaseOutside = context.bytes.readFlag();
-			record.release = context.bytes.readFlag();
-			record.press = context.bytes.readFlag();
-			record.initialize = context.bytes.readFlag();
-			record.data = context.bytes.readFlag();
-			record.construct = context.bytes.readFlag();
-			record.keyPress = context.bytes.readFlag();
-			record.dragOut = context.bytes.readFlag();
-			return record;
-		}
-		
-		protected function readClipActionRecord(context:SWFReaderContext):ClipActionRecord
-		{
-			var record:ClipActionRecord = new ClipActionRecord();
-			record.eventFlags = readClipEventFlagsRecord(context);
-			record.actionRecordSize = context.bytes.readUI32();
-			if(record.eventFlags.keyPress)
-			{
-				record.keyCode = context.bytes.readUI8();
-			}
-			record.actions = new Vector.<ActionRecord>();
-			while(true)
-			{
-				var originalPosition:uint = context.bytes.getBytePosition();
-				if(context.bytes.readUI8() == 0)
-				{
-					break;
-				}
-				context.bytes.setBytePosition(originalPosition);
-				record.actions.push(readActionRecord(context));
-			}
 			return record;
 		}
 		
