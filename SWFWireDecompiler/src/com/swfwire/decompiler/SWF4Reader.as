@@ -1,10 +1,9 @@
 package com.swfwire.decompiler
 {
-	import com.swfwire.decompiler.data.swf.*;
+	import com.swfwire.decompiler.SWF3Reader;
 	import com.swfwire.decompiler.data.swf.records.TagHeaderRecord;
 	import com.swfwire.decompiler.data.swf.tags.SWFTag;
-	import com.swfwire.decompiler.SWF3Reader;
-	import com.swfwire.decompiler.data.swf4.tags.*;
+	import com.swfwire.decompiler.data.swf4.tags.DefineEditTextTag;
 	import com.swfwire.utils.ObjectUtil;
 	
 	public class SWF4Reader extends SWF3Reader
@@ -48,15 +47,15 @@ package com.swfwire.decompiler
 			//The spec says a bunch of UB[1]s but it looks more like 2 UI8s
 			context.bytes.alignBytes();
 			
-			tag.hasText = context.bytes.readFlag();
+			var hasText:Boolean = context.bytes.readFlag();
 			tag.wordWrap = context.bytes.readFlag();
 			tag.multiline = context.bytes.readFlag();
 			tag.password = context.bytes.readFlag();
 			tag.readOnly = context.bytes.readFlag();
-			tag.hasTextColor = context.bytes.readFlag();
-			tag.hasMaxLength = context.bytes.readFlag();
-			tag.hasFont = context.bytes.readFlag();
-			tag.hasFontClass = context.bytes.readFlag();
+			var hasTextColor:Boolean = context.bytes.readFlag();
+			var hasMaxLength:Boolean = context.bytes.readFlag();
+			var hasFont:Boolean = context.bytes.readFlag();
+			var hasFontClass:Boolean = context.bytes.readFlag();
 			tag.autoSize = context.bytes.readFlag();
 			tag.hasLayout = context.bytes.readFlag();
 			tag.noSelect = context.bytes.readFlag();
@@ -64,23 +63,23 @@ package com.swfwire.decompiler
 			tag.wasStatic = context.bytes.readFlag();
 			tag.html = context.bytes.readFlag();
 			tag.useOutlines = context.bytes.readFlag();
-			if(tag.hasFont)
+			if(hasFont)
 			{
 				tag.fontId = context.bytes.readUI16();
 			}
-			if(tag.hasFontClass)
+			if(hasFontClass)
 			{
 				tag.fontClass = context.bytes.readString();
 			}
-			if(tag.hasFont)
+			if(hasFont)
 			{
 				tag.fontHeight = context.bytes.readUI16();
 			}
-			if(tag.hasTextColor)
+			if(hasTextColor)
 			{
 				tag.textColor = readRGBARecord(context);
 			}
-			if(tag.hasMaxLength)
+			if(hasMaxLength)
 			{
 				tag.maxLength = context.bytes.readUI16();
 			}
@@ -93,7 +92,7 @@ package com.swfwire.decompiler
 				tag.leading = context.bytes.readSI16();
 			}
 			tag.variableName = context.bytes.readString();
-			if(tag.hasText)
+			if(hasText)
 			{
 				tag.initialText = context.bytes.readString();
 			}

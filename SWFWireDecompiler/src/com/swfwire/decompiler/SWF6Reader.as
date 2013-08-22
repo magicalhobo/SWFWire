@@ -1,13 +1,17 @@
 package com.swfwire.decompiler
 {
-	import com.swfwire.decompiler.data.swf.*;
+	import com.swfwire.decompiler.SWF5Reader;
 	import com.swfwire.decompiler.data.swf.records.ClipActionRecord;
 	import com.swfwire.decompiler.data.swf.records.ClipActionsRecord;
 	import com.swfwire.decompiler.data.swf.records.TagHeaderRecord;
 	import com.swfwire.decompiler.data.swf.tags.SWFTag;
 	import com.swfwire.decompiler.data.swf3.records.ActionRecord;
-	import com.swfwire.decompiler.SWF5Reader;
-	import com.swfwire.decompiler.data.swf6.tags.*;
+	import com.swfwire.decompiler.data.swf6.records.IVideoPacketRecord;
+	import com.swfwire.decompiler.data.swf6.records.VP6SWFVideoPacketRecord;
+	import com.swfwire.decompiler.data.swf6.tags.DefineVideoStreamTag;
+	import com.swfwire.decompiler.data.swf6.tags.DoInitActionTag;
+	import com.swfwire.decompiler.data.swf6.tags.EnableDebugger2Tag;
+	import com.swfwire.decompiler.data.swf6.tags.VideoFrameTag;
 
 	public class SWF6Reader extends SWF5Reader
 	{
@@ -30,12 +34,16 @@ package com.swfwire.decompiler
 				switch(header.type)
 				{
 					/*
-					case 60: tag = readDefineVideoStreamTag(context, header);
-					case 61: tag = readVideoFrameTag(context, header);
 					case 62: tag = readDefineFontInfo2Tag(context, header);
 					*/
 					case 59:
 						tag = readDoInitActionTag(context, header);
+						break;
+					case 60: 
+						tag = readDefineVideoStreamTag(context, header);
+						break;
+					case 61:
+						tag = readVideoFrameTag(context, header);
 						break;
 					case 64:
 						tag = readEnableDebugger2Tag(context, header);
@@ -62,6 +70,62 @@ package com.swfwire.decompiler
 				}
 				context.bytes.setBytePosition(originalPosition);
 				tag.actions.push(readActionRecord(context));
+			}
+			return tag;
+		}
+		
+		protected function readDefineVideoStreamTag(context:SWFReaderContext, header:TagHeaderRecord):DefineVideoStreamTag
+		{
+			var tag:DefineVideoStreamTag = new DefineVideoStreamTag();
+			tag.characterId = context.bytes.readUI16();
+			tag.numFrames = context.bytes.readUI16();
+			tag.width = context.bytes.readUI16();
+			tag.height = context.bytes.readUI16();
+			var reserved:uint = context.bytes.readUB(4);
+			tag.videoFlagsDeblocking = context.bytes.readUB(3);
+			tag.videoFlagsSmoothing = context.bytes.readFlag();
+			tag.codecId = context.bytes.readUI8();
+			context.videoStreams[tag.characterId] = tag;
+			return tag;
+		}
+		
+		protected function readVideoFrameTag(context:SWFReaderContext, header:TagHeaderRecord):VideoFrameTag
+		{
+			var tag:VideoFrameTag = new VideoFrameTag();
+			tag.streamId = context.bytes.readUI16();
+			tag.frameNum = context.bytes.readUI16();
+			var videoStreamTag:DefineVideoStreamTag = context.videoStreams[tag.streamId] as DefineVideoStreamTag;
+			if(videoStreamTag)
+			{
+				switch(videoStreamTag.codecId)
+				{
+					/*
+					case 2:
+						tag.videoData = readH263VideoPacketRecord();
+						break;
+					case 3:
+						tag.videoData = readScreenVideoPacketRecord();
+						break;
+					*/
+					case 4:
+						tag.videoData = readVP6SWFVideoPacketRecord(context);
+						break;
+					/*
+					case 5:
+						tag.videoData = readVP6SWFAlphaVideoPacketRecord();
+						break;
+					case 6:
+						tag.videoData = readScreenV2VideoPacketRecord();
+						break;
+					*/
+					default:
+						context.result.errors.push('Invalid codec id: ' + videoStreamTag.codecId);
+						break;
+				}
+			}
+			else
+			{
+				context.result.errors.push('Video stream id ' + tag.streamId + ' not found while reading VideoFrameTag.');
 			}
 			return tag;
 		}
@@ -97,6 +161,14 @@ package com.swfwire.decompiler
 				record.clipActionRecords.push(clipActionRecord);
 			}
 			
+			return record;
+		}
+		
+		private function readVP6SWFVideoPacketRecord(context:SWFReaderContext):VP6SWFVideoPacketRecord
+		{
+			var record:VP6SWFVideoPacketRecord = new VP6SWFVideoPacketRecord();
+			var remaining:int = context.currentTagEnd - context.bytes.getBytePosition();
+			context.bytes.readBytes(record.data, 0, remaining);
 			return record;
 		}
 

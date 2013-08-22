@@ -15,9 +15,12 @@ package com.swfwire.decompiler
 		public var bytes:SWFByteArray;
 		public var result:SWFReadResult;
 		
+		public var currentTagStart:uint;
+		public var currentTagEnd:uint;
 		public var fontGlyphCounts:Object;
 		public var tagId:int;
 		public var tagStack:Vector.<SWFTag>;
+		public var videoStreams:Object;
 		
 		public function SWFReaderContext(bytes:SWFByteArray, fileVersion:uint, result:SWFReadResult)
 		{
@@ -25,8 +28,9 @@ package com.swfwire.decompiler
 			this.fileVersion = fileVersion;
 			this.result = result;
 			
-			tagStack = new Vector.<SWFTag>();
 			fontGlyphCounts = {};
+			tagStack = new Vector.<SWFTag>();
+			videoStreams = {};
 		}
 	}
 }

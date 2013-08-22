@@ -1,9 +1,15 @@
 package com.swfwire.decompiler.data.swf.tags
 {
-	import com.swfwire.decompiler.data.swf.SWF;
-	import com.swfwire.decompiler.SWFByteArray;
-	
 	public class SoundStreamHeadTag extends SWFTag
 	{
+		public var playbackSoundRate:uint;
+		public var playbackSoundSize:uint;
+		public var playbackSoundType:uint;
+		public var streamSoundCompression:uint;
+		public var streamSoundRate:uint;
+		public var streamSoundSize:uint;
+		public var streamSoundType:uint;
+		public var streamSoundSampleCount:uint;
+		public var latencySeek:uint;
 	}
 }

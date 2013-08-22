@@ -27,10 +27,6 @@ package com.swfwire.decompiler.data.swf3.records
 			{
 				colorTransform = new CXFormWithAlphaRecord();
 			}
-			if(filterList == null)
-			{
-				filterList = new FilterListRecord();
-			}
 			
 			this.reserved = reserved;
 			this.stateHitTest = stateHitTest;

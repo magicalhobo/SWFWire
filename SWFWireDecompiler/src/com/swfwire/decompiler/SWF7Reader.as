@@ -28,7 +28,6 @@ package com.swfwire.decompiler
 				switch(header.type)
 				{
 					/*
-					case 60: tag = readDefineVideoStreamTag(context, header);
 					case 66: tag = readSetTabIndexTag(context, header);
 					*/
 					case 65:

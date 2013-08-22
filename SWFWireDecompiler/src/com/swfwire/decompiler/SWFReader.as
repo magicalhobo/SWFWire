@@ -1,8 +1,5 @@
 package com.swfwire.decompiler
 {
-	import com.swfwire.decompiler.SWF10Reader;
-	import com.swfwire.decompiler.SWF9Reader;
-	import com.swfwire.decompiler.abc.ABCByteArray;
 	import com.swfwire.decompiler.data.swf.SWF;
 	import com.swfwire.decompiler.data.swf.SWFHeader;
 	import com.swfwire.decompiler.data.swf.records.ButtonRecord;
@@ -51,16 +48,9 @@ package com.swfwire.decompiler
 	import com.swfwire.decompiler.data.swf.tags.SoundStreamHeadTag;
 	import com.swfwire.decompiler.data.swf.tags.StartSoundTag;
 	import com.swfwire.decompiler.data.swf.tags.UnknownTag;
-	import com.swfwire.utils.ByteArrayUtil;
 	
-	import flash.display.Scene;
 	import flash.events.EventDispatcher;
-	import flash.geom.Matrix;
-	import flash.sampler.NewObjectSample;
 	import flash.utils.ByteArray;
-	import flash.utils.CompressionAlgorithm;
-	import flash.utils.Dictionary;
-	import flash.utils.Endian;
 	import flash.utils.getQualifiedClassName;
 	
 	public class SWFReader extends EventDispatcher
@@ -101,6 +91,8 @@ package com.swfwire.decompiler
 				var expectedEndPosition:uint = startPosition + header.length;
 				
 				context.tagId = tagId;
+				context.currentTagStart = startPosition;
+				context.currentTagEnd = expectedEndPosition;
 				
 				var tag:SWFTag;
 				if(catchErrors)
@@ -205,12 +197,6 @@ package com.swfwire.decompiler
 				case 15: 
 					tag = readStartSoundTag(context, header);
 					break;
-				case 18: 
-					tag = readSoundStreamHeadTag(context, header);
-					break;
-				case 19: 
-					tag = readSoundStreamBlockTag(context, header);
-					break;
 				*/
 				case 0:
 					tag = readEndTag(context, header);
@@ -238,6 +224,12 @@ package com.swfwire.decompiler
 					break;
 				case 11: 
 					tag = readDefineTextTag(context, header);
+					break;
+				case 18: 
+					tag = readSoundStreamHeadTag(context, header);
+					break;
+				case 19: 
+					tag = readSoundStreamBlockTag(context, header);
 					break;
 				case 77: 
 					tag = readMetadataTag(context, header);
@@ -462,12 +454,27 @@ package com.swfwire.decompiler
 		protected function readSoundStreamHeadTag(context:SWFReaderContext, header:TagHeaderRecord):SoundStreamHeadTag
 		{
 			var tag:SoundStreamHeadTag = new SoundStreamHeadTag();
+			var reserved:uint = context.bytes.readUB(4);
+			tag.playbackSoundRate = context.bytes.readUB(2);
+			tag.playbackSoundSize = context.bytes.readUB(1);
+			tag.playbackSoundType = context.bytes.readUB(1);
+			tag.streamSoundCompression = context.bytes.readUB(4);
+			tag.streamSoundRate = context.bytes.readUB(2);
+			tag.streamSoundSize = context.bytes.readUB(1);
+			tag.streamSoundType = context.bytes.readUB(1);
+			tag.streamSoundSampleCount = context.bytes.readUI16();
+			if(tag.streamSoundCompression == 2)
+			{
+				tag.latencySeek = context.bytes.readSI16();
+			}
 			return tag;
 		}
 
 		protected function readSoundStreamBlockTag(context:SWFReaderContext, header:TagHeaderRecord):SoundStreamBlockTag
 		{
 			var tag:SoundStreamBlockTag = new SoundStreamBlockTag();
+			var remaining:int = context.currentTagEnd - context.bytes.getBytePosition();
+			context.bytes.readBytes(tag.data, 0, remaining);
 			return tag;
 		}
 

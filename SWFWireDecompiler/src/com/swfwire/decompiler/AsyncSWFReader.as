@@ -117,6 +117,8 @@ package com.swfwire.decompiler
 				var tag:SWFTag;
 				
 				context.tagId = tagId;
+				context.currentTagStart = startPosition;
+				context.currentTagEnd = expectedEndPosition;
 				
 				if(catchErrors)
 				{

@@ -416,6 +416,9 @@
     <classEntry path="com.swfwire.decompiler.events.AsyncSWFModifierEvent"/>
     <classEntry path="com.swfwire.decompiler.events.AsyncSWFReaderEvent"/>
     <classEntry path="com.swfwire.decompiler.events.AsyncSWFWriterEvent"/>
+    <classEntry path="com.swfwire.decompiler.data.swf6.records.IVideoPacketRecord"/>
+    <classEntry path="com.swfwire.decompiler.data.swf6.records.VP6SWFVideoPacketRecord"/>
+    <classEntry path="com.swfwire.decompiler.data.swf.enums.SoundType"/>
   </includeClasses>
   <includeResources/>
   <namespaceManifests/>

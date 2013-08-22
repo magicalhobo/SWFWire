@@ -25,19 +25,6 @@ package com.swfwire.decompiler.data.swf8.tags
 		
 		public function PlaceObject3Tag(move:Boolean = false, reserved:uint = 0, depth:uint = 0, className:String = null, characterId:uint = 0, matrix:MatrixRecord = null, colorTransform:CXFormWithAlphaRecord = null, ratio:uint = 0, name:String = null, clipDepth:uint = 0, surfaceFilterList:FilterListRecord = null, blendMode:uint = 0, bitmapCache:uint = 0, clipActions:ClipActionsRecord = null)
 		{
-			if(colorTransform == null)
-			{
-				colorTransform = new CXFormWithAlphaRecord();
-			}
-			if(surfaceFilterList == null)
-			{
-				surfaceFilterList = new FilterListRecord();
-			}
-			if(clipActions == null)
-			{
-				clipActions = new ClipActionsRecord();
-			}
-			
 			this.move = move;
 			this.reserved = reserved;
 			this.depth = depth;

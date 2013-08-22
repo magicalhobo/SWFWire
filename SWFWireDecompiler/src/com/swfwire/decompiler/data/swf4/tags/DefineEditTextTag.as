@@ -1,7 +1,5 @@
 package com.swfwire.decompiler.data.swf4.tags
 {
-	import com.swfwire.decompiler.data.swf.SWF;
-	import com.swfwire.decompiler.SWFByteArray;
 	import com.swfwire.decompiler.data.swf.records.RGBARecord;
 	import com.swfwire.decompiler.data.swf.records.RectangleRecord;
 	import com.swfwire.decompiler.data.swf.tags.SWFTag;
@@ -10,15 +8,10 @@ package com.swfwire.decompiler.data.swf4.tags
 	{
 		public var characterId:uint;
 		public var bounds:RectangleRecord;
-		public var hasText:Boolean;
 		public var wordWrap:Boolean;
 		public var multiline:Boolean;
 		public var password:Boolean;
 		public var readOnly:Boolean;
-		public var hasTextColor:Boolean;
-		public var hasMaxLength:Boolean;
-		public var hasFont:Boolean;
-		public var hasFontClass:Boolean;
 		public var autoSize:Boolean;
 		public var hasLayout:Boolean;
 		public var noSelect:Boolean;

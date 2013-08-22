@@ -10,9 +10,13 @@ package com.swfwire.decompiler.data.swf.records
 		public var rotate:MatrixRotateStructure;
 		public var translate:MatrixTranslateStructure;
 		
-		public function MatrixRecord(scale:MatrixScaleStructure = null, rotate:MatrixRotateStructure = null,
-									 translate:MatrixTranslateStructure = null)
+		public function MatrixRecord(scale:MatrixScaleStructure = null, rotate:MatrixRotateStructure = null, translate:MatrixTranslateStructure = null)
 		{
+			if(!translate)
+			{
+				translate = new MatrixTranslateStructure();
+			}
+			
 			this.scale = scale;
 			this.rotate = rotate;
 			this.translate = translate;

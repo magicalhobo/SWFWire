@@ -1,7 +1,7 @@
 package com.swfwire.decompiler
 {
 	import com.swfwire.decompiler.data.swf.tags.SWFTag;
-	import com.swfwire.decompiler.data.swf4.tags.*;
+	import com.swfwire.decompiler.data.swf4.tags.DefineEditTextTag;
 
 	public class SWF4Writer extends SWF3Writer
 	{
@@ -38,15 +38,26 @@ package com.swfwire.decompiler
 			//The spec says a bunch of UB[1]s but it looks more like 2 UI8s
 			context.bytes.alignBytes();
 			
-			context.bytes.writeFlag(tag.hasText);
+			var hasText:Boolean = tag.initialText != null;
+			var hasTextColor:Boolean = tag.textColor != null;
+			var hasMaxLength:Boolean = tag.maxLength > 0;
+			var hasFont:Boolean = tag.fontId > 0;
+			var hasFontClass:Boolean = tag.fontClass != null;
+			
+			if(hasFont && hasFontClass)
+			{
+				context.result.warnings.push('HasFont cannot be true if HasFontClass is true');
+			}
+			
+			context.bytes.writeFlag(hasText);
 			context.bytes.writeFlag(tag.wordWrap);
 			context.bytes.writeFlag(tag.multiline);
 			context.bytes.writeFlag(tag.password);
 			context.bytes.writeFlag(tag.readOnly);
-			context.bytes.writeFlag(tag.hasTextColor);
-			context.bytes.writeFlag(tag.hasMaxLength);
-			context.bytes.writeFlag(tag.hasFont);
-			context.bytes.writeFlag(tag.hasFontClass);
+			context.bytes.writeFlag(hasTextColor);
+			context.bytes.writeFlag(hasMaxLength);
+			context.bytes.writeFlag(hasFont);
+			context.bytes.writeFlag(hasFontClass);
 			context.bytes.writeFlag(tag.autoSize);
 			context.bytes.writeFlag(tag.hasLayout);
 			context.bytes.writeFlag(tag.noSelect);
@@ -54,23 +65,23 @@ package com.swfwire.decompiler
 			context.bytes.writeFlag(tag.wasStatic);
 			context.bytes.writeFlag(tag.html);
 			context.bytes.writeFlag(tag.useOutlines);
-			if(tag.hasFont)
+			if(hasFont)
 			{
 				context.bytes.writeUI16(tag.fontId);
 			}
-			if(tag.hasFontClass)
+			if(hasFontClass)
 			{
 				context.bytes.writeString(tag.fontClass);
 			}
-			if(tag.hasFont)
+			if(hasFont)
 			{
 				context.bytes.writeUI16(tag.fontHeight);
 			}
-			if(tag.hasTextColor)
+			if(hasTextColor)
 			{
 				writeRGBARecord(context, tag.textColor);
 			}
-			if(tag.hasMaxLength)
+			if(hasMaxLength)
 			{
 				context.bytes.writeUI16(tag.maxLength);
 			}
@@ -83,7 +94,7 @@ package com.swfwire.decompiler
 				context.bytes.writeSI16(tag.leading);
 			}
 			context.bytes.writeString(tag.variableName);
-			if(tag.hasText)
+			if(hasText)
 			{
 				context.bytes.writeString(tag.initialText);
 			}

@@ -1,6 +1,5 @@
 package com.swfwire.decompiler.data.swf8.records
 {
-	import com.swfwire.decompiler.data.swf.records.FillStyleRecord;
 	import com.swfwire.decompiler.data.swf.records.RGBARecord;
 	import com.swfwire.decompiler.data.swf3.records.FillStyleRecord2;
 
