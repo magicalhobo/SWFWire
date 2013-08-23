@@ -1,10 +1,10 @@
 package com.swfwire.decompiler
 {
-	import com.swfwire.decompiler.data.swf.*;
+	import com.swfwire.decompiler.SWF6Reader;
 	import com.swfwire.decompiler.data.swf.records.TagHeaderRecord;
 	import com.swfwire.decompiler.data.swf.tags.SWFTag;
-	import com.swfwire.decompiler.SWF6Reader;
-	import com.swfwire.decompiler.data.swf7.tags.*;
+	import com.swfwire.decompiler.data.swf6.records.IVideoPacketRecord;
+	import com.swfwire.decompiler.data.swf7.tags.ScriptLimitsTag;
 	import com.swfwire.utils.ObjectUtil;
 
 	public class SWF7Reader extends SWF6Reader
@@ -47,6 +47,25 @@ package com.swfwire.decompiler
 			tag.maxRecursionDepth = context.bytes.readUI16();
 			tag.scriptTimeoutSeconds = context.bytes.readUI16();
 			return tag;
+		}
+		
+		override protected function readVideoPacketRecord(codecId:uint, context:SWFReaderContext):IVideoPacketRecord
+		{
+			var record:IVideoPacketRecord;
+			
+			switch(codecId)
+			{
+				/*
+				case 3:
+					record = readScreenVideoPacketRecord();
+					break;
+				*/
+				default:
+					record = super.readVideoPacketRecord(codecId, context);
+					break;
+			}
+			
+			return record;
 		}
 	}
 }

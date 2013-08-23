@@ -97,31 +97,7 @@ package com.swfwire.decompiler
 			var videoStreamTag:DefineVideoStreamTag = context.videoStreams[tag.streamId] as DefineVideoStreamTag;
 			if(videoStreamTag)
 			{
-				switch(videoStreamTag.codecId)
-				{
-					/*
-					case 2:
-						tag.videoData = readH263VideoPacketRecord();
-						break;
-					case 3:
-						tag.videoData = readScreenVideoPacketRecord();
-						break;
-					*/
-					case 4:
-						tag.videoData = readVP6SWFVideoPacketRecord(context);
-						break;
-					/*
-					case 5:
-						tag.videoData = readVP6SWFAlphaVideoPacketRecord();
-						break;
-					case 6:
-						tag.videoData = readScreenV2VideoPacketRecord();
-						break;
-					*/
-					default:
-						context.result.errors.push('Invalid codec id: ' + videoStreamTag.codecId);
-						break;
-				}
+				tag.videoData = readVideoPacketRecord(videoStreamTag.codecId, context);
 			}
 			else
 			{
@@ -164,50 +140,34 @@ package com.swfwire.decompiler
 			return record;
 		}
 		
-		private function readVP6SWFVideoPacketRecord(context:SWFReaderContext):VP6SWFVideoPacketRecord
+		protected function readVideoPacketRecord(codecId:uint, context:SWFReaderContext):IVideoPacketRecord
+		{
+			var record:IVideoPacketRecord;
+			
+			switch(codecId)
+			{
+				/*
+				case 2:
+					record = readH263VideoPacketRecord();
+					break;
+				*/
+				case 4:
+					record = readVP6SWFVideoPacketRecord(context);
+					break;
+				default:
+					context.result.errors.push('Invalid codec id: ' + codecId);
+					break;
+			}
+			
+			return record;
+		}
+		
+		protected function readVP6SWFVideoPacketRecord(context:SWFReaderContext):VP6SWFVideoPacketRecord
 		{
 			var record:VP6SWFVideoPacketRecord = new VP6SWFVideoPacketRecord();
 			var remaining:int = context.currentTagEnd - context.bytes.getBytePosition();
 			context.bytes.readBytes(record.data, 0, remaining);
 			return record;
 		}
-
-		/*
-		protected function getFillStyle(type:uint, parent:Class):Class
-		{
-			switch(type)
-			{
-				case 0x00:
-					if(parent is DefineShapeTag || parent is DefineShape2Tag)
-					{
-						return FillStyleSolid;
-					}
-					else
-					{
-						return FillStyleSolidShape3;
-					}
-					break;
-				case 0x10:
-					return FillStyleLinearGradient;
-					break;
-				case 0x12:
-					return FillStyleRadialGradient;
-					break;
-				case 0x40:
-					return FillStyleRepeatingBitmapFill;
-					break;
-				case 0x41:
-					return FillStyleClippedBitmapFill;
-					break;
-				case 0x42:
-					return FillStyleNonSmoothedRepeatingBitmap;
-					break;
-				case 0x43:
-					return FillStyleNonSmoothedClippedBitmap;
-					break;
-			}
-			return null;
-		}
-		*/
 	}
 }

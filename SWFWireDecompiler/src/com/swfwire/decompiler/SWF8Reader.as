@@ -20,6 +20,8 @@ package com.swfwire.decompiler
 	import com.swfwire.decompiler.data.swf3.records.FillStyleRecord2;
 	import com.swfwire.decompiler.data.swf3.records.GradientControlPointRecord2;
 	import com.swfwire.decompiler.data.swf3.tags.PlaceObject2Tag;
+	import com.swfwire.decompiler.data.swf6.records.IVideoPacketRecord;
+	import com.swfwire.decompiler.data.swf6.records.VP6SWFVideoPacketRecord;
 	import com.swfwire.decompiler.data.swf8.records.FocalGradientRecord;
 	import com.swfwire.decompiler.data.swf8.records.FontShapeRecord;
 	import com.swfwire.decompiler.data.swf8.records.KerningRecord;
@@ -27,6 +29,7 @@ package com.swfwire.decompiler
 	import com.swfwire.decompiler.data.swf8.records.LineStyle2Record;
 	import com.swfwire.decompiler.data.swf8.records.ShapeWithStyleRecord4;
 	import com.swfwire.decompiler.data.swf8.records.StyleChangeRecord4;
+	import com.swfwire.decompiler.data.swf8.records.VP6SWFAlphaVideoPacketRecord;
 	import com.swfwire.decompiler.data.swf8.records.ZoneDataRecord;
 	import com.swfwire.decompiler.data.swf8.records.ZoneRecord;
 	import com.swfwire.decompiler.data.swf8.tags.CSMTextSettingsTag;
@@ -833,6 +836,38 @@ package com.swfwire.decompiler
 			{
 				record.blendMode = context.bytes.readUI8();
 			}
+			return record;
+		}
+		
+		override protected function readVideoPacketRecord(codecId:uint, context:SWFReaderContext):IVideoPacketRecord
+		{
+			var record:IVideoPacketRecord;
+			
+			switch(codecId)
+			{
+				case 5:
+					record = readVP6SWFAlphaVideoPacketRecord(context);
+					break;
+				/*
+				case 6:
+					record = readScreenV2VideoPacketRecord();
+					break;
+				*/
+				default:
+					record = super.readVideoPacketRecord(codecId, context);
+					break;
+			}
+			
+			return record;
+		}
+		
+		protected function readVP6SWFAlphaVideoPacketRecord(context:SWFReaderContext):VP6SWFAlphaVideoPacketRecord
+		{
+			var record:VP6SWFAlphaVideoPacketRecord = new VP6SWFAlphaVideoPacketRecord();
+			var offsetToAlpha:uint = context.bytes.readUI24();
+			context.bytes.readBytes(record.data, 0, offsetToAlpha);
+			var remaining:int = context.currentTagEnd - context.bytes.getBytePosition();
+			context.bytes.readBytes(record.alphaData, 0, remaining);
 			return record;
 		}
 	}

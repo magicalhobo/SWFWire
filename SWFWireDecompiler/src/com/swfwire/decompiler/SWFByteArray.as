@@ -160,7 +160,7 @@ package com.swfwire.decompiler
 		}
 		
 		/**
-		 * Reads a UI8[] into a ByteArray
+		 * Reads data to a ByteArray
 		 */
 		public function readBytes(byteArray:ByteArray, offset:uint = 0, length:uint = 0):void
 		{
@@ -168,7 +168,7 @@ package com.swfwire.decompiler
 			bytes.readBytes(byteArray, offset, length);
 		}
 		/**
-		 * Writes a UI8[] into a ByteArray
+		 * Writes data from a ByteArray
 		 */
 		public function writeBytes(byteArray:ByteArray, offset:uint = 0, length:uint = 0):void
 		{
@@ -260,7 +260,20 @@ package com.swfwire.decompiler
 		public function writeUI16(value:uint):void
 		{
 			alignBytes();
-			return bytes.writeShort(int(value));
+			bytes.writeShort(int(value));
+		}
+		
+		public function readUI24():uint
+		{
+			alignBytes();
+			return bytes.readUnsignedByte() << 16 | bytes.readUnsignedByte() << 8 | bytes.readUnsignedByte();
+		}
+		public function writeUI24(value:uint):void
+		{
+			alignBytes();
+			bytes.writeByte(value >> 16);
+			bytes.writeByte(value >> 8);
+			bytes.writeByte(value);
 		}
 		
 		public function readUI32():uint
@@ -271,7 +284,7 @@ package com.swfwire.decompiler
 		public function writeUI32(value:uint):void
 		{
 			alignBytes();
-			return bytes.writeUnsignedInt(value);
+			bytes.writeUnsignedInt(value);
 		}
 		
 		public function readUI8Array(length:uint):Vector.<uint>
@@ -298,7 +311,7 @@ package com.swfwire.decompiler
 			var result:Vector.<uint> = new Vector.<uint>(length, true);
 			for(var iter:uint = 0; iter < length; iter++)
 			{
-				result[iter] = bytes.readUnsignedShort() << 8 | bytes.readUnsignedByte();
+				result[iter] = readUI24();
 			}
 			return result;
 		}
