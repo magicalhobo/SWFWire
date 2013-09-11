@@ -419,6 +419,8 @@
     <classEntry path="com.swfwire.decompiler.data.swf6.records.IVideoPacketRecord"/>
     <classEntry path="com.swfwire.decompiler.data.swf6.records.VP6SWFVideoPacketRecord"/>
     <classEntry path="com.swfwire.decompiler.data.swf.enums.SoundType"/>
+    <classEntry path="com.swfwire.decompiler.data.swf.enums.SoundFormat"/>
+    <classEntry path="com.swfwire.decompiler.data.swf.records.SoundInfoRecord"/>
   </includeClasses>
   <includeResources/>
   <namespaceManifests/>

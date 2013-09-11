@@ -22,6 +22,8 @@ package com.swfwire.decompiler
 	import com.swfwire.decompiler.data.swf.records.SceneRecord;
 	import com.swfwire.decompiler.data.swf.records.ShapeRecord;
 	import com.swfwire.decompiler.data.swf.records.ShapeWithStyleRecord;
+	import com.swfwire.decompiler.data.swf.records.SoundEnvelopeRecord;
+	import com.swfwire.decompiler.data.swf.records.SoundInfoRecord;
 	import com.swfwire.decompiler.data.swf.records.StraightEdgeRecord;
 	import com.swfwire.decompiler.data.swf.records.StyleChangeRecord;
 	import com.swfwire.decompiler.data.swf.records.TagHeaderRecord;
@@ -186,12 +188,6 @@ package com.swfwire.decompiler
 				case 13: 
 					tag = readDefineFontInfoTag(context, header);
 					break;
-				case 14: 
-					tag = readDefineSoundTag(context, header);
-					break;
-				case 15: 
-					tag = readStartSoundTag(context, header);
-					break;
 				*/
 				case 0:
 					tag = readEndTag(context, header);
@@ -225,6 +221,12 @@ package com.swfwire.decompiler
 					break;
 				case 11: 
 					tag = readDefineTextTag(context, header);
+					break;
+				case 14: 
+					tag = readDefineSoundTag(context, header);
+					break;
+				case 15: 
+					tag = readStartSoundTag(context, header);
 					break;
 				case 18: 
 					tag = readSoundStreamHeadTag(context, header);
@@ -461,12 +463,22 @@ package com.swfwire.decompiler
 		protected function readDefineSoundTag(context:SWFReaderContext, header:TagHeaderRecord):DefineSoundTag
 		{
 			var tag:DefineSoundTag = new DefineSoundTag();
+			tag.soundId = context.bytes.readUI16();
+			tag.soundFormat = context.bytes.readUB(4);
+			tag.soundRate = context.bytes.readUB(2);
+			tag.soundSize = context.bytes.readUB(1);
+			tag.soundType = context.bytes.readUB(1);
+			tag.soundSampleCount = context.bytes.readUI32();
+			var remaining:int = context.currentTagEnd - context.bytes.getBytePosition();
+			context.bytes.readBytes(tag.soundData, 0, remaining);
 			return tag;
 		}
 
 		protected function readStartSoundTag(context:SWFReaderContext, header:TagHeaderRecord):StartSoundTag
 		{
 			var tag:StartSoundTag = new StartSoundTag();
+			tag.soundId = context.bytes.readUI16();
+			tag.soundInfo = readSoundInfoRecord(context);
 			return tag;
 		}
 
@@ -858,6 +870,48 @@ package com.swfwire.decompiler
 				record.greenAddTerm = context.bytes.readSB(record.nBits);
 				record.blueAddTerm = context.bytes.readSB(record.nBits);
 			}
+			return record;
+		}
+		
+		protected function readSoundInfoRecord(context:SWFReaderContext):SoundInfoRecord
+		{
+			var record:SoundInfoRecord = new SoundInfoRecord();
+			record.reserved = context.bytes.readUB(2);
+			record.syncStop = context.bytes.readFlag();
+			record.syncNoMultiple = context.bytes.readFlag();
+			record.hasEnvelope = context.bytes.readFlag();
+			record.hasLoops = context.bytes.readFlag();
+			record.hasOutPoint = context.bytes.readFlag();
+			record.hasInPoint = context.bytes.readFlag();
+			if(record.hasInPoint)
+			{
+				record.inPoint = context.bytes.readUI32();
+			}
+			if(record.hasOutPoint)
+			{
+				record.outPoint = context.bytes.readUI32();
+			}
+			if(record.hasLoops)
+			{
+				record.loopCount = context.bytes.readUI16();
+			}
+			if(record.hasEnvelope)
+			{
+				record.envPoints = context.bytes.readUI8();
+				for(var iter:uint = 0; iter < record.envPoints; iter++)
+				{
+					record.envPoints[iter] = readSoundEnvelopeRecord(context);
+				}
+			}
+			return record;
+		}
+		
+		protected function readSoundEnvelopeRecord(context:SWFReaderContext):SoundEnvelopeRecord
+		{
+			var record:SoundEnvelopeRecord = new SoundEnvelopeRecord();
+			record.pos44 = context.bytes.readUI32();
+			record.leftLevel = context.bytes.readUI16();
+			record.rightLevel = context.bytes.readUI16();
 			return record;
 		}
 		
