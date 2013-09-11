@@ -20,6 +20,7 @@ package com.swfwire.decompiler
 	import com.swfwire.decompiler.data.swf.records.RGBRecord;
 	import com.swfwire.decompiler.data.swf.records.RectangleRecord;
 	import com.swfwire.decompiler.data.swf.records.SceneRecord;
+	import com.swfwire.decompiler.data.swf.records.ShapeRecord;
 	import com.swfwire.decompiler.data.swf.records.ShapeWithStyleRecord;
 	import com.swfwire.decompiler.data.swf.records.StraightEdgeRecord;
 	import com.swfwire.decompiler.data.swf.records.StyleChangeRecord;
@@ -182,12 +183,6 @@ package com.swfwire.decompiler
 			switch(header.type)
 			{
 				/*
-				case 5: 
-					tag = readRemoveObjectTag(context, header);
-					break;
-				case 10: 
-					tag = readDefineFontTag(context, header);
-					break;
 				case 13: 
 					tag = readDefineFontInfoTag(context, header);
 					break;
@@ -210,6 +205,9 @@ package com.swfwire.decompiler
 				case 4: 
 					tag = readPlaceObjectTag(context, header);
 					break;
+				case 5: 
+					tag = readRemoveObjectTag(context, header);
+					break;
 				case 6: 
 					tag = readDefineBitsTag(context, header);
 					break;
@@ -221,6 +219,9 @@ package com.swfwire.decompiler
 					break;
 				case 9:
 					tag = readSetBackgroundColorTag(context, header);
+					break;
+				case 10: 
+					tag = readDefineFontTag(context, header);
 					break;
 				case 11: 
 					tag = readDefineTextTag(context, header);
@@ -239,7 +240,6 @@ package com.swfwire.decompiler
 					break;
 				default:
 					tag = readUnknownTag(context, header);
-					//throw new Error('Unknown Tag!');
 					break;
 			}
 			
@@ -299,6 +299,8 @@ package com.swfwire.decompiler
 		protected function readRemoveObjectTag(context:SWFReaderContext, header:TagHeaderRecord):RemoveObjectTag
 		{
 			var tag:RemoveObjectTag = new RemoveObjectTag();
+			tag.characterId = context.bytes.readUI16();
+			tag.depth = context.bytes.readUI16();
 			return tag;
 		}
 		
@@ -361,6 +363,23 @@ package com.swfwire.decompiler
 		protected function readDefineFontTag(context:SWFReaderContext, header:TagHeaderRecord):DefineFontTag
 		{
 			var tag:DefineFontTag = new DefineFontTag();
+			var iter:uint;
+			
+			tag.fontId = context.bytes.readUI16();
+			var firstEntry:uint = context.bytes.readUI16();
+			var numGlyphs:uint = firstEntry / 2;
+			tag.offsetTable = new Vector.<uint>(numGlyphs);
+			tag.offsetTable[0] = firstEntry;
+			for(iter = 1; iter < numGlyphs; iter++)
+			{
+				tag.offsetTable[iter] = context.bytes.readUI16();
+			}
+			tag.glyphShapeTable = new Vector.<ShapeRecord>(numGlyphs);
+			for(iter = 0; iter < numGlyphs; iter++)
+			{
+				tag.glyphShapeTable[iter] = readShapeRecord(context);
+			}
+			
 			return tag;
 		}
 		
@@ -531,6 +550,26 @@ package com.swfwire.decompiler
 			return record;
 		}
 		
+		protected function readShapeRecord(context:SWFReaderContext):ShapeRecord
+		{
+			var record:ShapeRecord = new ShapeRecord();
+			
+			record.numFillBits = context.bytes.readUB(4);
+			record.numLineBits = context.bytes.readUB(4);
+			record.shapeRecords = new Vector.<IShapeRecord>();
+			while(true)
+			{
+				var shapeRecord:IShapeRecord = readIShapeRecord(context, record.numFillBits, record.numLineBits);
+				record.shapeRecords.push(shapeRecord);
+				if(shapeRecord is EndShapeRecord)
+				{
+					break;
+				}
+			}
+			
+			return record;
+		}
+		
 		protected function readShapeWithStyleRecord(context:SWFReaderContext):ShapeWithStyleRecord
 		{
 			var record:ShapeWithStyleRecord = new ShapeWithStyleRecord();
@@ -542,7 +581,7 @@ package com.swfwire.decompiler
 			record.shapeRecords = new Vector.<IShapeRecord>();
 			while(true)
 			{
-				var shapeRecord:IShapeRecord = readShapeRecord(context, record.numFillBits, record.numLineBits);
+				var shapeRecord:IShapeRecord = readIShapeRecord(context, record.numFillBits, record.numLineBits);
 				record.shapeRecords.push(shapeRecord);
 				if(shapeRecord is EndShapeRecord)
 				{
@@ -553,7 +592,7 @@ package com.swfwire.decompiler
 			return record;
 		}
 		
-		protected function readShapeRecord(context:SWFReaderContext, numFillBits:uint, numLineBits:uint):IShapeRecord
+		protected function readIShapeRecord(context:SWFReaderContext, numFillBits:uint, numLineBits:uint):IShapeRecord
 		{
 			var record:IShapeRecord;
 			var typeFlag:Boolean = context.bytes.readFlag();

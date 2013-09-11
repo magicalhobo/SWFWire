@@ -1,8 +1,8 @@
 package com.swfwire.decompiler.data.swf.tags
 {
-	import com.swfwire.decompiler.data.swf.SWF;
-	import com.swfwire.decompiler.SWFByteArray;
-	import com.swfwire.decompiler.data.swf.records.*;
+	import com.swfwire.decompiler.data.swf.records.MatrixRecord;
+	import com.swfwire.decompiler.data.swf.records.RectangleRecord;
+	import com.swfwire.decompiler.data.swf.records.TextRecord;
 	
 	public class DefineTextTag extends SWFTag
 	{
