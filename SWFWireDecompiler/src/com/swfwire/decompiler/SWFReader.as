@@ -184,11 +184,6 @@ package com.swfwire.decompiler
 			
 			switch(header.type)
 			{
-				/*
-				case 13: 
-					tag = readDefineFontInfoTag(context, header);
-					break;
-				*/
 				case 0:
 					tag = readEndTag(context, header);
 					break;
@@ -221,6 +216,9 @@ package com.swfwire.decompiler
 					break;
 				case 11: 
 					tag = readDefineTextTag(context, header);
+					break;
+				case 13: 
+					tag = readDefineFontInfoTag(context, header);
 					break;
 				case 14: 
 					tag = readDefineSoundTag(context, header);
@@ -457,6 +455,38 @@ package com.swfwire.decompiler
 		protected function readDefineFontInfoTag(context:SWFReaderContext, header:TagHeaderRecord):DefineFontInfoTag
 		{
 			var tag:DefineFontInfoTag = new DefineFontInfoTag();
+			var iter:uint;
+			
+			tag.fontId = context.bytes.readUI16();
+			var fontNameLen:uint = context.bytes.readUI8();
+			for(iter = 0; iter < fontNameLen; iter++)
+			{
+				tag.fontName[iter] = context.bytes.readUI8();
+			}
+			tag.fontFlagsReserved = context.bytes.readUB(2);
+			tag.fontFlagsSmallText = context.bytes.readFlag();
+			tag.fontFlagsShiftJIS = context.bytes.readFlag();
+			tag.fontFlagsANSI = context.bytes.readFlag();
+			tag.fontFlagsItalic = context.bytes.readFlag();
+			tag.fontFlagsBold = context.bytes.readFlag();
+			tag.fontFlagsWideCodes = context.bytes.readFlag();
+			var remaining:int = context.currentTagEnd - context.bytes.getBytePosition();
+			var numGlyphs:uint = remaining < 0 ? 0 : remaining;
+			if(tag.fontFlagsWideCodes)
+			{
+				numGlyphs /= 2;
+				for(iter = 0; iter < numGlyphs; iter++)
+				{
+					tag.codeTable[iter] = context.bytes.readUI16();
+				}
+			}
+			else
+			{
+				for(iter = 0; iter < numGlyphs; iter++)
+				{
+					tag.codeTable[iter] = context.bytes.readUI8();
+				}
+			}
 			return tag;
 		}
 
