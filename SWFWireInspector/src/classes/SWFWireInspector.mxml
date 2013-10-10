@@ -79,7 +79,7 @@
 			private var tagHexCache:Array;
 			private var parseStart:uint;
 			private var syntaxHighlighting:Boolean = true;
-
+			
 			private function addMenuItem(name:String, separatorBefore:Boolean = false, selectCallback:Function = null):void
 			{
 				var item:ContextMenuItem = new ContextMenuItem(name, separatorBefore);

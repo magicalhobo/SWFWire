@@ -12,8 +12,8 @@ global
 
 @font-face
 {
-	src: url('myriad_pro.otf');
-	fontFamily: MyriadEmbedded;
+	src: url('SourceSansPro-Light.ttf');
+	font-family: EmbeddedLight;
 	embedAsCFF: false;
 }
 
@@ -60,7 +60,7 @@ mx|List
 */
 .bigText
 {
-	font-family: MyriadEmbedded;
+	font-family: EmbeddedLight;
 	font-lookup: embeddedCFF;
 }
 

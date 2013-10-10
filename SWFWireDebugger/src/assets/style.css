@@ -11,7 +11,7 @@ global
 	text-selected-color: #AAAAAA;
 	focus-color: #a4da0a;
 
-	font-family: MyriadBoldEmbedded;
+	font-family: EmbeddedRegular;
 	font-lookup: embeddedCFF;
 	font-size: 16px;
 	content-background-color: #383733;
@@ -19,15 +19,15 @@ global
 
 @font-face
 {
-	src: url('MyriadPro-Light_0.otf');
-	fontFamily: MyriadLightEmbedded;
+	src: url('SourceSansPro-Light.ttf');
+	fontFamily: EmbeddedLight;
 	embedAsCFF: false;
 }
 
 @font-face
 {
-	src: url('MyriadPro-BoldCond.otf');
-	fontFamily: MyriadBoldEmbedded;
+	src: url('SourceSansPro-Regular.ttf');
+	fontFamily: EmbeddedRegular;
 	embedAsCFF: false;
 }
 
@@ -98,7 +98,7 @@ ui|SearchInput .button
 
 .bigText
 {
-	font-family: MyriadLightEmbedded;
+	font-family: EmbeddedLight;
 	font-lookup: embeddedCFF;
 	font-size: 32px;
 	padding-top: 8px;

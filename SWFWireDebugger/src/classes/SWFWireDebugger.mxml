@@ -8,7 +8,7 @@
 						paddingRight="5" paddingBottom="5"
 						horizontalAlign="right"
 						currentState="waiting" backgroundColor="#222222">
-	<mx:Style source="../assets/style.css"/>
+	<mx:Style source="style.css"/>
 	<mx:Script>
 		<![CDATA[
 			import air.update.ApplicationUpdaterUI;
