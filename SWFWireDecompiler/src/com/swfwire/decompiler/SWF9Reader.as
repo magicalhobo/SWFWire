@@ -42,7 +42,6 @@ package com.swfwire.decompiler
 					case 76:
 						tag = readSymbolClassTag(context, header);
 						break;
-					case 72:
 					case 82:
 						tag = readDoABCTag(context, header);
 						break;

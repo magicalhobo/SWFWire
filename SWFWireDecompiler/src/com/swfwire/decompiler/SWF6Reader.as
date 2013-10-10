@@ -121,14 +121,22 @@ package com.swfwire.decompiler
 			record.reserved = context.bytes.readUI16();
 			record.allEventFlags = readClipEventFlagsRecord(context);
 			
-			context.bytes.alignBytes();
-			
 			record.clipActionRecords = new Vector.<ClipActionRecord>();
 			
 			while(true)
 			{
+				context.bytes.alignBytes();
 				var originalPosition:uint = context.bytes.getBytePosition();
-				if(context.bytes.readUI32() == 0)
+				var endFlag:uint;
+				if(context.fileVersion < 5)
+				{
+					endFlag = context.bytes.readUI16();
+				}
+				else
+				{
+					endFlag = context.bytes.readUI32();
+				}
+				if(endFlag)
 				{
 					break;
 				}

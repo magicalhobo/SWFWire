@@ -930,7 +930,7 @@ package com.swfwire.decompiler
 				record.envPoints = context.bytes.readUI8();
 				for(var iter:uint = 0; iter < record.envPoints; iter++)
 				{
-					record.envPoints[iter] = readSoundEnvelopeRecord(context);
+					record.envelopeRecords[iter] = readSoundEnvelopeRecord(context);
 				}
 			}
 			return record;
