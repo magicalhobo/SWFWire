@@ -8,4 +8,4 @@ If you're interested in using the decompiler libraries, check out the [Sample Co
 
 If you're interested in using the debugger, check out the [SWFWire Debugger Overview](https://github.com/magicalhobo/SWFWire/wiki/SWFWire-Debugger-Overview).
 
-[Licensed](https://github.com/magicalhobo/SWFWire/wiki/License) under the GPLv3.
+[Licensed](https://github.com/magicalhobo/SWFWire/wiki/License) under the MIT license.
