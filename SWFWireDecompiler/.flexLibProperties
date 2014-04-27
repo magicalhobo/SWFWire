@@ -421,6 +421,11 @@
     <classEntry path="com.swfwire.decompiler.data.swf.enums.SoundType"/>
     <classEntry path="com.swfwire.decompiler.data.swf.enums.SoundFormat"/>
     <classEntry path="com.swfwire.decompiler.data.swf.records.SoundInfoRecord"/>
+    <classEntry path="com.swfwire.decompiler.Serializable"/>
+    <classEntry path="com.swfwire.decompiler.utils.ABCToActionScript"/>
+    <classEntry path="com.swfwire.decompiler.utils.ReadableTrait"/>
+    <classEntry path="com.swfwire.decompiler.utils.ReadableMultiname"/>
+    <classEntry path="com.swfwire.decompiler.utils.ReadableClass"/>
   </includeClasses>
   <includeResources/>
   <namespaceManifests/>
