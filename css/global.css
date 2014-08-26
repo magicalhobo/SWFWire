@@ -198,19 +198,9 @@ body#inspector #body>.column
 }
 .section.twitter
 {
-    background-color: #eee;
-	color: #333;
-    border-radius: 4px;
-	width: 269px;
+	width: 310px;
+	padding: 0;
 	float: left;
-}
-.section.twitter h1
-{
-	color: #333;
-}
-.section.twitter h1 a
-{
-	color: #2FC2EF !important;
 }
 body#inspector .screenshot
 {
