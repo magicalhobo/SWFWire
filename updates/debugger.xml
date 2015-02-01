@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <update xmlns="http://ns.adobe.com/air/framework/update/description/2.5">
 	<versionNumber>1.6.28</versionNumber>
-	<url>http://www.swfwire.com/download/SWFWireDebugger-1.6.28.air</url>
+	<url>https://github.com/magicalhobo/SWFWire/releases/download/v1.3/SWFWireDebugger-1.6.28.air</url>
 	<description>Adding ability to invoke with a SWF path as a parameter.</description>
 </update>

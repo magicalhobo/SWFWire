@@ -3,7 +3,7 @@
 	var flashvars = {};
 	flashvars.airversion = '3.4';
 	flashvars.appname = 'SWFWire Debugger';
-	flashvars.appurl = 'http://www.swfwire.com/download/SWFWireDebugger-1.6.28.air';
+	flashvars.appurl = 'https://github.com/magicalhobo/SWFWire/releases/download/v1.3/SWFWireDebugger-1.6.28.air';
 	flashvars.imageurl = 'debugger-badge/logo.png';
 	flashvars.appid = 'SWFWireDebugger';
 	flashvars.appversion = '1.6.28';
